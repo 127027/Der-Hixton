@@ -1,0 +1,37 @@
+schema_version: 1
+backtest_version: v1
+run_id: TO_BE_ASSIGNED
+run_mode: all_ten_isolated  # alternativ: single_symbol oder paper_live_mirror
+created_at_utc: TO_BE_ASSIGNED
+status: not_run
+
+strategy:
+  version: TO_CONFIRM
+  pine_sha256: TO_CONFIRM
+  config_sha256: TO_CONFIRM
+  code_commit: TO_CONFIRM
+
+data:
+  provider: binance_spot
+  snapshot_sha256: TO_CONFIRM
+  timeframe: TO_CONFIRM
+  warmup_start_utc: TO_CONFIRM
+  report_start_utc: TO_CONFIRM
+  report_end_utc: TO_CONFIRM
+
+capital:
+  isolated_starting_usdt_per_symbol: 250.00
+  paper_live_mirror_total_usdt: 240.00
+  paper_live_mirror_slots: 3
+  paper_live_mirror_target_notional_usdt: 80.00
+
+execution:
+  fill_model: next_bar_open
+  fee_model: TO_CONFIRM
+  slippage_model: TO_CONFIRM
+
+artifacts:
+  data_quality: TO_BE_ASSIGNED
+  report: TO_BE_ASSIGNED
+  trades: TO_BE_ASSIGNED
+
