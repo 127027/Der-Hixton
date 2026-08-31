@@ -90,4 +90,4 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | SEC-002 | API-Key erhält nur Lesen und Spot-Handel; Auszahlung ist verboten. | VERBINDLICH |
 | SEC-003 | Live wird nur nach Strategieparität, Backtest, Paper-Soak-Test und Restore-Test freigeschaltet. | VERBINDLICH |
 | QLT-001 | Kritische Anforderungen sind in der Traceability-Matrix mit mindestens einem Test verknüpft. | VERBINDLICH |
-| COL-001 | Gemeinsames Repository ist `https://github.com/127027/Der-Hixton`; Upload erst nach Freigabe, niemals mit Secrets. | VERBINDLICH |
+| COL-001 | Zentrale Projektablage ist `https://github.com/127027/Der-Hixton`. Geprüfte Arbeitsstände werden fortlaufend committed und gepusht; 99-%-Freigabe wird separat als Release/Tag markiert. Secrets sind immer verboten. | VERBINDLICH |

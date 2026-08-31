@@ -2,6 +2,8 @@
 
 Dies ist die **einzige zentrale Startdatei** des Projekts.
 
+Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
+
 Aktueller Status: Dokumentations- und Spezifikationsphase. Es wurde noch kein Trading-Bot implementiert und kein valider Backtest ausgeführt.
 
 ## Wo anfangen?
@@ -38,4 +40,3 @@ Eine neue fachliche Methodik erhält die nächste Version. Ein veröffentlichter
 - Kein GitHub-Stand ersetzt die DMS-Freigabe.
 - Pine-Quellcode nur veröffentlichen, wenn Eigentum und Veröffentlichungsrecht geklärt sind.
 - Historische Ergebnisse sind keine Gewinngarantie.
-

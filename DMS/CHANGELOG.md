@@ -1,5 +1,13 @@
 # DMS-Changelog
 
+## 0.3.1 – 31.08.2026
+
+- GitHub ausdrücklich als zentrale versionierte Projektablage festgeschrieben; OneDrive ist die lokale Arbeitskopie.
+- Frühere Formulierung „Upload erst bei Freigabereife“ entfernt; 99 % bleibt ein separates Releasegate.
+- `DEC-029` bestätigt: Slotvergabe nach stärkstem normalisiertem Hixton-Ausbruch mit festem Tie-Break.
+- `DEC-030` bestätigt: 80 USDT je Slot bleiben fest bis zu einer bewussten UI-Änderung; kein automatisches Compounding.
+- Verbleibende Kernblocker auf Pine-Referenz, Trading-Timeframe und Kostenmodell verdichtet.
+
 ## 0.3.0 – 31.08.2026
 
 - `README.md` als einzige zentrale Startdatei festgelegt.

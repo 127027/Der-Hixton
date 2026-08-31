@@ -5,9 +5,9 @@
 - Remote: `https://github.com/127027/Der-Hixton`
 - vom Eigentümer für die gemeinsame Arbeit von Codex und GPT vorgesehen;
 - Remoteprüfung am 31.08.2026: erreichbar, aber noch ohne sichtbare Git-Referenzen/Commits;
-- initialer Dokumentationsstand darf nach ausdrücklicher Freigabe des Eigentümers hochgeladen werden; 99-%-Status wird erst später als eigener Release/Tag gekennzeichnet.
+- GitHub ist die zentrale Projektablage; geprüfte Arbeitsstände werden fortlaufend committed und gepusht. 99-%-Status wird erst später als eigener Release/Tag gekennzeichnet.
 
-Das lokale OneDrive-Verzeichnis bleibt Arbeitsquelle. GitHub-Synchronisation erfolgt kontrolliert per Commit/Push, niemals unbemerkt durch bloßes Speichern.
+Das lokale OneDrive-Verzeichnis ist die Arbeitskopie, GitHub die zentrale versionierte Projektablage. Synchronisation erfolgt kontrolliert per Commit/Push, niemals unbemerkt durch bloßes Speichern.
 
 ## Verbindliche Repository-Struktur
 

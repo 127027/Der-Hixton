@@ -2,7 +2,7 @@
 
 Dieses Dokument ist die einzige Sammelstelle für offene fachliche Entscheidungen. „Default des Frameworks“ ist keine Entscheidung.
 
-## P0 – vor Implementierungsbeginn zwingend
+## P0 – vor exakter Signalparität und belastbarem Backtest
 
 | ID | Frage/fehlendes Artefakt | Aktuelle Annahme | Auswirkung |
 |---|---|---|---|
@@ -13,12 +13,22 @@ Dieses Dokument ist die einzige Sammelstelle für offene fachliche Entscheidunge
 | DEC-005 | Exakte zehn Coins? | **BESCHLOSSEN FÜR V0.1:** BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE gegen USDT | Daten/Backtests/Portfolio |
 | DEC-006 | Gibt es ein festes 3-Jahres-Gewinnziel? | **BESCHLOSSEN: nein**; Backtest prüft Reaktion und berichtet Ergebnis ohne 250-/500-Ziel | Ergebnisinterpretation |
 | DEC-007 | Nur Long oder echte Shorts? | Spot long-only; Verkauf = Long schließen | Execution, Risiko, Börsenprodukt |
-| DEC-008 | Kapital-/Positionsmodell? | **TEILBESCHLOSSEN:** Backtest 10×250 plus Einzeltest 250; Paper/Live 240 mit 3×80; Compounding offen | PnL, Slots und Drawdown |
+| DEC-008 | Kapital-/Positionsmodell? | **BESCHLOSSEN:** Backtest 10×250 plus Einzeltest 250; Paper/Live 240 mit 3×80; kein automatisches Compounding gemäß DEC-030 | PnL, Slots und Drawdown |
 | DEC-009 | Ordertyp live? | Market mit Schutz angenommen | Fill, Slippage, Timeoutlogik |
 | DEC-010 | Gebührenstufe und Slippagemodell? | fehlt | Kein valider Netto-Backtest |
 | DEC-011 | Bar-Close/Initialtrend/Warm-up exakt aus Pine? | sichere Zustandsmaschine angenommen | erste Signale und Parität |
-| DEC-029 | Welche drei Signale erhalten Slots, wenn mehr Coins gleichzeitig kaufen wollen? | stärkster normalisierter Hixton-Ausbruch, feste Coin-Tie-Break-Reihe | Portfolioresultat |
-| DEC-030 | Bleibt ein Slot fest 80 USDT oder wächst er mit Gewinnen? | 80 USDT fest bis UI-Änderung | Compounding/Profit/Risiko |
+| DEC-029 | Welche drei Signale erhalten Slots, wenn mehr Coins gleichzeitig kaufen wollen? | **BESCHLOSSEN:** stärkster normalisierter Hixton-Ausbruch; Gleichstand über feste Coin-Tie-Break-Reihe | Portfolioresultat |
+| DEC-030 | Bleibt ein Slot fest 80 USDT oder wächst er mit Gewinnen? | **BESCHLOSSEN:** 80 USDT fest bis zu einer bewussten, auditierbaren UI-Änderung; kein automatisches Compounding | Compounding/Profit/Risiko |
+
+## Aktuell verbleibende Kernblocker
+
+Für Implementierung, Signalparität und einen belastbaren Nettobacktest bleiben nur diese drei Themenblöcke zwingend offen:
+
+1. **Pine-Referenz (`DEC-001`, `DEC-002`, `DEC-011`):** vollständiger zulässiger Pine-Code oder gleichwertige technische Spezifikation mit Referenzwerten; Inputs, Initialzustand und Warm-up daraus ableiten.
+2. **Trading-Timeframe (`DEC-003`):** eine feste Signalkerzenauflösung wählen; UI-Zeiträume bleiben davon unabhängig.
+3. **Kostenmodell (`DEC-010`):** Binance-Gebührenstufe und realistisches Slippage-/Spreadmodell für Nettoergebnisse festlegen.
+
+`DEC-029` und `DEC-030` sind geschlossen. Die übrigen P1-/P2-Punkte blockieren nicht die erste Signalengine bzw. den technischen Bruttobacktest; sie werden vor Paper- oder Live-Freigabe geschlossen.
 
 ## P1 – vor Paper-/Livebetrieb
 
@@ -66,7 +76,7 @@ Dieses Dokument ist die einzige Sammelstelle für offene fachliche Entscheidunge
 | Startup prüft und aktualisiert alle zehn Coins | VERBINDLICH |
 | tägliche Aktualisierung um Mitternacht | VERBINDLICH; exakte Zeitzone/Uhrminute ANNAHME |
 | alles basiert auf dem Hixton-Indikator | VERBINDLICH |
-| gemeinsames GitHub-Repository `127027/Der-Hixton`; Upload erst bei Freigabereife | VERBINDLICH |
+| GitHub-Repository `127027/Der-Hixton` ist die zentrale Projektablage; Arbeitsstände werden gepusht, 99 % ist ein separates Releasegate | VERBINDLICH |
 
 ## Erklärung zu DEC-001: Was ist der Pine-Code?
 
