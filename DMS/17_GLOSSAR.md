@@ -5,8 +5,8 @@
 | Bar/Kerze | OHLCV-Datensatz eines festen Timeframes |
 | geschlossene Kerze | vom Datenprovider finalisierte Kerze; darf Signalsbasis sein |
 | vorläufige Kerze | laufende Kerze; nur Anzeige, keine bestätigte Signalsbasis |
-| VIDYA | Variable Index Dynamic Average gemäß freigegebenem Pine-Code |
-| ATR | Average True Range gemäß freigegebenem Pine-Code |
+| VIDYA | Variable Index Dynamic Average gemäß `HIXTON-SPEC-1.0` in DMS 03 |
+| ATR | Average True Range mit Wilder-RMA gemäß `HIXTON-SPEC-1.0` in DMS 03 |
 | Band | VIDYA plus/minus ATR × Multiplikator |
 | Trendzustand | persistenter Zustand `UP`, `DOWN` oder vor Initialisierung `UNINITIALIZED` |
 | Flip | echter Wechsel zwischen Trendzuständen, nicht jeder Bar im selben Trend |
@@ -36,7 +36,7 @@
 | stale | veraltet; Frischegrenze überschritten |
 | Datenrevision | nachträgliche Änderung historischer Providerdaten |
 | Run-Manifest | vollständige Metadaten eines reproduzierbaren Backtestlaufs |
-| Golden-Daten | Referenzwerte/-signale aus dem freigegebenen Pine-Code |
+| Golden-Daten | unabhängig berechnete Referenzwerte/-signale aus der normativen Spezifikation; optional ergänzt um rechtmäßig verfügbare externe Vergleichswerte |
 | Not-Aus | Sperre neuer Entries; Liquidation ist eine getrennte Aktion |
 | UTC | interne Standardzeitzone |
 | Today/Heute | 00:00 bis jetzt in der sichtbar gewählten UI-Zeitzone |

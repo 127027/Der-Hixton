@@ -1,100 +1,82 @@
 # 16 – Entscheidungslog und offene Punkte
 
-Dieses Dokument ist die einzige Sammelstelle für offene fachliche Entscheidungen. „Default des Frameworks“ ist keine Entscheidung.
+Dieses Dokument ist die einzige Sammelstelle für fachliche Entscheidungen. „Default des Frameworks“ ist keine Entscheidung. Für DMS V1 sind alle implementierungsrelevanten P0-/P1-Entscheidungen geschlossen. Noch fehlende Zugangsdaten, Testresultate und Betriebsnachweise sind **Nachweise**, keine offenen Produktentscheidungen.
 
-## P0 – vor exakter Signalparität und belastbarem Backtest
+Beschlussstand: **31.08.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze benötigen eine Entscheidungs-ID, Begründung und passende Versionsanhebung.
 
-| ID | Frage/fehlendes Artefakt | Aktuelle Annahme | Auswirkung |
-|---|---|---|---|
-| DEC-001 | Vollständiger Pine-v6-Quellcode inklusive Inputs? | fehlt | Keine exakte Strategie oder 99-%-Freigabe möglich |
-| DEC-002 | Pine-Parameterwerte und Source? | fehlen | Indikatorwerte/Signale unbestimmt |
-| DEC-003 | Trading-Timeframe? | offen; UI-Zeiträume sind davon unabhängig | Datenmenge, Signalspeed, Gebühren, Warm-up |
-| DEC-004 | Welche Börse/Datenquelle und welches Konto? | **BESCHLOSSEN: Binance Spot/USDT**; konkretes Paper-/Live-Konto noch offen | API, Historie, Filter, Gebühren, rechtliche Verfügbarkeit |
-| DEC-005 | Exakte zehn Coins? | **BESCHLOSSEN FÜR V0.1:** BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE gegen USDT | Daten/Backtests/Portfolio |
-| DEC-006 | Gibt es ein festes 3-Jahres-Gewinnziel? | **BESCHLOSSEN: nein**; Backtest prüft Reaktion und berichtet Ergebnis ohne 250-/500-Ziel | Ergebnisinterpretation |
-| DEC-007 | Nur Long oder echte Shorts? | Spot long-only; Verkauf = Long schließen | Execution, Risiko, Börsenprodukt |
-| DEC-008 | Kapital-/Positionsmodell? | **BESCHLOSSEN:** Backtest 10×250 plus Einzeltest 250; Paper/Live 240 mit 3×80; kein automatisches Compounding gemäß DEC-030 | PnL, Slots und Drawdown |
-| DEC-009 | Ordertyp live? | Market mit Schutz angenommen | Fill, Slippage, Timeoutlogik |
-| DEC-010 | Gebührenstufe und Slippagemodell? | fehlt | Kein valider Netto-Backtest |
-| DEC-011 | Bar-Close/Initialtrend/Warm-up exakt aus Pine? | sichere Zustandsmaschine angenommen | erste Signale und Parität |
-| DEC-029 | Welche drei Signale erhalten Slots, wenn mehr Coins gleichzeitig kaufen wollen? | **BESCHLOSSEN:** stärkster normalisierter Hixton-Ausbruch; Gleichstand über feste Coin-Tie-Break-Reihe | Portfolioresultat |
-| DEC-030 | Bleibt ein Slot fest 80 USDT oder wächst er mit Gewinnen? | **BESCHLOSSEN:** 80 USDT fest bis zu einer bewussten, auditierbaren UI-Änderung; kein automatisches Compounding | Compounding/Profit/Risiko |
+## P0 – Strategie, Markt und Backtest
 
-## Aktuell verbleibende Kernblocker
-
-Für Implementierung, Signalparität und einen belastbaren Nettobacktest bleiben nur diese drei Themenblöcke zwingend offen:
-
-1. **Pine-Referenz (`DEC-001`, `DEC-002`, `DEC-011`):** vollständiger zulässiger Pine-Code oder gleichwertige technische Spezifikation mit Referenzwerten; Inputs, Initialzustand und Warm-up daraus ableiten.
-2. **Trading-Timeframe (`DEC-003`):** eine feste Signalkerzenauflösung wählen; UI-Zeiträume bleiben davon unabhängig.
-3. **Kostenmodell (`DEC-010`):** Binance-Gebührenstufe und realistisches Slippage-/Spreadmodell für Nettoergebnisse festlegen.
-
-`DEC-029` und `DEC-030` sind geschlossen. Die übrigen P1-/P2-Punkte blockieren nicht die erste Signalengine bzw. den technischen Bruttobacktest; sie werden vor Paper- oder Live-Freigabe geschlossen.
-
-## P1 – vor Paper-/Livebetrieb
-
-| ID | Entscheidung | Vorschlag |
+| ID | Beschluss für DMS V1 | Status/Auswirkung |
 |---|---|---|
-| DEC-012 | täglicher Job in welcher Zeitzone? | 00:05 UTC; UI zeigt Europe/Berlin |
-| DEC-013 | Stale-data-Grenze | abhängig vom Timeframe, z. B. deutlich kleiner als ein Barintervall |
-| DEC-014 | Maximal erlaubte Preisabweichung/Slippage | aus Paperdaten ableiten und bestätigen |
-| DEC-015 | Tagesverlust-/Drawdown-Pause | nur neue Entries pausieren; Werte festlegen |
-| DEC-016 | Teilfill-Rest/Order-Timeout | keine Neuorder ohne Statusklärung; konkrete Frist offen |
-| DEC-017 | Umgang mit offener Position am Backtestende | mark-to-market separat, nicht künstlich fillen |
-| DEC-018 | Paper-Soak-Dauer | mindestens mehrere Wochen und genügend Barwechsel; nach Timeframe festlegen |
-| DEC-019 | Alarmkanal | lokale UI plus externer Kanal für P1/P2 nötig |
-| DEC-020 | Backupziel und Retention | getrennt vom Rechner, verschlüsselt, Restore regelmäßig testen |
-| DEC-021 | Darf derselbe Börsenaccount manuell gehandelt werden? | nein; eigener Bot-Subaccount bevorzugt |
-| DEC-022 | lokale UI oder Netzwerkzugriff? | localhost-only |
-| DEC-023 | Autostart/Windows-Service? | ja für unbeaufsichtigten Betrieb, erst nach Paperfreigabe |
-| DEC-031 | GitHub-Repository öffentlich oder privat; darf Pine-Source hinein? | vor Upload prüfen; Secrets niemals, Pine nur mit Eigentums-/Lizenzfreigabe |
+| DEC-001 | Der nicht vorliegende proprietäre Pine-Quelltext wird weder erraten noch als vorhanden behauptet. Normative und implementierbare Referenz ist `HIXTON-SPEC-1.0` in DMS 03. Ein später rechtmäßig verfügbarer Originalcode wird verglichen; Abweichungen erzeugen V2 statt einer stillen Änderung. | **BESCHLOSSEN**; Spezifikationsparität ist prüfbar, Herstellerparität ohne Herstellerquelle nicht behauptet. |
+| DEC-002 | Source `close`; VIDYA-Länge 10; Momentum/CMO 20; Nachglättung SMA 15; ATR als Wilder-RMA 200; Bandmultiplikator 2,0. Formeln und Rundungsregeln stehen normativ in DMS 03. | **BESCHLOSSEN** |
+| DEC-003 | Signallogik auf Binance-Spot-Kerzen mit festem Timeframe `1h`. UI-Zeiträume sind davon unabhängig. | **BESCHLOSSEN** |
+| DEC-004 | Handelsplatz und Datenquelle: Binance Spot, Quote-Asset USDT. Paper nutzt dieselben Marktdaten; Live benötigt einen eigenen Bot-Account oder Subaccount. | **BESCHLOSSEN** |
+| DEC-005 | BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE, jeweils `/USDT`; keine automatische Ersetzung. | **BESCHLOSSEN** |
+| DEC-006 | Kein fixes Gewinnversprechen und kein Ziel „250 werden 500“. Ergebnisse werden netto und vollständig berichtet; Optimierungsziel ist risikobewusster Nettogewinn, nicht maximale Tradezahl allein. | **BESCHLOSSEN** |
+| DEC-007 | Spot long-only; Kauf öffnet Long, Verkauf schließt Long; kein Short, Margin, Futures, Leverage oder Pyramiding. | **BESCHLOSSEN** |
+| DEC-008 | Backtest: zehn isolierte Läufe à 250 USDT sowie Einzelmodus à 250 USDT; optionaler 240-USDT-Spiegellauf. Paper/Live: gemeinsamer Cashpool 240 USDT, drei Slots à 80 USDT. | **BESCHLOSSEN** |
+| DEC-009 | Live-V1 verwendet Market-Orders mit den Guards aus DMS 07. | **BESCHLOSSEN** |
+| DEC-010 | Kosten je Seite: Baseline 10 bp Gebühr + 2 bp Spread + 3 bp Slippage = 15 bp; Stress 10 + 10 + 20 = 40 bp. Kein BNB-/VIP-Rabatt. | **BESCHLOSSEN** |
+| DEC-011 | Nur geschlossene Bars; Warm-up 400 Bars; Initialzustand nach Bar 399 `DOWN`, ohne Startorder; Cross- und Fill-Regeln exakt nach DMS 03/06. | **BESCHLOSSEN** |
+| DEC-029 | Bei mehr Kaufkandidaten als freien Slots gewinnt der größte normalisierte Ausbruch `(close-upper)/ATR`; Tie-Break: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. | **BESCHLOSSEN** |
+| DEC-030 | Ein Paper-/Live-Slot bleibt 80 USDT, bis der Betreiber ihn bewusst und auditierbar für künftige Entries ändert. Der isolierte Backtest nutzt fest 250 USDT Zielbudget bzw. den kleineren verfügbaren Cashbestand. Gewinne erhöhen keine der Zielgrößen automatisch. | **BESCHLOSSEN** |
 
-## P2 – Produktpolitur
+## P1 – Paper-, Live- und Betriebsregeln
 
-| ID | Entscheidung | Vorschlag |
+| ID | Beschluss für DMS V1 | Status/Auswirkung |
 |---|---|---|
-| DEC-024 | Exportformate | CSV + JSON + druckbarer HTML/PDF-Report |
-| DEC-025 | UI-Standardzeitraum | 1 Monat |
-| DEC-026 | UI-Chart-Aggregation je Bereich | automatisch, aber sichtbar und manuell wählbar |
-| DEC-027 | Daten-/Log-Retention | Backtestdaten dauerhaft; Logs rotierend gemäß Auditbedarf |
-| DEC-028 | Sprache | Deutsch zuerst; technische Werte/IDs unverändert |
+| DEC-012 | Täglicher Datenaudit und Update um 00:05 UTC; UI zeigt zusätzlich Europe/Berlin. | **BESCHLOSSEN** |
+| DEC-013 | 90 Sekunden ohne Streamupdate → `DEGRADED`; finale 1h-Bar mehr als 120 Sekunden verspätet → Symbol pausieren und REST-Recovery. | **BESCHLOSSEN** |
+| DEC-014 | Vor Live-Submit maximal 25 bp Abweichung zwischen aktuellem Referenzpreis und geplantem Preis; darüber Intent blockieren und neu bewerten. | **BESCHLOSSEN** |
+| DEC-015 | Netto-Tagesverlust von 5 % der Equity zu 00:00 UTC pausiert neue Entries bis zum nächsten UTC-Tag. 20 % Drawdown vom globalen Equity-High-Water-Mark setzt `HALTED`; keine automatische Notliquidation. | **BESCHLOSSEN** |
+| DEC-016 | Ohne bestätigten Börsenstatus nach 10 Sekunden Zustand `UNKNOWN` und Reconciliation, niemals blinde Ersatzorder. Nach 30 Sekunden verbleibenden stornierbaren Teilfill-Rest stornieren; keine automatische Neuorder. | **BESCHLOSSEN** |
+| DEC-017 | Offene Position am Backtestende separat mark-to-market bewerten; keinen künstlichen Exit erfinden. | **BESCHLOSSEN** |
+| DEC-018 | Live-Gate: mindestens 30 Kalendertage, 720 geschlossene 1h-Bars und 20 abgeschlossene Papertrades. Sind nach 30 Tagen weniger als 20 Trades erreicht, bis 20 Trades verlängern, höchstens auf 90 Tage; danach Eigentümerentscheidung statt automatischer Live-Freigabe. | **BESCHLOSSEN** |
+| DEC-019 | UI und strukturierte Logs immer; externer Pflichtkanal für P1/P2 ist Telegram. Fehlende/gestörte Telegram-Konfiguration blockiert Live, nicht den Backtest. | **BESCHLOSSEN** |
+| DEC-020 | Verschlüsselte Backups außerhalb des öffentlichen Repos und außerhalb der aktiven Datenbank, bevorzugt in einem separaten OneDrive-Ziel. Retention: 7 tägliche, 4 wöchentliche, 12 monatliche Stände; Restore-Test vor Live und danach vierteljährlich. | **BESCHLOSSEN** |
+| DEC-021 | Manueller Handel auf demselben Binance-Account/Subaccount ist verboten. Fremdorders oder unerklärte Salden setzen Live-Entries aus. | **BESCHLOSSEN** |
+| DEC-022 | V1-UI bindet ausschließlich an localhost. Netzwerkfreigabe ist eine spätere Sicherheitsentscheidung. | **BESCHLOSSEN** |
+| DEC-023 | Nach bestandener Paperfreigabe Betrieb als Windows-Service mit verzögertem Autostart und Restart-on-Failure; jede Wiederaufnahme beginnt mit Startup-Reconciliation. | **BESCHLOSSEN** |
+| DEC-031 | Repository `127027/Der-Hixton` ist öffentlich. DMS und eigene Projektspezifikation dürfen hinein; Secrets nie. Fremder/proprietärer Pine-Quelltext wird ohne nachgewiesene Rechte nicht veröffentlicht. Zulässig sind eigene Spezifikation, Parameter, rechtmäßig erzeugte Referenzwerte und ein Hash eines privat verwahrten Artefakts. | **BESCHLOSSEN** |
 
-## Vorläufige Beschlüsse aus dem Nutzerauftrag
+## P2 – Bedienung und Aufbewahrung
 
-| Beschluss | Status |
-|---|---|
-| kein Botbau in diesem Auftrag, nur Dokumentation | VERBINDLICH |
-| zehn Kryptowährungen | VERBINDLICH |
-| Binance Spot/USDT | VERBINDLICH |
-| Backtest-Batch: zehn isolierte Tests à 250 USDT | VERBINDLICH |
-| Backtest-Einzelmodus: frei wählbarer Coin, z. B. ETH, mit 250 USDT | VERBINDLICH |
-| Paper 24/7 als Vorbereitung für Live | VERBINDLICH |
-| Paper-/Live-Start: gemeinsamer Cashpool 240 USDT, drei Slots à 80 USDT | VERBINDLICH |
-| kein festes 250-/500-USDT-Performanceziel | VERBINDLICH |
-| dreijähriger Primärbacktest | VERBINDLICH |
-| UI-Charts Heute/1W/1M/1J/3J | VERBINDLICH |
-| lokale heruntergeladene Historie nutzen | VERBINDLICH |
-| Startup prüft und aktualisiert alle zehn Coins | VERBINDLICH |
-| tägliche Aktualisierung um Mitternacht | VERBINDLICH; exakte Zeitzone/Uhrminute ANNAHME |
-| alles basiert auf dem Hixton-Indikator | VERBINDLICH |
-| GitHub-Repository `127027/Der-Hixton` ist die zentrale Projektablage; Arbeitsstände werden gepusht, 99 % ist ein separates Releasegate | VERBINDLICH |
+| ID | Beschluss für DMS V1 | Status/Auswirkung |
+|---|---|---|
+| DEC-024 | Exporte: CSV und JSON; druckbarer HTML-Bericht. PDF ist optional und darf aus HTML erzeugt werden. | **BESCHLOSSEN** |
+| DEC-025 | UI-Standardzeitraum: 1 Monat. | **BESCHLOSSEN** |
+| DEC-026 | Chart: Heute/1W/1M nativ `1h`, 1J deterministisch `4h`, 3J deterministisch `1d`; Nutzer darf eine verfügbare Auflösung wählen. Strategie und Signale werden immer auf `1h` berechnet, nie auf aggregierten UI-Bars. | **BESCHLOSSEN** |
+| DEC-027 | Markt-/Backtestdaten und Trade-/Audit-Ledger bleiben für Reproduzierbarkeit dauerhaft. Betriebslogs 90 Tage online, danach löschbar; Incidentberichte und Release-Nachweise dauerhaft. | **BESCHLOSSEN** |
+| DEC-028 | Oberfläche Deutsch; technische IDs, API-Felder und Symbole bleiben unverändert/kopierbar. | **BESCHLOSSEN** |
 
-## Erklärung zu DEC-001: Was ist der Pine-Code?
+## Vom Nutzer verbindlich vorgegeben
 
-Der Pine-Code ist der **vollständige Quelltext des TradingView-Indikators**, nicht nur seine Beschreibung. Er beginnt typischerweise mit `//@version=5` oder `//@version=6` und enthält Zeilen wie `indicator(...)`, Inputs, VIDYA-/ATR-Berechnung und Kauf-/Verkaufsbedingungen.
+- In dieser Phase ausschließlich Dokumentation, kein Botcode.
+- Zehn Kryptowährungen auf Binance Spot/USDT.
+- Backtest-Batch: zehn isolierte Tests à 250 USDT; Einzeltest für einen wählbaren Coin ebenfalls 250 USDT.
+- 24/7-Paperbetrieb als Pflichtvorbereitung für Live.
+- Paper-/Live-Start: 240 USDT als drei Positionen à 80 USDT; spätere Positionsgröße über UI änderbar.
+- Dreijähriger Primärbacktest und lokale Historie.
+- UI-Charts Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
+- Startup-Vollprüfung aller zehn Coins und tägliches Nachziehen.
+- Die Strategie basiert ausschließlich auf der dokumentierten Hixton-V1-Logik.
+- GitHub ist die zentrale Projektablage; übersichtliche Struktur, ein technischer Einstiegspunkt, Backtestversionen in getrennten Versionsordnern.
 
-So wird er beschafft, wenn der Quelltext zugänglich ist:
+## Umgang mit dem nicht vorliegenden Pine-Quelltext
 
-1. Indikator in TradingView öffnen.
-2. Unten den „Pine Editor“ öffnen.
-3. gesamten Inhalt kopieren, einschließlich Versionszeile.
-4. als Datei, zum Beispiel `hixton_indicator.pine`, bereitstellen.
-5. zusätzlich Screenshot/Export aller aktuell verwendeten Indikatoreinstellungen und den verwendeten Chart-Timeframe liefern.
+Ein vollständiger TradingView-Pine-Quelltext wäre ein möglicher externer Vergleichsmaßstab. Da der proprietäre Source nicht vorliegt, gilt er **nicht** als versteckte Abhängigkeit und blockiert nicht die Implementierbarkeit der selbstständigen Projektspezifikation. `HIXTON-SPEC-1.0` definiert alle Formeln, Parameter, Initialzustände, Cross-Regeln und Ausführungsannahmen ohne Interpretationsspielraum.
 
-Ist der Indikator „protected/invite-only“ und der Editor zeigt keinen Source, darf der Code nicht erraten oder unzulässig beschafft werden. Dann benötigen wir vom Rechteinhaber den Source oder ersatzweise eine offizielle, ausreichend genaue Spezifikation plus exportierte Referenzwerte/Signale. Ohne eines davon kann keine 1:1-Parität bewiesen werden.
+Falls später rechtmäßig ein Hersteller-Source zugänglich wird:
 
-## Entscheidungsformat
+1. Datei privat und rechtekonform verwahren;
+2. SHA-256 und Parameter-Snapshot erfassen;
+3. Werte und Signale gegen V1-Golden-Daten vergleichen;
+4. Abweichungen dokumentieren;
+5. nur über eine neue Strategieentscheidung und Version übernehmen;
+6. vorhandene V1-Backtests niemals rückwirkend umdeuten.
 
-Nach Bestätigung wird jeder Eintrag so ergänzt:
+## Änderungsformat nach dem Freeze
 
 ```text
 Entscheidung: DEC-xxx
@@ -104,17 +86,9 @@ Beschluss:
 Begründung:
 Betroffene Anforderungen/Dokumente:
 Neue Strategie-/Konfigurationsversion:
+Erforderliche neue Tests/Backtests:
 ```
 
-## Empfohlene nächste Rückfrage an GPT/den Eigentümer
+## Restarbeiten sind Nachweise, keine Entscheidungen
 
-Die effizienteste Antwort ist ein Paket aus:
-
-1. vollständigem Pine-Code als Datei;
-2. gewünschtem Trading-Timeframe;
-3. Binance-Gebührenstufe bzw. ob Gebühren mit BNB bezahlt werden;
-4. Bestätigung „Spot long-only, Verkauf schließt Position, kein Short“ oder einer abweichenden Regel;
-5. gewünschter Live-Ordertyp;
-6. Slotpriorisierung bei mehr als drei gleichzeitigen Kaufkandidaten;
-7. feste 80 USDT oder automatisches Compounding;
-8. Bestätigung, ob das GitHub-Repository öffentlich oder privat sein soll und ob der Pine-Code dort veröffentlicht werden darf.
+Vor Implementierung fehlen keine kritischen fachlichen Festlegungen. Vor Backtest, Paper oder Live müssen jedoch die jeweiligen Nachweise erzeugt werden: Code-/Config-Hashes, Golden-Fixtures aus der Spezifikation, echte Binance-Daten, Backtestergebnisse, API-Key-Berechtigungsprüfung, Telegram-Testalarm, Backup-Restore und Paper-Soak. Diese Artefakte dürfen nicht vorgetäuscht werden und werden in DMS 12 über Freigabegates kontrolliert.

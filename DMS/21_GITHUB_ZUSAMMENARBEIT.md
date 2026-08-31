@@ -4,8 +4,8 @@
 
 - Remote: `https://github.com/127027/Der-Hixton`
 - vom Eigentümer für die gemeinsame Arbeit von Codex und GPT vorgesehen;
-- Remoteprüfung am 31.08.2026: erreichbar, aber noch ohne sichtbare Git-Referenzen/Commits;
-- GitHub ist die zentrale Projektablage; geprüfte Arbeitsstände werden fortlaufend committed und gepusht. 99-%-Status wird erst später als eigener Release/Tag gekennzeichnet.
+- Remoteprüfung am 31.08.2026: **öffentlich**, Branch `main` vorhanden und mit der DMS-Struktur befüllt;
+- GitHub ist die zentrale Projektablage; geprüfte Arbeitsstände werden fortlaufend committed und gepusht. Der eingefrorene Dokumentationsstand erhält den Tag `dms-v1.0.0`; dieser ist kein fertiger Bot-/Live-Release.
 
 Das lokale OneDrive-Verzeichnis ist die Arbeitskopie, GitHub die zentrale versionierte Projektablage. Synchronisation erfolgt kontrolliert per Commit/Push, niemals unbemerkt durch bloßes Speichern.
 
@@ -27,7 +27,7 @@ tests/
 config/
   examples/          # niemals echte Secrets
 .gitignore
-LICENSE              # noch zu entscheiden
+LICENSE              # in DMS V1 bewusst nicht vorhanden; siehe Lizenzregel
 ```
 
 Historische Marktdaten, Datenbanken, große Logs, Backups, API-Schlüssel und lokale Secret-Dateien gehören nicht ins Git-Repository. Lose oder durchnummerierte Startskripte im Hauptordner sind verboten.
@@ -60,7 +60,8 @@ Commits sollen klein, nachvollziehbar und thematisch geschlossen sein. Ein DMS-U
 ## Quellen der Wahrheit in Git
 
 - `DMS/` beschreibt den freigegebenen Sollzustand.
-- Pine-Datei plus SHA-256 definiert die Signallogik.
+- `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die V1-Signallogik.
+- Ein später rechtmäßig verfügbarer Pine-Hash ist ein Vergleichsnachweis, keine stille Überschreibung der Spezifikation.
 - Konfigurationsbeispiele enthalten keine echten Schlüssel.
 - Dependency-Lock und Codecommit definieren einen Build.
 - Backtest-Manifest referenziert Code-, Config- und Datenhash.
@@ -80,26 +81,26 @@ Niemals committen:
 
 Vor jedem Push läuft ein Secret-Scan. Ein versehentlich veröffentlichter Schlüssel wird nicht nur aus Git gelöscht, sondern sofort bei Binance gesperrt und rotiert.
 
-## Öffentliche/private Sichtbarkeit und Lizenz
+## Öffentliche Sichtbarkeit, Pine und Lizenz
 
-Vor dem ersten Push ist zu bestätigen:
-
-1. Soll das Repository öffentlich oder privat sein?
-2. Darf der Hixton-Pine-Quellcode veröffentlicht werden und wem gehören die Rechte?
-3. Welche Open-Source- oder proprietäre Lizenz soll gelten?
-4. Welche Backtestreports dürfen öffentlich sein?
-
-Ohne diese Antworten wird nur nicht-sensibles DMS vorbereitet; kein Pine-Code und kein Secret wird hochgeladen.
+- Das Repository ist gemäß DEC-031 öffentlich.
+- Öffentlich bedeutet nicht automatisch Open Source. Solange keine `LICENSE`-Datei vom Eigentümer bewusst freigegeben wurde, bleiben die üblichen Urheberrechte vorbehalten; fremde dürfen den Inhalt ansehen, erhalten aber keine darüber hinausgehende pauschale Nutzungslizenz.
+- Eigene DMS- und Projektspezifikation dürfen veröffentlicht werden.
+- Proprietärer/fremder Hixton-Pine-Source darf ohne eindeutigen Eigentums- und Lizenznachweis **nicht** committed werden. Ein privater Hash oder rechtmäßig erzeugte Referenzwerte sind zulässig, wenn sie keine Geheimnisse oder geschützten Quelltext offenlegen.
+- Öffentliche Backtestreports müssen reproduzierbare Methodik und alle Coins zeigen, dürfen aber keine Account-IDs, Keys, Saldenexporte oder sonstigen personenbezogenen Kontodaten enthalten.
+- Eine spätere Open-Source-Lizenz ist eine neue Eigentümerentscheidung; sie wird nicht automatisch angenommen.
 
 ## 99-%-Releasegate
 
-Ein Stand darf vorher als klar gekennzeichneter Arbeitsstand gepusht werden. Ein 99-%-Release/Tag entsteht erst, wenn:
+Ein Stand darf vorher als klar gekennzeichneter Arbeitsstand gepusht werden. Der reine DMS-99-%-Tag `dms-v1.0.0` entsteht, wenn:
 
-- Pine-Quelle oder zulässige Referenzspezifikation vorhanden;
+- normative Referenzspezifikation vorhanden;
 - kritische Entscheidungen geschlossen;
 - DMS-Link-/Konsistenzprüfung grün;
-- Eigentümer die Repo-Sichtbarkeit und Pine-Veröffentlichung geklärt hat;
+- öffentliche Repo-Sichtbarkeit und Nichtveröffentlichung fremden Pine-Sources dokumentiert sind;
 - Secret-Scan grün;
-- Release ausdrücklich freigegeben ist.
+- DMS-Changelog und Freeze-Status gesetzt sind.
+
+Ein Bot-, Backtest-, Paper- oder Live-Release nutzt separate spätere Tags und benötigt zusätzlich die Gates aus DMS 12. `dms-v1.0.0` behauptet ausdrücklich keine implementierte oder profitable Software.
 
 Jeder Push ist eine externe Änderung und wird als eigener Schritt verifiziert.

@@ -29,14 +29,16 @@ Einzelne Symbole können separat pausiert sein, während andere gesund bleiben. 
 | Job | Takt |
 |---|---|
 | Livefeed/Bar-Finalisierung | kontinuierlich / je Bar-Close |
-| Freshness-Watchdog | deutlich häufiger als ein Trading-Bar |
+| Freshness-Watchdog | mindestens alle 30 Sekunden |
 | Order-Reconciliation | ereignisgetrieben plus periodisch |
-| Mitternachts-Datenaudit | täglich 00:05 UTC (`ANNAHME`) |
-| Backup | täglich nach erfolgreichem Datenaudit (`ANNAHME`) |
+| Mitternachts-Datenaudit | täglich 00:05 UTC |
+| Backup | täglich nach erfolgreichem Datenaudit |
 | ausführlicher Datenintegritätscheck | wöchentlich |
 | Backtest-Neulauf | manuell/freigegeben oder nach versionierter Daten-/Strategieänderung |
 
 Das Papersystem ist für 24/7-Betrieb vorgesehen. Schlafmodus, Windows-Updates, Internet-/Stromausfall und Service-Autostart werden deshalb im Soak-Test ausdrücklich geprüft. Nach jedem Ausfall gilt Gap-Fill und Reconciliation vor neuer Signalverarbeitung.
+
+Nach bestandener Paperfreigabe läuft der Bot als Windows-Service mit verzögertem Autostart und Restart-on-Failure. Ein Service-Restart überspringt niemals Startup-Prüfung oder Reconciliation.
 
 Ein Backtest wird nicht ungeprüft jeden Tag automatisch zum Live-Entscheider. Neue Ergebnisse müssen gesichtet und freigegeben werden.
 
@@ -81,7 +83,7 @@ Metriken umfassen mindestens Datenlatenz, letzte Barzeit, Lückenanzahl, Stream-
 | P3 mittel | einzelnes Symbol stale, Rate-Limit-Spitze | Symbol pausieren/überwachen |
 | P4 info | täglicher Audit erfolgreich, Backtest fertig | protokollieren |
 
-Benachrichtigungskanal ist noch offen. Die UI allein reicht für unbeaufsichtigten Livebetrieb nicht.
+Alle Klassen erscheinen in UI und strukturiertem Log. Für P1/P2 ist Telegram der verbindliche externe Kanal; P3 wird mindestens in der UI und optional per Telegram gemeldet, P4 bleibt standardmäßig UI/Log. Ein erfolgreicher Telegram-Testalarm ist Live-Gate. Ist Telegram im Livebetrieb länger als fünf Minuten nicht erreichbar, wechselt das System auf `DEGRADED` und pausiert neue Entries; Positions- und Reconciliation-Überwachung laufen weiter.
 
 ## Sicheres Herunterfahren
 
@@ -103,11 +105,19 @@ Backup umfasst:
 - Strategiequellen/-hashes und DMS-Version;
 - Migrationsstand.
 
-Backups erhalten Prüfsumme, Erstellzeit, Version und Retention. Speicherort darf nicht ausschließlich auf demselben physischen Datenträger liegen (`OFFEN`).
+Backups erhalten Prüfsumme, Erstellzeit, Version und Retention. Sie werden verschlüsselt außerhalb des öffentlichen Repositories und außerhalb der aktiven Datenbank abgelegt, bevorzugt in einem getrennten OneDrive-synchronisierten Ziel. Secrets werden nur in verschlüsselter Form bzw. als wiederherstellbare Secret-Referenz gesichert.
+
+Verbindliche Retention:
+
+- 7 tägliche Stände;
+- 4 wöchentliche Stände;
+- 12 monatliche Stände.
+
+Das Zielverzeichnis ist eine deployment-spezifische Pflichtkonfiguration und darf nicht innerhalb des Git-Worktrees liegen. Ein fehlendes oder nicht beschreibbares Backupziel blockiert Live.
 
 ## Restore-Test
 
-Mindestens vor Live-Freigabe und danach regelmäßig:
+Mindestens vor Live-Freigabe und danach vierteljährlich:
 
 1. neue isolierte Umgebung bereitstellen;
 2. Backupintegrität prüfen;
@@ -117,6 +127,18 @@ Mindestens vor Live-Freigabe und danach regelmäßig:
 6. Positionen/Orders nicht senden, sondern Reconciliation trocken prüfen;
 7. einen bekannten Backtest reproduzieren;
 8. Ergebnis und Dauer dokumentieren.
+
+## Verbindlicher Paper-Soak vor Live
+
+Alle Bedingungen müssen erfüllt sein:
+
+- mindestens 30 zusammenhängende Kalendertage im 24/7-Paperbetrieb;
+- mindestens 720 verarbeitete geschlossene 1h-Bars je aktivem Symbol;
+- mindestens 20 vollständig abgeschlossene Papertrades portfolioübergreifend;
+- keine ungeklärte Doppelorder, Kontodifferenz oder kritische Datenlücke;
+- Restart-, Internet-/Streamausfall-, Telegram- und Restore-Szenario bestanden.
+
+Werden nach 30 Tagen weniger als 20 Trades erreicht, läuft Paper bis zum 20. Trade weiter, jedoch höchstens 90 Tage. Nach 90 Tagen ohne 20 Trades entscheidet der Eigentümer dokumentiert über Verlängerung oder Abbruch; es gibt keine automatische Live-Freigabe.
 
 ## Typische Recovery-Szenarien
 

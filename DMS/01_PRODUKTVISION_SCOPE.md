@@ -1,6 +1,6 @@
 # 01 – Produktvision und Scope
 
-Status: `VERBINDLICH`, soweit einzelne Punkte nicht als `ANNAHME` oder `OFFEN` markiert sind.
+Status: `VERBINDLICH` für DMS V1.
 
 ## Produktziel
 
@@ -73,4 +73,4 @@ Der sichere Standard nach Installation, Konfigurationsfehler, Restore oder unkla
 - verständliche deutsche UI-Texte;
 - Zeitangaben eindeutig mit Zeitzone;
 - Konfigurationsänderungen versioniert und auditierbar;
-- Betrieb auf einem lokalen Windows-System möglich (`ANNAHME`).
+- Betrieb als lokaler Windows-Service mit localhost-Web-UI.

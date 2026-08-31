@@ -4,12 +4,12 @@ Dies ist die **einzige zentrale Startdatei** des Projekts.
 
 Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
-Aktueller Status: Dokumentations- und Spezifikationsphase. Es wurde noch kein Trading-Bot implementiert und kein valider Backtest ausgeführt.
+Aktueller Status: **DMS V1 ist fachlich eingefroren und implementierbar.** Es wurde weiterhin kein Trading-Bot implementiert und kein valider Backtest ausgeführt; diese Nachweise entstehen erst nach einem separaten Bauauftrag.
 
 ## Wo anfangen?
 
 1. Verbindliche DMS-Einführung: [`DMS/00_DOKUMENTENLENKUNG_UND_START.md`](DMS/00_DOKUMENTENLENKUNG_UND_START.md)
-2. Offene Entscheidungen: [`DMS/16_ENTSCHEIDUNGSLOG_UND_OFFENE_PUNKTE.md`](DMS/16_ENTSCHEIDUNGSLOG_UND_OFFENE_PUNKTE.md)
+2. Geschlossene Entscheidungen und Änderungsregeln: [`DMS/16_ENTSCHEIDUNGSLOG_UND_OFFENE_PUNKTE.md`](DMS/16_ENTSCHEIDUNGSLOG_UND_OFFENE_PUNKTE.md)
 3. Ordner- und Einstiegspunktregel: [`DMS/23_ORDNERSTRUKTUR_UND_EINSTIEGSPUNKT.md`](DMS/23_ORDNERSTRUKTUR_UND_EINSTIEGSPUNKT.md)
 
 ## Zwei Laufwelten
@@ -38,5 +38,5 @@ Eine neue fachliche Methodik erhält die nächste Version. Ein veröffentlichter
 - Binance Spot, USDT-Paare, kein Leverage gemäß aktuellem DMS.
 - Keine API-Schlüssel, Secrets, Datenbanken oder privaten Kontodaten in Git.
 - Kein GitHub-Stand ersetzt die DMS-Freigabe.
-- Pine-Quellcode nur veröffentlichen, wenn Eigentum und Veröffentlichungsrecht geklärt sind.
+- Normative V1-Strategie ist `HIXTON-SPEC-1.0`; fremder/proprietärer Pine-Quellcode wird ohne nachgewiesene Rechte nicht veröffentlicht.
 - Historische Ergebnisse sind keine Gewinngarantie.

@@ -1,127 +1,219 @@
-# 03 – Strategie: Hixton-/VIDYA-/ATR-Logik
+# 03 – Normative Strategie: Hixton VIDYA/ATR V1
 
-## Status und harte Grenze
+Status: `VERBINDLICH` für Strategieversion `HIXTON-SPEC-1.0`.
 
-Die vorhandene Beschreibung reicht zur Architekturplanung, aber **nicht** zur bitgenauen Strategieimplementierung. Es fehlen der Pine-Quellcode, die Input-Defaults, der Timeframe, die exakte Initialisierung und ein Referenzdatensatz. Diese Lücke darf nicht mit Internetbeispielen oder vermuteten Standardwerten geschlossen werden.
+## Referenz und Abgrenzung
 
-Die offizielle Hixton-Seite beschreibt grüne/rote Signalpfeile und Nutzung auf beliebigen Tickern/Timeframes, veröffentlicht dort aber keine für eine 1:1-Nachbildung ausreichende Formel. Marketingbeschreibung und Screenshots ersetzen keinen ausführbaren Referenzcode.
+Dieses Dokument ist die vollständige mathematische Referenz für die spätere Botimplementierung. Ein Entwickler darf keine fehlenden Werte ergänzen, keine Bibliotheksdefaults übernehmen und keine ähnliche Internetstrategie an die Stelle dieser Definition setzen.
 
-## Zulässige Wege zur Strategieparität
+Der originale proprietäre Hixton-Pine-Quelltext liegt nicht vor. Deshalb wird keine wort- oder bitgleiche Identität mit einem nicht einsehbaren Herstellerskript behauptet. Für dieses Projekt heißt „Hixton V1“ ausschließlich die nachfolgend festgelegte VIDYA-/CMO-/ATR-Strategie. Wenn später ein rechtmäßig zugänglicher Originalcode abweicht, entsteht eine neue Strategieversion mit eigenem Backtest; V1 wird nicht rückwirkend verändert.
 
-1. **Bevorzugt:** vollständiger rechtmäßig zugänglicher Pine-Code plus Einstellungen und Golden-Daten.
-2. **Bei geschütztem Source:** offizielle technische Spezifikation des Rechteinhabers plus historische Exportwerte/Signale, die alle Berechnungsschritte prüfbar machen.
-3. **Nur für laufendes Paper/Live, nicht für lokalen exakten Backtest:** offizielle TradingView-Alerts/Webhooks des Indikators als externe Signalquelle. Dann muss Verfügbarkeit, Duplikatschutz und Alert-Zeitpunkt getestet werden.
-4. **Nicht als Hixton-Parität zulässig:** eine ähnliche öffentliche VIDYA-/ATR-Strategie nachbauen und behaupten, sie sei identisch. Das wäre eine eigene neue Strategieversion.
+## Verbindliche Defaultparameter
 
-Wenn der Hixton-Indikator invite-only/protected ist, darf der Schutz nicht umgangen werden. Dann muss der Eigentümer bzw. Anbieter den zulässigen Integrationsweg bestätigen.
+| Parameter | V1-Wert |
+|---|---:|
+| Strategie-ID | `hixton_vidya_atr` |
+| Strategieversion | `HIXTON-SPEC-1.0` |
+| Markt | Binance Spot, USDT-Paare |
+| Signaltimeframe | `1h` |
+| Preisquelle | `close` |
+| VIDYA-Länge `L` | `10` |
+| Momentum-/CMO-Länge `M` | `20` |
+| Nachglättung | SMA `15` |
+| ATR-Variante | True Range + Wilder RMA |
+| ATR-Länge `A` | `200` |
+| Bandmultiplikator `K` | `2.0` |
+| Warm-up vor erster handelbarer Auswertung | `400` geschlossene 1h-Bars |
+| Signalauswertung | ausschließlich nach endgültigem Kerzenschluss |
+| Positionierung | Spot, Long-only, höchstens eine Position je Symbol |
+| Pyramiding | `0` |
 
-## Bekannte fachliche Bestandteile
+UI-Zeiträume Heute/1W/1M/1J/3J ändern den Signaltimeframe nicht. Ein später anderer Signaltimeframe ist eine neue Strategie-/Konfigurationsversion und benötigt neue Backtests.
 
-Aus der Eingangsdatei gelten vorläufig folgende Bausteine:
+## Eingabekerzen
 
-1. Quelle wird durch eine adaptive VIDYA verarbeitet.
-2. Adaptivität basiert auf positiven/negativen Preisänderungen und einem absoluten CMO.
-3. VIDYA wird nach der Beschreibung zusätzlich über 15 Perioden geglättet.
-4. ATR-Bänder liegen um VIDYA: `upper = VIDYA + ATR × bandMult`, `lower = VIDYA − ATR × bandMult`.
-5. Crossover des Preises über `upper` schaltet den Trend auf `UP`.
-6. Crossunder des Preises unter `lower` schaltet den Trend auf `DOWN`.
-7. Zwischen den Umschaltungen bleibt der letzte Trendzustand erhalten.
-8. Trendwechsel erzeugen visuelle Kauf-/Verkaufsmarker und Alerts.
-
-Jeder Punkt bleibt `NACHWEIS AUSSTEHEND`, bis er mit dem Pine-Quellcode abgeglichen ist.
-
-## Noch exakt zu extrahierende Pine-Details
-
-| Feld | Warum kritisch |
-|---|---|
-| Pine-Version und vollständiger Source-Hash | eindeutige Referenz |
-| `source` | `close`, `hl2` oder andere Quelle ändert Signale |
-| `vidyaLen` | Reaktionsgeschwindigkeit |
-| `momLen` | CMO-Fenster |
-| VIDYA-Formel und Seed | erste Werte und Parität |
-| Nachglättungslänge/-typ | Bandlage |
-| `atrLen` und ATR-Variante | Bandbreite |
-| `bandMult` | Signalhäufigkeit |
-| verwendeter Preis beim Cross | Close, High/Low oder Source |
-| Bar-Zustand | intrabar oder nur Bar-Close |
-| Startwert `trendUp` | erstes gültiges Signal |
-| `na`-/Warm-up-Verhalten | Beginn des handelbaren Bereichs |
-| Timeframe und mögliche Multi-Timeframe-Aufrufe | Kerzenbezug/Repainting-Risiko |
-| Alert-Bedingung | Trendstatus vs. echter Flip |
-
-## Normative Zustandsmaschine
-
-Vorbehaltlich Pine-Abgleich wird folgende sichere Zustandsmaschine verwendet:
+Je Symbol wird eine lückenlose, streng aufsteigend nach UTC sortierte Folge endgültig geschlossener Binance-1h-Kerzen verwendet:
 
 ```text
-UNINITIALIZED
-  -> UP,   wenn eine geschlossene Kerze die bestätigte Flip-Up-Bedingung erfüllt
-  -> DOWN, wenn eine geschlossene Kerze die bestätigte Flip-Down-Bedingung erfüllt
-  -> UNINITIALIZED sonst
-
-UP
-  -> DOWN nur bei bestätigtem Flip-Down
-  -> UP sonst
-
-DOWN
-  -> UP nur bei bestätigtem Flip-Up
-  -> DOWN sonst
+Candle[t] = (open_time_utc, open, high, low, close, volume, closed=true)
 ```
 
-`UNINITIALIZED` erzeugt keine Order. Falls der Pine-Code ausdrücklich mit `false`/`DOWN` startet, muss die Zustandsmaschine nach dokumentierter Entscheidung angepasst werden.
+Duplikate, Lücken, nicht positive Preise, negative Volumina oder vorläufige Kerzen sperren die Auswertung des Symbols. Es werden keine synthetischen Kerzen interpoliert. Die Kerzenindizes sind nullbasiert und ohne Lücke; `[a..b]` schließt beide Grenzen ein.
+
+## VIDYA-/CMO-Berechnung
+
+Index `t = 0` bezeichnet die erste Warm-up-Kerze. Indikatorrechnungen verwenden IEEE-754 Binary64 ohne Zwischenrundung; Vergleiche arbeiten auf den ungerundeten Werten. Geld, Gebühren und Ordermengen verwenden Decimal und werden erst nach der Indikatorentscheidung gemäß Binance-Filtern gerundet.
+
+### 1. Momentum
+
+```text
+momentum[t] = close[t] - close[t-1]       für t >= 1
+positive[t] = max(momentum[t], 0)
+negative[t] = max(-momentum[t], 0)
+```
+
+Für `t = 0` sind `positive[0] = 0` und `negative[0] = 0`.
+
+### 2. Absoluter CMO-Faktor
+
+Über die letzten höchstens `M = 20` Momentumwerte einschließlich `t`:
+
+```text
+lo[t]      = max(1, t - M + 1)
+pos_sum[t] = Sum(positive[i], i = lo[t]..t)  für t >= 1; sonst 0
+neg_sum[t] = Sum(negative[i], i = lo[t]..t)  für t >= 1; sonst 0
+denom[t]   = pos_sum[t] + neg_sum[t]
+
+wenn denom[t] = 0:
+    abs_cmo[t] = 0
+sonst:
+    abs_cmo[t] = abs((pos_sum[t] - neg_sum[t]) / denom[t])
+```
+
+`abs_cmo` liegt im Bereich `[0, 1]`. Es wird nicht erneut durch 100 geteilt.
+
+### 3. Adaptive VIDYA
+
+```text
+alpha = 2 / (L + 1) = 2 / 11
+effective_alpha[t] = alpha * abs_cmo[t]
+
+vidya_raw[0] = close[0]
+vidya_raw[t] = effective_alpha[t] * close[t]
+             + (1 - effective_alpha[t]) * vidya_raw[t-1]
+```
+
+### 4. Nachglättung
+
+```text
+vidya[t] = Sum(vidya_raw[i], i = t-14..t) / 15    für t >= 14
+```
+
+`vidya[t]` ist erst gültig, wenn 15 Rohwerte vorhanden sind.
+
+## ATR-Berechnung
+
+### 1. True Range
+
+```text
+TR[0] = high[0] - low[0]
+
+TR[t] = max(
+    high[t] - low[t],
+    abs(high[t] - close[t-1]),
+    abs(low[t]  - close[t-1])
+) für t >= 1
+```
+
+### 2. Wilder RMA mit Länge 200
+
+Der erste ATR-Wert ist der Mittelwert der ersten 200 True-Range-Werte:
+
+```text
+ATR[199] = SMA(TR[0..199])
+ATR[t]   = ((ATR[t-1] * 199) + TR[t]) / 200    für t >= 200
+```
+
+Vor Index 199 ist ATR ungültig.
+
+## Bänder
+
+Sobald VIDYA und ATR gültig sind:
+
+```text
+upper[t] = vidya[t] + ATR[t] * 2.0
+lower[t] = vidya[t] - ATR[t] * 2.0
+```
+
+Die aktuelle Kerze darf in `vidya[t]` und `ATR[t]` eingehen, aber erst nachdem sie von Binance als geschlossen bestätigt wurde.
+
+## Warm-up und Startzustand
+
+- Pro Symbol müssen mindestens 400 lückenlose geschlossene 1h-Kerzen vorliegen.
+- Bars `0..398` erzeugen niemals Signale oder Orders.
+- Nach Abschluss von Bar `399` wird der Trendzustand auf `DOWN` initialisiert.
+- Die Initialisierung erzeugt kein Verkaufssignal und keine Order.
+- Das erste handelbare Ereignis kann frühestens ein späterer bestätigter Wechsel von `DOWN` nach `UP` sein.
+
+Der 400-Bar-Warm-up liegt bewusst über den mathematisch mindestens benötigten 200 ATR-Bars und reduziert Seed-Einflüsse. Ein anderer Warm-up ist eine Strategieänderung.
+
+## Exakte Cross- und Trendregel
+
+Auswertung beginnt für `t >= 400` nach Kerzenschluss:
+
+```text
+flip_up[t] = close[t] > upper[t]
+          AND close[t-1] <= upper[t-1]
+
+flip_down[t] = close[t] < lower[t]
+            AND close[t-1] >= lower[t-1]
+```
+
+Zustandsübergänge:
+
+```text
+wenn flip_up[t]:
+    trend[t] = UP
+sonst wenn flip_down[t]:
+    trend[t] = DOWN
+sonst:
+    trend[t] = trend[t-1]
+```
+
+Falls aufgrund ungültiger Daten beide Bedingungen nicht eindeutig auswertbar sind, wird kein Zustand fortgeschrieben; das Symbol wird pausiert. Bei gültigen Bändern können `flip_up` und `flip_down` auf derselben Kerze nicht gleichzeitig wahr sein.
 
 ## Signal- und Positionsabbildung
 
-Sicherer Initialvorschlag (`ANNAHME`): Spot, long-only, eine Position je Symbol, kein Pyramiding.
-
-| Ereignis | Position vorher | Order-Intent |
+| Ereignis | Position vorher | Aktion |
 |---|---|---|
-| Flip-Up | flat | `ENTER_LONG` |
-| Flip-Up | long | keiner; als Duplikat protokollieren |
-| Flip-Down | long | `EXIT_LONG` |
-| Flip-Down | flat | keiner; Zustand protokollieren |
-| kein Flip | beliebig | keiner |
+| `flip_up` | flat | Kaufkandidat `ENTER_LONG` |
+| `flip_up` | long | keine Order, als bereits positioniert protokollieren |
+| `flip_down` | long | vollständiger Long-Exit `EXIT_LONG` |
+| `flip_down` | flat | keine Order |
+| kein Flip | beliebig | keine Order |
 
-Ein `VERKAUFEN`-Marker bedeutet in diesem Modus **Long schließen**, nicht automatisch Short eröffnen.
+Ein Verkaufssignal eröffnet niemals eine Short-Position. Es gibt keinen Stop-Loss, Take-Profit, Trailing Stop, DCA oder zusätzliches Entry-Signal in V1.
 
-## Zeit- und Fill-Regel
+## Drei-Slot-Priorisierung für Paper/Live
 
-- Strategie wird erst ausgewertet, wenn die Kerze endgültig geschlossen ist.
-- Der Signalzeitpunkt ist die Endzeit der Signalkerze in UTC.
-- Ein Backtest-Fill erfolgt standardmäßig am Open der nächsten Kerze plus Kosten-/Slippage-Modell.
-- Im laufenden Handel wird nach bestätigtem Bar-Close ein Order-Intent erzeugt; der reale Fill kommt von der Börse.
-- Wenn nach einer Datenlücke mehrere historische Signale gefunden werden, werden alte Signale **nicht nachträglich als Live-Orders** abgesendet. Nur der aktuelle synchronisierte Zustand wird hergestellt und als Recovery-Fall gemeldet.
+Wenn mehr Kaufkandidaten als freie Slots auf derselben Kerzenzeit existieren, wird je Kandidat berechnet:
 
-## Kein Repainting – Abnahmedefinition
+```text
+breakout_strength[t] = (close[t] - upper[t]) / ATR[t]
+```
 
-„Kein Repainting“ gilt nur als nachgewiesen, wenn:
+Nur Werte größer als `0` sind zulässig. Sortierung:
 
-- keine zukünftigen Bars in die Berechnung einfließen;
-- mögliche `request.security`-Aufrufe korrekt ohne Look-ahead arbeiten;
-- Signale nach Bar-Close unverändert bleiben;
-- ein Replay-/Streaming-Test dieselben bestätigten Signale liefert wie der Batchlauf;
-- mindestens drei verschiedene Marktphasen geprüft wurden.
+1. Für das Ranking wird `breakout_strength` auf 12 Dezimalstellen mit Round-Half-Even gerundet; dieser `rank_strength` wird absteigend sortiert.
+2. Bei gleichem `rank_strength` gilt diese feste Reihenfolge:
+   `BTCUSDT, ETHUSDT, BNBUSDT, SOLUSDT, XRPUSDT, ADAUSDT, LINKUSDT, AVAXUSDT, DOTUSDT, DOGEUSDT`.
 
-## Pine-Paritätsnachweis
+Es werden nur so viele Kandidaten angenommen, wie freie Slots vorhanden sind. Abgewiesene Kandidaten werden als `NO_FREE_SLOT` gespeichert und nicht mitten im laufenden Uptrend nachgeholt.
 
-Vor Strategie-Freigabe werden aus TradingView/Pine exportiert:
+## Zeitpunkt von Signal und Fill
 
-- Zeitstempel, OHLCV;
-- VIDYA, obere/untere Bänder;
-- Trendzustand;
-- Flip-Up/Flip-Down;
-- aktive Parameter.
+- Signalzeit ist die UTC-Close-Time der Signalkerze.
+- Backtestorder wird frühestens am Open der folgenden 1h-Kerze gefüllt.
+- Paper-/Live-Intent entsteht erst nach finalem Binance-Bar-Close.
+- Historisch nachgeladene Signale werden nicht als verspätete Live-Orders gesendet.
+- Gebühren, Spread, Slippage und Binance-Rundung werden nach Dokument 06 angewendet.
 
-Die spätere Engine muss nach Rundungsdefinition dieselben Zustände und Signale erzeugen. Preislinien dürfen eine dokumentierte numerische Toleranz haben; Signalabweichungen müssen **0** sein.
+## Kein Repainting – Definition
 
-## Verbotene stillschweigende Erweiterungen
+V1 gilt als nicht repaintend, wenn:
 
-- RSI-, ADX-, Volumen-, Nachrichten- oder Trendfilter;
-- Take-Profit, Stop-Loss oder Trailing Stop;
-- Zeitfilter, Cooldown oder Mindesthaltedauer;
-- Wechsel des Timeframes je Marktlage;
-- optimierte Parameter je Coin;
-- Nachkaufen oder Pyramiding;
-- Short-Handel.
+- ausschließlich endgültig geschlossene Bars ausgewertet werden;
+- kein zukünftiger Index verwendet wird;
+- Batchberechnung und chronologisches Bar-für-Bar-Replay exakt dieselben Signal-IDs liefern;
+- ein bereits gespeichertes Signal durch spätere Bars nicht geändert wird;
+- Providerrevisionen eine neue Datenversion erzeugen, statt alte Resultate still zu überschreiben.
 
-Solche Erweiterungen benötigen eine neue Strategieversion, eigene Backtests und eine explizite Entscheidung.
+## Verbindliche Testvektoren
+
+Vor Botcode-Freigabe werden handgerechnete Mini-Fixtures und später mindestens 1.000 aufeinanderfolgende 1h-Bars je Referenzmarkt geprüft. Pflichtfelder je Bar: OHLCV, `abs_cmo`, `vidya_raw`, `vidya`, `TR`, `ATR`, `upper`, `lower`, Trend, `flip_up`, `flip_down` und ggf. `breakout_strength`.
+
+Für Golden-Tests gilt je numerischem Indikatorwert: bestanden, wenn absolute Abweichung höchstens `1e-10` **oder** relative Abweichung höchstens `1e-9` beträgt. Cross-Vergleiche verwenden trotzdem ungerundete Produktionswerte; Signal-, Trend- und Slotentscheidungen dürfen keine Abweichung haben.
+
+## Versionsregel
+
+Änderungen an Formel, Seed, Parameter, Timeframe, Warm-up, Cross, Positionsabbildung oder Slotranking erzeugen mindestens `HIXTON-SPEC-2.0` und `backtests/v2`. V1-Ergebnisse werden nicht überschrieben.

@@ -28,9 +28,16 @@ Pflichtfelder:
 - aktive Konfigurationsversion;
 - Status und Blockierungsgrund.
 
-## Vorgeschlagene Orderarten
+## Verbindliche Orderarten
 
-Für den Start ist eine Market-Order nach bestätigtem Signal der einfachste deterministische Modus (`ANNAHME`). Sie muss mit Slippage-/Abweichungsschutz versehen werden. Limit-/Marketable-Limit-Orders benötigen Regeln für Timeout, Anpassung und Nichtausführung und werden erst nach eigener Entscheidung freigegeben.
+V1 verwendet verbindlich Market-Orders nach bestätigtem Signal. Kauforders verwenden, sofern von Binance für das Symbol erlaubt, `quoteOrderQty` mit 80 USDT Zielnotional; Verkaufsorders schließen höchstens die tatsächlich verfügbare Basisassetmenge. Vor Submit darf der aktuelle ausführbare Referenzpreis höchstens 25 bps vom Intent-Referenzpreis abweichen. Limit-/Marketable-Limit-Orders gehören nicht zu V1.
+
+Nach Submit gelten feste Zeiten:
+
+- nach 10 Sekunden ohne eindeutige Binance-Bestätigung: Status `UNKNOWN`, sofortige Reconciliation, keine Ersatzorder;
+- Teilfills werden fortlaufend gebucht;
+- bleibt eine Market-Order nach 30 Sekunden teilweise offen, wird zuerst ihr Börsenstatus geklärt und ein stornierbarer Rest storniert; keine automatische Neuorder;
+- jede Überschreitung der erwarteten 25-bps-Ausführungsabweichung erzeugt mindestens einen P2-Alarm und fließt in die Paper-/Live-Auswertung ein.
 
 ## Zustände
 
@@ -53,7 +60,7 @@ INTENT_CREATED
 - Jeder Fill wird separat mit Menge, Preis, Gebühr und Zeit gespeichert.
 - Position basiert auf Fills, nicht auf der gewünschten Ordermenge.
 - Restmenge bleibt gemäß Börsenstatus offen, wird nicht automatisch dupliziert.
-- Verhalten bei Timeout oder zu kleinem Rest ist noch zu definieren.
+- Nach 30 Sekunden gilt die oben definierte Klärungs-/Stornoregel. Ein Rest unter Binance-Mindestmenge oder Mindestnotional wird als `DUST` sichtbar verbucht und nicht durch eine regelwidrige Ersatzorder vergrößert; bei einem später regelkonformen Exit darf er mitgeschlossen werden.
 - Exitmenge darf den tatsächlich verfügbaren Basisbestand nicht überschreiten.
 
 ## Restart und Reconciliation
@@ -67,7 +74,7 @@ Vor Live-Aktivierung nach jedem Start:
 5. Differenzen als Incident markieren;
 6. nur bei eindeutigem Zustand neuen Orderversand freigeben.
 
-Lokaler Zustand ist nicht automatisch wahr; bei Live-Fills ist die Börse die Ausführungsquelle der Wahrheit. Ungeklärte manuelle Trades auf demselben Konto führen zu `HALTED` oder einer expliziten Importentscheidung.
+Lokaler Zustand ist nicht automatisch wahr; bei Live-Fills ist die Börse die Ausführungsquelle der Wahrheit. Manueller Handel auf dem Bot-Account/Subaccount ist verboten. Erkannte Fremdorders oder ungeklärte Salden führen zu `HALTED`; eine Fortsetzung erfordert geklärten Zustand und Audit, keine stille Importannahme.
 
 ## Fehlerverhalten
 
