@@ -1,5 +1,17 @@
 # DMS-Changelog
 
+## 1.0.0 – 31.08.2026
+
+- `HIXTON-SPEC-1.0` als vollständige normative V1-Strategie festgelegt: Formel, `1h`-Timeframe, Parameter, 400-Bar-Warm-up, Initialzustand, Cross-, Bar-Close- und Next-bar-Regeln.
+- Sauber getrennt: implementierbare Projektspezifikation ja, unbelegte Identität mit proprietärem Hersteller-Pine nein.
+- Backtestkosten verbindlich auf 15 bp je Seite in der Baseline und 40 bp je Seite im Stressfall festgelegt.
+- Long-only, 3×80-USDT-Slots ohne automatisches Compounding und deterministische Slotpriorisierung in Anforderungen, Config und Traceability synchronisiert.
+- Stale-Data-, Preisabweichungs-, Tagesverlust-, Drawdown-, Order-Timeout- und Teilfill-Grenzen geschlossen.
+- Paper-Soak, Telegram-Alarmierung, dedizierter Bot-Account, localhost-UI, Windows-Service und Backup-/Restore-Retention festgelegt.
+- Öffentliches GitHub-Repository bestätigt; fremder Pine-Source ohne Rechte ausgeschlossen, keine Open-Source-Lizenz stillschweigend angenommen.
+- Entscheidungslog ohne kritische P0-/P1-Lücke geschlossen und DMS-Freigabegates von späteren Implementierungs-/Testnachweisen getrennt.
+- Keine Botimplementierung und keine Backtestergebnisse erzeugt.
+
 ## 0.3.1 – 31.08.2026
 
 - GitHub ausdrücklich als zentrale versionierte Projektablage festgeschrieben; OneDrive ist die lokale Arbeitskopie.

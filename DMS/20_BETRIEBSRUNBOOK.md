@@ -37,6 +37,8 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 
 ## Stream oder Datenfeed stale
 
+Auslöser: 90 Sekunden ohne Streamupdate oder finale 1h-Bar mehr als 120 Sekunden nach geplantem Schluss nicht verfügbar.
+
 1. betroffene Symbole/Zeitraum feststellen;
 2. neue Entries für betroffene Symbole pausiert lassen;
 3. REST-/Providerstatus und Systemzeit prüfen;
@@ -48,6 +50,8 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 
 ## Orderstatus `UNKNOWN`
 
+Auslöser: zehn Sekunden nach Submit keine eindeutige Börsenbestätigung.
+
 1. **keine Ersatzorder senden**;
 2. Client-Order-ID bei Börse abfragen;
 3. offene/geschlossene Orders und Trades seit Signalzeit prüfen;
@@ -55,6 +59,23 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 5. Fills ins Ledger übernehmen, falls eindeutig;
 6. bei Restunsicherheit `HALTED` lassen und Incident eskalieren;
 7. nur nach dokumentierter Reconciliation entsperren.
+
+Ein nach 30 Sekunden verbleibender Teilfill-Rest wird nach Statusklärung storniert, sofern die Börse ihn als stornierbar meldet. Kein automatischer Ersatzsubmit. Ein Rest unter Börsenminimum bleibt sichtbar als `DUST`.
+
+## Tagesverlust oder Drawdown-Grenze
+
+- Bei 5 % Nettoverlust gegenüber der Equity um 00:00 UTC werden neue Entries bis zum nächsten UTC-Tag pausiert; Exits und Überwachung bleiben aktiv.
+- Bei 20 % Drawdown vom globalen Equity-High-Water-Mark wechselt das System auf `HALTED`.
+- Keine der beiden Grenzen liquidiert Positionen automatisch.
+- Vor manueller Wiederaufnahme nach Drawdown: Ursachen-, Ledger-, Daten- und Konfigurationsprüfung, Incidentabschluss und ausdrückliche Eigentümerfreigabe.
+
+## Telegram-Kanal gestört
+
+1. Fehler in UI und Log sichtbar machen;
+2. bei Liveausfall über fünf Minuten `DEGRADED` setzen und neue Entries pausieren;
+3. Token/Ziel nur über Secret-Referenz prüfen, nie ausgeben;
+4. Testalarm senden und Empfang bestätigen;
+5. erst danach Entries wieder freigeben.
 
 ## Positions-/Saldodifferenz
 
@@ -122,4 +143,3 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 - Monitoring/Test ergänzt;
 - Runbook/DMS aktualisiert;
 - Owner schließt Incident nachvollziehbar.
-

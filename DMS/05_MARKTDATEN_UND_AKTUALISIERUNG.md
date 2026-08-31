@@ -13,7 +13,7 @@ Pro aktivem Symbol und Trading-Timeframe werden gespeichert:
 - Kennzeichen `closed`/`provisional`;
 - Datenquelle, Abrufzeit und Import-Batch-ID.
 
-Preise und Mengen werden decimal-sicher gespeichert, nicht als unkontrollierte binäre Gleitkommazahl. Der exakte Trading-Timeframe ist noch offen. Die UI-Zeiträume sind **keine** Trading-Timeframes.
+Preise und Mengen werden decimal-sicher gespeichert, nicht als unkontrollierte binäre Gleitkommazahl. Der verbindliche V1-Signaltimeframe ist **1 Stunde (`1h`)**. Die UI-Zeiträume sind **keine** Trading-Timeframes.
 
 ## Historienanforderung
 
@@ -50,10 +50,12 @@ Ein Startup darf keine historischen Signale als nachträgliche Live-Orders abspi
 - Bei Streamabbruch startet exponentieller Reconnect mit Jitter.
 - Nach Reconnect wird die Lücke per REST geschlossen, bevor neue Signale freigegeben werden.
 - Ein Watchdog vergleicht erwartete und letzte Barzeit.
+- Mehr als 90 Sekunden ohne Streamupdate setzt den Feed auf `DEGRADED`.
+- Fehlt die finale 1h-Kerze zwei Minuten nach ihrem planmäßigen UTC-Schluss, wird das Symbol pausiert und per REST repariert.
 
 ## Täglicher Mitternachtsjob
 
-Vorgeschlagener Zeitpunkt: **00:05 UTC**. Der Puffer vermeidet die Verarbeitung einer noch nicht final bereitgestellten Tagesgrenze. In der UI wird zusätzlich die lokale Zeit Europe/Berlin angezeigt.
+Verbindlicher Zeitpunkt: **00:05 UTC**. Der Puffer vermeidet die Verarbeitung einer noch nicht final bereitgestellten Tagesgrenze. In der UI wird zusätzlich die lokale Zeit Europe/Berlin angezeigt.
 
 Der Job:
 
@@ -82,9 +84,11 @@ Fehlende Bars werden nicht durch lineare Interpolation, Forward-Fill oder künst
 
 ## Caching und UI-Auflösung
 
-- Heute: native oder ausreichend feine gespeicherte Bars.
-- 1W/1M: native Bars oder deterministische Aggregation.
-- 1J/3J: serverseitige Aggregation/Downsampling für Darstellung, ohne Backtestdaten zu verändern.
+- Heute, 1W und 1M: native gespeicherte `1h`-Bars.
+- 1J: standardmäßig deterministisch zu `4h` aggregiert.
+- 3J: standardmäßig deterministisch zu `1d` aggregiert.
+- Nutzer kann eine verfügbare Auflösung wählen; Strategieoverlay und Signalmarker bleiben Ergebnisse der nativen `1h`-Berechnung.
+- Aggregation/Downsampling ist nur Darstellung und verändert keine Backtestdaten.
 - Aggregierte OHLCV-Bars: Open = erstes Open, High = Maximum, Low = Minimum, Close = letztes Close, Volumen = Summe.
 - Chart-Downsampling darf Signalmarker, lokale Extrema und Positionsevents nicht verfälschen.
 

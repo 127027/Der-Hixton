@@ -16,7 +16,7 @@ Dieses Dokument hält externe, veränderliche Tatsachen getrennt von dauerhaften
 
 - Produktseite: `https://hixton.de/`
 
-Die Seite beschreibt Kauf-/Verkaufspfeile, Nutzung auf verschiedenen Märkten und Timeframes sowie den allgemeinen Risikohinweis, dass keine Gewinngarantie besteht. Sie stellt jedoch keine ausreichend vollständige technische Signalformel oder öffentlich prüfbaren Pine-Source bereit. Für exakte Bot-/Backtestparität gelten deshalb die Beschaffungswege in Dokument 03.
+Die Seite beschreibt Kauf-/Verkaufspfeile, Nutzung auf verschiedenen Märkten und Timeframes sowie den allgemeinen Risikohinweis, dass keine Gewinngarantie besteht. Sie stellt jedoch keine ausreichend vollständige technische Signalformel oder öffentlich prüfbaren Pine-Source bereit. Deshalb behauptet das Projekt keine Herstellerparität; seine eigenständige normative V1-Definition ist `HIXTON-SPEC-1.0` in Dokument 03.
 
 ## Prüfung des initialen Universums
 
@@ -59,4 +59,4 @@ Für den Bot gilt:
 
 Remote: `https://github.com/127027/Der-Hixton`
 
-Am 31.08.2026 war der Remote per Git erreichbar, lieferte aber noch keine Branch-/Tag-Referenzen. Das entspricht einem neu angelegten, leeren Repository. Vor einem Upload sind Sichtbarkeit, Lizenz und Pine-Veröffentlichungsrecht gemäß Dokument 21 zu klären.
+Am 31.08.2026 wurde der Remote als öffentliches Repository mit aktivem Branch `main` geprüft. Die DMS-Struktur ist dort die zentrale Projektablage. Proprietärer/fremder Pine-Source bleibt gemäß DEC-031 ausgeschlossen; mangels bewusst gesetzter `LICENSE` wird keine Open-Source-Lizenz unterstellt.

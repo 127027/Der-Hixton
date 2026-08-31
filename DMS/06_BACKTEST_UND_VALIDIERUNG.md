@@ -2,14 +2,16 @@
 
 ## Ziel
 
-Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze genauso wie der freigegebene Hixton-Indikator reagiert; danach reproduzierbar messen, wie diese unveränderte Strategie unter realistischen Kosten abgeschnitten hätte. Er beweist keine zukünftige Profitabilität.
+Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß `HIXTON-SPEC-1.0` reagiert; danach reproduzierbar messen, wie diese unveränderte Strategie unter realistischen Kosten abgeschnitten hätte. Ein zusätzlicher Vergleich mit einem später rechtmäßig verfügbaren Hersteller-Indikator ist zulässig, aber keine Voraussetzung für die Projektspezifikation. Der Backtest beweist keine zukünftige Profitabilität.
 
 ## Testfenster
 
 Primärtest je Coin:
 
-- exakt drei vollständige Jahre;
-- Start und Ende werden vor dem Lauf als UTC-Zeitpunkte festgeschrieben;
+- exakt drei vollständige Kalenderjahre im halboffenen Intervall `[report_start_utc, report_end_utc)`;
+- `report_end_utc` liegt auf einer vollen UTC-Stunde und wird vor Datenabruf festgeschrieben; Standard ist der letzte planmäßig bereits finalisierte 1h-Bar-Schluss;
+- `report_start_utc` ist dieselbe UTC-Uhrzeit drei Kalenderjahre früher; existiert der Tag nicht (29. Februar), wird auf den 28. Februar geklemmt;
+- Datenlücken verändern niemals Start/Ende, sondern machen den Lauf bis zur Klärung ungültig;
 - zusätzlich notwendiger Warm-up vor dem Start;
 - Endkapital und Metriken werden nur innerhalb des Berichtsfensters gezählt;
 - zusätzlich ein „volle verfügbare Historie“-Lauf, wenn die Datenqualität dies zulässt.
@@ -41,25 +43,25 @@ Die Engine verwendet eine feste Reihenfolge:
 
 Damit kann der Schlusskurs einer Bar nicht gleichzeitig rückwirkend als Fillpreis derselben Entscheidung dienen.
 
-## Kostenmodell
+## Verbindliches Kostenmodell V1
 
-Jeder Lauf dokumentiert:
+Alle Werte gelten je ausgeführter Orderseite und wirken immer zu Ungunsten der Strategie.
 
-- Maker-/Taker-Gebühr in Basispunkten;
-- angenommener Ordertyp;
-- Slippage in Basispunkten oder ein klar beschriebenes dynamisches Modell;
-- Spread, sofern nicht schon in Slippage enthalten;
-- Rundung nach Tick/Step Size;
-- Mindestnotional und abgelehnte Kleinstorders;
-- mögliche Gebührenzahlung in anderer Währung und deren Umrechnung.
+| Szenario | Binance-Gebühr | Spreadanteil | zusätzliche Slippage | Summe je Seite | Round-Trip |
+|---|---:|---:|---:|---:|---:|
+| Baseline | 10 bps | 2 bps | 3 bps | 15 bps | 30 bps |
+| Stress | 10 bps | 10 bps | 20 bps | 40 bps | 80 bps |
 
-Bis Börse und Gebührenstufe feststehen, werden Ergebnisse nicht als final bezeichnet. Mindestens drei Szenarien:
+Regeln:
 
-- günstig;
-- realistisch/baseline;
-- Stress mit deutlich höheren Kosten/Slippage.
-
-Konkrete Basispunkte sind `OFFEN` und dürfen nicht erfunden werden.
+- Kein BNB-Rabatt und keine VIP-Vergünstigung werden in der Baseline vorausgesetzt.
+- Kauf-Fill = Next-Bar-Open × `(1 + (Spread + Slippage)/10.000)`; Verkaufs-Fill entsprechend mit Minus.
+- Ein Kauf verwendet höchstens das Ziel-Quote-Budget (initial 80 bzw. 250 USDT): `gross_base = quote_spend / Kauf-Fillpreis`; Kaufgebühr wird im Basissasset abgezogen, `net_base = gross_base × (1-fee_rate)`, Cash sinkt exakt um `quote_spend`.
+- Beim Verkauf wird die gesamte regelkonform handelbare Basismenge zum adversen Fillpreis bewertet; Verkaufsgebühr wird vom Quote-Erlös abgezogen, `net_quote = gross_quote × (1-fee_rate)`.
+- Damit können drei 80-USDT-Kaufbudgets aus 240 USDT belegt werden, ohne einen negativen Cashbestand zu erfinden. Tatsächliche Live-Gebührenassets werden aus Börsenfills übernommen und im Papervergleich separat ausgewiesen.
+- Tick Size, Step Size und Mindestnotional werden mit dem zum Lauf gespeicherten Binance-Filterstand simuliert.
+- Wird später die echte kontospezifische Binance-Gebühr automatisch abgefragt, erscheint sie als zusätzliches Account-Szenario; Baseline und Stress bleiben für Vergleichbarkeit erhalten.
+- Reports zeigen Brutto-PnL, Gebühr, Spread, Slippage und Netto-PnL getrennt.
 
 ## Metriken je Coin
 
@@ -109,7 +111,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 
 Ein Backtest ist nur `VALID`, wenn:
 
-- Pine-Parität ohne Signalabweichung nachgewiesen ist;
+- Spezifikationsparität ohne Wert-/Signalabweichung innerhalb der festgelegten numerischen Toleranz nachgewiesen ist;
 - Datenqualitätsprüfung bestanden ist;
 - keine fehlenden Bars im Berichtsfenster existieren oder Ausnahmen explizit dokumentiert sind;
 - Kostenmodell vollständig ist;

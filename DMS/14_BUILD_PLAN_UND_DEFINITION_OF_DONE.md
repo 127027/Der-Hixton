@@ -4,19 +4,19 @@ Dieses Dokument beschreibt nur die spätere Reihenfolge. Es autorisiert in diese
 
 ## Phase 0 – Spezifikation schließen
 
-- Pine-Quellcode und Parameter-Screenshot/-Export beschaffen;
-- Börse, Accounttyp, Timeframe, zehn Paare und Kapitalziel bestätigen;
-- Trading-/Ordermodus und Kosten festlegen;
-- offene P0-Entscheidungen schließen;
-- Strategieversion 1.0 einfrieren.
+- `HIXTON-SPEC-1.0` mit Formeln, Parametern, `1h`-Timeframe, Warm-up und Zustandslogik festlegen;
+- Börse, eigener Bot-Account/Subaccount, zehn Paare und Kapitalmodell festlegen;
+- Trading-/Ordermodus, Kosten, Risikogrenzen und Betriebsregeln festlegen;
+- alle P0-/P1-Entscheidungen schließen und Traceability synchronisieren;
+- DMS V1 einfrieren, changeloggen und taggen.
 
-Ergebnis: Implementierung kann ohne Vermutungen beginnen.
+Ergebnis: **mit DMS V1 erreicht**; Implementierung kann ohne Strategieerfindung beginnen, sobald der Eigentümer die nächste Phase beauftragt.
 
 ## Phase 1 – Reproduzierbare Strategie-Domain
 
 - Candle-/Decimal-/Zeitmodell;
 - VIDYA, ATR, Bänder, Trendzustand;
-- Golden-Pine-Parität;
+- Golden-Spezifikationsparität; optionaler Herstellervergleich bei rechtmäßig verfügbarem Source;
 - Signal-IDs, Parameterhashes und Unit-Tests.
 
 Definition of Done: Null Signalabweichungen in Golden-Daten, Batch = Replay, keine externe API nötig.

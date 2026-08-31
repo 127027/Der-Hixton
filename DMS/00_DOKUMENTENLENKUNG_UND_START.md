@@ -22,10 +22,11 @@ Die Dokumentation deckt ab:
 Bei einem Widerspruch gilt diese Reihenfolge:
 
 1. schriftlich vom Eigentümer freigegebene Entscheidung im Entscheidungslog;
-2. freigegebener Pine-Quellcode samt Hash und Parameter-Snapshot für die Signalformel;
+2. normative Strategie `HIXTON-SPEC-1.0` in Dokument 03;
 3. diese DMS-Dokumente mit Status `VERBINDLICH`;
-4. vorhandene Analyse `Der Hixton Indikator.md`;
-5. Kommentare, Beispiele, UI-Mockups und sonstige Hinweise.
+4. ein später rechtmäßig verfügbarer Pine-Quellcode samt Hash und Parameter-Snapshot als Vergleichsquelle, nicht als stille Überschreibung von V1;
+5. vorhandene Analyse `Der Hixton Indikator.md`;
+6. Kommentare, Beispiele, UI-Mockups und sonstige Hinweise.
 
 Eine spätere Implementierung darf nicht stillschweigend von einer höher priorisierten Quelle abweichen.
 
@@ -39,7 +40,7 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **Spezifikationsbasis vollständig strukturiert; kritische Strategie- und Betriebsentscheidungen sind noch offen.** Deshalb ist eine ehrliche 99-%-Implementierungsfreigabe noch nicht möglich.
+Aktueller Paketstatus: **DMS V1 ist fachlich entscheidungsvollständig und als Implementierungsleitfaden eingefroren.** Kritische Produktentscheidungen stehen nicht mehr auf `OFFEN`. Implementierung, echte Binance-Daten, Backtests, Paper-Soak und Live-Nachweise existieren noch nicht und bleiben ausdrücklich `NACHWEIS AUSSTEHEND`.
 
 ## Eingangsbestand vom 31.08.2026
 
@@ -47,7 +48,7 @@ Aktueller Paketstatus: **Spezifikationsbasis vollständig strukturiert; kritisch
 |---|---:|---|---|
 | `Der Hixton Indikator.md` | 7.226 Bytes / 27 Zeilen | `3577700EAFA4738D8941769F8275024BEDE86B6D8CB344C7B1EA8E60E7E4E117` | Analyse/Beschreibung, kein Pine-Quellcode |
 
-Die Datei behauptet unter anderem Pine-v6-Verhalten, Bar-Close-Auswertung und fehlendes Repainting. Diese Punkte sind ohne den tatsächlichen Pine-Code **nicht verifiziert**.
+Die Datei beschreibt unter anderem Pine-v6-Verhalten, Bar-Close-Auswertung und fehlendes Repainting. Sie bleibt als unverändertes Eingangsmaterial erhalten, ist aber keine normative Signalquelle. Die selbstständige und vollständig implementierbare Projektdefinition steht in `03_STRATEGIE_HIXTON.md`; eine Identität mit nicht einsehbarem Hersteller-Source wird nicht behauptet.
 
 ## Dokumentenkarte
 

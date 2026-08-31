@@ -3,7 +3,7 @@
 ## Testebenen
 
 1. Unit-Tests für Mathematik, Zustände, Rundung und Gebühren.
-2. Golden-Tests gegen Pine-Referenzwerte.
+2. Golden-Tests gegen unabhängig berechnete Werte aus `HIXTON-SPEC-1.0`; optional zusätzlicher Vergleich mit rechtmäßig verfügbarem Pine-Source.
 3. Integrationsprüfungen für Datenprovider, DB und Börsenadapter.
 4. Replay-/Backtests mit historischen Bars.
 5. End-to-End-Tests der UI bis Ledger/Report.
@@ -14,7 +14,7 @@
 ## Kritische Strategieprüfungen
 
 - identische VIDYA-/Bandwerte innerhalb definierter Toleranz;
-- null Signalabweichungen gegen Pine-Golden-Daten;
+- null Signalabweichungen gegen Spezifikations-Golden-Daten;
 - Signal erst nach Bar-Close;
 - kein Signal auf Warm-up-/`na`-Bars;
 - genau ein Flip-Event pro tatsächlichem Zustandswechsel;
@@ -78,26 +78,30 @@
 
 ## Nichtfunktionale Kriterien
 
-Konkrete Grenzwerte werden im Testplan festgelegt. Mindestens:
+Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Märkten:
 
-- UI-Anfragen dürfen den Tradingloop nicht blockieren;
-- Bar-Close-Verarbeitung endet deutlich vor Beginn der nächsten Bar;
-- Backtestlauf und Datenimport zeigen Fortschritt und können kontrolliert abgebrochen werden;
-- Logs wachsen unter Retention kontrolliert;
-- drei Jahre Chart öffnen innerhalb eines praxistauglichen Zeitfensters;
-- Restore ist auf einer sauberen Umgebung reproduzierbar.
+- UI-/Lese-API p95 höchstens 2 Sekunden; sie darf den Tradingloop nie synchron blockieren;
+- Verarbeitung eines 1h-Bar-Close für alle zehn Märkte einschließlich Persistenz höchstens 60 Sekunden;
+- ein kontrollierter Abbruch von Backtest/Datenimport wird spätestens nach 5 Sekunden quittiert und hinterlässt einen eindeutigen Status;
+- 3-Jahres-Chart p95 höchstens 3 Sekunden nach verfügbarer lokaler Historie und serverseitiger Aggregation;
+- Retention hält normale Betriebslogs bei höchstens 90 Tagen, ohne Audit-/Trade-/Backtestnachweise zu löschen;
+- Restore ist in einer sauberen Umgebung reproduzierbar und wird vor Live sowie vierteljährlich nachgewiesen.
 
 ## Freigabegates
 
-### Gate A – Strategie eingefroren
+### Gate A – DMS/Strategie eingefroren
 
-- Pine-Datei vorhanden und gehasht;
-- Parameter/Timeframe bestätigt;
-- Golden-Datensatz vorhanden;
-- offene kritische Strategiefragen geschlossen.
+- `HIXTON-SPEC-1.0` ist als normative Referenz vorhanden;
+- Formeln, Parameter, `1h`-Timeframe, Warm-up, Initialzustand, Cross- und Fillregeln sind verbindlich;
+- Kosten-, Kapital-, Slot- und Long-only-Regeln sind synchron dokumentiert;
+- keine kritische Strategieentscheidung steht auf `OFFEN`;
+- DMS-Version/Tag und Changelog sind gesetzt.
+
+Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich und wird ohne Rechte nicht veröffentlicht. Eine Herstellerparität darf ohne ihn nicht behauptet werden.
 
 ### Gate B – Backtest valide
 
+- Strategy Engine besteht Golden- und Zustandsmaschinentests ohne Abweichung zur Spezifikation;
 - alle zehn Einzeltests und Portfolio beendet;
 - Daten/Kosten/Manifest vollständig;
 - Reproduktionslauf identisch;
@@ -107,11 +111,12 @@ Konkrete Grenzwerte werden im Testplan festgelegt. Mindestens:
 
 - alle Integrations-, UI- und Failure-Tests grün;
 - keine kritischen offenen Defekte;
-- Monitoring und Backups aktiv.
+- Monitoring, Telegram-Testalarm und Backups aktiv;
+- dedizierter Bot-Account/Subaccount ohne manuellen Handel vorbereitet.
 
 ### Gate D – Live bereit
 
-- Paper-Soak-Dauer und Mindestanzahl Barwechsel erreicht (`OFFEN`);
+- mindestens 30 Kalendertage, 720 geschlossene 1h-Bars je Symbol und 20 abgeschlossene Papertrades; bei zu wenigen Trades Verlängerung bis höchstens 90 Tage gemäß DEC-018;
 - Börse/Account/Keys bestätigt;
 - Reconciliation-, Not-Aus- und Restore-Test bestanden;
 - Live-Risikolimits bestätigt;
@@ -123,9 +128,9 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 
 - 100 % der kritischen Anforderungen haben Owner, Status und Test;
 - keine kritische Entscheidung steht auf `OFFEN`;
-- Pine-Quelle und Börse sind bestätigt;
+- normative Strategiequelle und Börse sind bestätigt;
 - alle Annahmen sind bestätigt oder verworfen;
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Zustand ist aktuell wegen der Punkte in Dokument 16 noch nicht erreicht.
+Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie lässt sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Das ist **keine** Aussage, dass Bot, Backtest, Paper- oder Live-Gates bereits bestanden sind; deren reale Testartefakte stehen bis zur jeweiligen Umsetzungsphase auf `NACHWEIS AUSSTEHEND`.

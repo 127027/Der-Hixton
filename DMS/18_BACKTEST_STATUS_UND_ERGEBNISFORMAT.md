@@ -2,20 +2,19 @@
 
 ## Wahrheitsgemäßer Ist-Stand
 
-Stand 31.08.2026 wurde **kein valider Backtest ausgeführt**. Im Eingangsordner fehlen:
+Stand 31.08.2026 wurde **kein valider Backtest ausgeführt**. Strategie, Parameter, `1h`-Timeframe und Kostenmodell sind dokumentiert; für einen echten Lauf fehlen weiterhin:
 
-- ausführbarer Pine- oder Bot-Strategiecode;
-- bestätigte Parameter und Trading-Timeframe;
+- ausführbarer Bot-Strategie-/Backtestcode;
+- Golden-Testartefakte aus `HIXTON-SPEC-1.0`;
 - vollständiger Binance-Datensnapshot für die festgelegte Coinliste;
 - historische Datensnapshots;
-- Gebühren-/Slippagemodell;
 - Backtestengine und Ergebnisartefakte.
 
 Jede konkrete Rendite-, Trefferquote- oder Drawdownzahl wäre derzeit erfunden. Die vorhandene Datei bewertet nur den beschriebenen Indikator; sie enthält keinen reproduzierbaren Performancebeleg.
 
 ## Verbindlicher Testumfang
 
-- kapitalunabhängiger Signal-/Pine-Paritätstest;
+- kapitalunabhängiger Signal-/Spezifikationsparitätstest;
 - Standard-Batch: zehn isolierte Einzeltests × 250 USDT;
 - Einzelmodus: ein gewählter Coin, zum Beispiel ETH, mit 250 USDT;
 - primär drei vollständige Jahre plus Warm-up;
@@ -32,7 +31,7 @@ Jede konkrete Rendite-, Trefferquote- oder Drawdownzahl wäre derzeit erfunden. 
 |---|---|
 | Symbol | aus bestätigter Liste |
 | Zeitraum | Start UTC bis Ende UTC |
-| Timeframe | bestätigt |
+| Timeframe | 1h |
 | Startkapital | 250,00 USDT |
 | Endkapital | zu berechnen |
 | Nettogewinn | zu berechnen |
@@ -83,10 +82,10 @@ Prominent anzeigen bei:
 
 - weniger als drei vollständigen Jahren;
 - Datenlücke/Revision;
-- unbekannten Gebühren;
-- fehlender Pine-Parität;
+- unbekannten oder vom V1-Baseline-/Stressmodell abweichenden Gebühren;
+- fehlender Spezifikationsparität;
 - weniger Trades als für stabile Metriken nötig;
 - Ergebnis aus In-sample-Optimierung;
 - veralteter Strategie-/Datenversion;
 - offenem Trade am Testende;
-- fehlender/ungeklärter Slotpriorisierung im 240-USDT-Spiegellauf.
+- nicht angewendeter Slotpriorisierung im 240-USDT-Spiegellauf.

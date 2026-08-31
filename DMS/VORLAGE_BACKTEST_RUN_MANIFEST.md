@@ -10,8 +10,9 @@
 ## Versionen und Hashes
 
 - Code/Build:
-- Strategieversion:
-- Pine-SHA-256:
+- Strategieversion: `HIXTON-SPEC-1.0`
+- normative Strategiequelle: `DMS/03_STRATEGIE_HIXTON.md`
+- optionaler Hersteller-Pine-SHA-256: `null`, solange kein rechtmäßig verfügbarer Source existiert
 - Konfigurations-SHA-256:
 - Daten-Snapshot-SHA-256:
 - Dependency-Lock-SHA-256:
@@ -21,7 +22,7 @@
 
 - Börse/Provider:
 - Symbole:
-- Timeframe:
+- Timeframe: `1h`
 - Warm-up Start UTC:
 - Bericht Start UTC:
 - Bericht Ende UTC:
@@ -32,21 +33,22 @@
 ## Handelsannahmen
 
 - Startkapital je Symbol: 250,00 USDT
+- Zielnotional je isoliertem Einstieg: 250,00 USDT bzw. kleinerer verfügbarer Cashbetrag
 - Run-Modus: `all_ten_isolated / single_symbol / paper_live_mirror`
 - Einzeltest-Symbol (falls zutreffend):
 - Spiegelportfolio: 240,00 USDT / 3 Slots / 80,00 USDT Zielnotional
 - Positionsgröße:
-- Compounding:
-- Fillmodell:
-- Ordertyp:
-- Gebühren:
-- Slippage/Spread:
+- Compounding: `false`
+- Fillmodell: `next_bar_open`
+- Ordertyp: simulierte Market-Order
+- Gebühren: Baseline/Stress jeweils 10 bp je Seite, kein BNB-/VIP-Rabatt
+- Slippage/Spread: Baseline 3/2 bp je Seite; Stress 20/10 bp je Seite
 - Tick-/Step-/Mindestnotional-Stand:
 - offene Position am Testende:
 
 ## Validierung
 
-- Pine-Parität:
+- Spezifikationsparität:
 - Replay = Batch:
 - Reproduktionslauf:
 - Holdout-/Optimierungsstatus:

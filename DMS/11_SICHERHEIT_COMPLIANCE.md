@@ -11,6 +11,7 @@
 
 ## API-Schlüssel
 
+- Live verwendet einen eigenen Bot-Account oder Binance-Subaccount; manueller Handel auf genau diesem Account ist verboten;
 - eigener API-Key nur für diesen Bot;
 - ausschließlich Leserechte und Spot-Handel;
 - Withdrawal/Auszahlung deaktiviert;
@@ -19,6 +20,8 @@
 - getrennte Schlüssel für Test/Paper und Live;
 - Rotation nach Incident oder regelmäßig gemäß Betriebsentscheidung;
 - Schlüsselwerte werden nie in Git, Markdown, YAML-Beispielen oder UI-Export gespeichert.
+
+Erkennt die Reconciliation eine manuelle/Fremdorder oder eine nicht erklärbare Saldenänderung, werden neue Live-Entries global pausiert, bis der Eigentümer den Zustand geklärt und auditiert hat. Der Bot eignet sich nicht zum parallelen Verwalten eines manuell gehandelten Spotbestands.
 
 ## Secret-Speicherung
 
@@ -61,7 +64,7 @@ Auditdaten sind append-only bzw. manipulationsgeschützt und werden nicht über 
 
 ## Datenschutz
 
-Das System benötigt keine unnötigen personenbezogenen Daten. Account-IDs werden, soweit möglich, pseudonymisiert. Logs/Supportpakete redigieren Tokens, Secrets, vollständige Kontokennungen und ggf. IP-Adressen. Retention wird festgelegt, bevor Live-Daten gesammelt werden.
+Das System benötigt keine unnötigen personenbezogenen Daten. Account-IDs werden, soweit möglich, pseudonymisiert. Logs/Supportpakete redigieren Tokens, Secrets, vollständige Kontokennungen und ggf. IP-Adressen. Markt-/Backtestdaten, Trade-Ledger, Auditdaten, Incidentberichte und Release-Nachweise bleiben dauerhaft; normale Betriebslogs werden 90 Tage online gehalten und dürfen danach nach dokumentiertem Retention-Job gelöscht werden.
 
 ## Rechtliche und finanzielle Grenzen
 
@@ -89,4 +92,3 @@ Mindestens testen:
 ## Live-Freigabebedingung
 
 Live bleibt technisch gesperrt, bis mindestens Secretschutz, Least Privilege, Reconciliation, Idempotenz, Not-Aus, Audit, Backup/Restore, Paper-Soak-Test und Incident-Runbook bestanden sind.
-

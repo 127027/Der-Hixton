@@ -34,16 +34,16 @@ Die Systeme sind getrennte Laufmodi und Ledgers, aber keine getrennten Kopien de
 | UI | Dashboard, Chart, Reports, Einstellungen |
 | Observability | Logs, Metriken, Health und Alerts |
 
-## Empfohlener Referenzstack (`ANNAHME`)
+## Verbindlicher Referenzstack für V1
 
-- Python-Service für Domain, Backtest und Adapter;
+- Python-3-Service für Domain, Backtest und Adapter;
 - lokale relationale Datenbank, initial SQLite im WAL-Modus; Migration auf PostgreSQL möglich;
 - lokale Web-API;
 - TypeScript-Web-UI mit einer Candlestick-fähigen Chartbibliothek;
 - schema-validierte YAML/JSON-Konfiguration plus Secret-Store/Umgebungsvariablen;
 - ein Prozessmanager/Windows-Service für Autostart.
 
-Die DMS-Anforderungen sind wichtiger als konkrete Frameworks. Ein Stackwechsel darf Strategie- und Auditsemantik nicht verändern.
+Framework- und Paketversionen werden beim Implementierungsstart in Lockfiles festgeschrieben. Ein Stackwechsel benötigt Architekturentscheidung und Migrationstest; er darf Strategie-, Decimal-, UTC-, Ledger- oder Auditsemantik nicht verändern.
 
 ## Kernobjekte
 

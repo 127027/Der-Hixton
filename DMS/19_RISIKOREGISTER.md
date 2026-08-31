@@ -4,7 +4,7 @@ Bewertung: Eintritt `N/M/H`, Auswirkung `N/M/H`. Das Register beschreibt Risiken
 
 | ID | Risiko | Eintritt | Auswirkung | Prävention/Erkennung | Reaktion | Owner |
 |---|---|---:|---:|---|---|---|
-| R-001 | Pine-Logik falsch rekonstruiert | H solange Source fehlt | H | Source-Hash, Golden-Daten, 0 Signalabweichungen | Implementierung sperren | Strategie |
+| R-001 | Projektstrategie wird fälschlich als identisch mit einem nicht einsehbaren Hersteller-Pine dargestellt | M | H | eindeutiger Name `HIXTON-SPEC-1.0`, Golden-Daten, keine Herstellerparitätsbehauptung | Aussage korrigieren; späteren rechtmäßigen Source nur versioniert vergleichen | Strategie |
 | R-002 | Repainting/Look-ahead | M | H | Bar-Close-Regel, Replay=Batch, Code-Review | Ergebnisse ungültig, Live sperren | Strategie/QA |
 | R-003 | Datenlücke erzeugt falsches Signal | M | H | Raster-/Freshness-Audit, Symbolpause | nachladen, neu validieren, keine Nachholorder | Daten |
 | R-004 | Provider korrigiert Historie | M | M | Datenrevision/Hash | Runs stale markieren, neu rechnen | Daten/Backtest |
@@ -38,6 +38,6 @@ Bewertung: Eintritt `N/M/H`, Auswirkung `N/M/H`. Das Register beschreibt Risiken
 - vor jeder Gate-Freigabe;
 - nach Incident oder wesentlicher Daten-/Börsenänderung;
 - mindestens monatlich im Livebetrieb;
-- Owner und konkrete Schwellen werden vor Paper/Live eingetragen.
+- Owner und die in DMS 04/05/07/10 festgelegten Schwellen werden vor jedem Gate auf Aktualität geprüft.
 
 Risiken mit Auswirkung `H` dürfen nicht ohne dokumentierte Kontrolle und Owner in Live gehen.

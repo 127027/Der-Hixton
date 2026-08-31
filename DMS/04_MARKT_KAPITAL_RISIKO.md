@@ -2,7 +2,7 @@
 
 ## Initiales Marktuniversum
 
-Für Version 0.1 festgelegte Binance-Spot-Paare:
+Für DMS V1 festgelegte Binance-Spot-Paare:
 
 1. BTC/USDT
 2. ETH/USDT
@@ -37,6 +37,7 @@ Kapital, Slotanzahl und Zielnotional müssen wegen Gebühren und verfügbarem Ca
 
 - Standard-Batch: zehn strikt isolierte Tests mit jeweils **250,00 USDT** Startkapital, insgesamt 2.500,00 USDT reines Simulationskapital.
 - Einzeltest: frei wählbares Binance-Paar, zum Beispiel nur ETH/USDT, mit **250,00 USDT** Startkapital.
+- Ziel-Quote-Budget je Einstieg ist in diesen isolierten Läufen fest 250,00 USDT oder, nach Verlusten, der kleinere verfügbare Cashbetrag; Gewinne erhöhen die nächste Zielgröße nicht automatisch.
 - Jeder Test startet ohne Position und Altorder.
 - Einzeltests beeinflussen einander nicht; Ergebnisse werden je Coin und zusätzlich als Vergleichstabelle gezeigt.
 - Optionaler Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT nach.
@@ -49,6 +50,7 @@ Initiale Regel:
 - maximal eine Long-Position pro Paar;
 - kein Pyramiding;
 - Zielnotional je neu belegtem Slot: 80,00 USDT;
+- die 80,00 USDT sind das maximale Quote-Budget des Kaufs; bei modellierter Zahlung der Kaufgebühr im Basisasset wird die empfangene Assetmenge entsprechend reduziert;
 - tatsächliches Notional höchstens verfügbarer Cash nach Reserven und Börsenfiltern;
 - Menge wird abwärts auf Binance-Schrittweite gerundet;
 - nach Rundung müssen Mindestmenge und Mindestnotional erfüllt sein;
@@ -56,11 +58,11 @@ Initiale Regel:
 - keine Kreditaufnahme, kein negativer Cash-Bestand;
 - eine UI-Änderung von Slotanzahl oder Positionsgröße wirkt nur auf neue Einstiege.
 
-Offen bleibt, ob Gewinne automatisch die Positionsgröße erhöhen (`compounding`) oder 80 USDT fest bleiben, bis der Benutzer sie ändert. Bis zur Bestätigung bleibt 80 USDT das feste Zielnotional.
+Automatisches Compounding ist deaktiviert. Das Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten V1-Backtest 250 USDT, auch wenn Gewinne entstehen. Nach Verlusten wird höchstens der verfügbare Cashbetrag eingesetzt. Nur eine bewusst bestätigte und auditierte UI-Änderung verändert die Größe künftiger Paper-/Live-Einstiege; bestehende Positionen bleiben unberührt.
 
 ## Slotvergabe
 
-Wenn mehr Kauf-Flip-Signale gleichzeitig oder bei bereits belegten Slots auftreten, braucht der Bot eine eindeutige Regel. Arbeitsannahme: freie Slots gehen an die stärksten Hixton-Ausbrüche, normalisiert durch ATR/Bandbreite; Gleichstand wird durch eine feste Coinreihenfolge gebrochen. Diese Priorisierung verwendet ausschließlich Werte des Hixton-Indikators, ist aber eine zusätzliche Portfolioentscheidung und muss separat bestätigt und backgetestet werden.
+Freie Slots gehen verbindlich an den größten auf 12 Dezimalstellen mit Round-Half-Even gerundeten Wert `(close-upper)/ATR` der jeweiligen Flip-Up-Kerze. Gleichstand wird über diese feste Reihenfolge gebrochen: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. Die Regel verwendet ausschließlich V1-Indikatorwerte und wird im Backtest mit simultanen Signalen geprüft.
 
 Ein Kauf-Flip, der wegen voller Slots nicht ausgeführt wird, wird protokolliert. Er wird nicht später mitten im bestehenden Uptrend nachgeholt, außer die Strategie definiert ausdrücklich eine weiterhin gültige Entry-Bedingung.
 
@@ -86,7 +88,7 @@ Diese Regeln dürfen eine Order blockieren, erzeugen aber niemals selbst ein Han
 - verfügbare Mittel reichen nicht;
 - Not-Aus aktiv;
 - Live-Modus nicht freigegeben;
-- Preis weicht beim Absenden über eine noch festzulegende Schutzgrenze vom Referenzpreis ab.
+- Preis weicht beim Absenden mehr als 25 bps vom Referenzpreis ab.
 
 Jede Blockade wird sichtbar protokolliert.
 
@@ -99,10 +101,10 @@ Da „alles über diesen Indikator“ laufen soll, werden keine heimlichen Stop-
 | Not-Aus | keine neuen Einstiege; Exit vorhandener Positionen nur separat bestätigen | VERBINDLICH |
 | Max. Ordernotional | anfänglich 80 USDT Zielnotional und höchstens verfügbarer Cash | VERBINDLICH |
 | Max. offene Positionen | anfangs drei, je Paar höchstens eine; UI-konfigurierbar | VERBINDLICH |
-| Max. Tagesverlust | Schwelle und Wirkung fehlen | OFFEN |
-| Max. Drawdown live | Schwelle und Wirkung fehlen | OFFEN |
-| Max. Slippage | Schwelle fehlt | OFFEN |
-| Stale-data-Grenze | abhängig vom Trading-Timeframe | OFFEN |
+| Max. Tagesverlust | ab 5 % Verlust gegenüber Start-of-Day-Equity keine neuen Entries bis 00:00 UTC; Exits bleiben erlaubt | VERBINDLICH |
+| Max. Drawdown live | ab 20 % unter globalem High-Water-Mark Zustand `HALTED`; keine automatische Liquidation | VERBINDLICH |
+| Max. Preisabweichung vor Order | 25 bps gegenüber dem zum Intent gespeicherten Referenzpreis; bei Überschreitung blockieren | VERBINDLICH |
+| Stale-data-Grenze | kein Streamupdate 90 Sekunden = `DEGRADED`; finale 1h-Bar mehr als 2 Minuten überfällig = Symbol pausieren und REST-Recovery | VERBINDLICH |
 
 Eine Verlustschwelle soll standardmäßig neue Einstiege pausieren, nicht unkontrolliert alle Positionen als Market-Order liquidieren.
 

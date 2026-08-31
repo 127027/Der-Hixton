@@ -15,7 +15,7 @@ Der-Hixton/
 ├── DMS/                              # verbindliche Dokumentation
 ├── strategy/
 │   ├── source_material/              # unveränderte Eingangsquellen
-│   └── pine/                         # freigegebene Pine-Referenz, falls erlaubt
+│   └── pine/                         # optionaler, rechtmäßig veröffentlichbarer Vergleichs-Source
 ├── backtests/
 │   ├── v1/
 │   │   ├── manifest-template.yaml
@@ -55,7 +55,7 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 - `backtests/v3`: nächste fachliche Änderung.
 - Reine Wiederholung mit gleichen Regeln erhält innerhalb derselben Version eine neue unveränderliche Run-ID unter `runs/`.
 - Ein gültiger Run wird nicht überschrieben oder nachträglich „verbessert“.
-- Jede Version referenziert Code-, Pine-, Config- und Datenhash.
+- Jede Version referenziert Code-, Strategie-, Config- und Datenhash; ein Pine-Hash ist nur optionaler externer Vergleichsnachweis.
 - Versionen werden numerisch ohne Fantasienamen geführt.
 
 ## Was nicht in den Hauptordner gehört
@@ -78,4 +78,3 @@ Vor dem Anlegen wird geprüft:
 5. Muss sie überhaupt in Git oder gehört sie in einen ignorierten Laufzeitordner?
 
 Diese Regel gilt gleichermaßen für Codex, GPT und manuelle Änderungen.
-

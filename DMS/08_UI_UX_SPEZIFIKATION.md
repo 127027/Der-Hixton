@@ -58,7 +58,7 @@ Pflichtsteuerungen:
 Pflichtdarstellung:
 
 - Candlesticks;
-- VIDYA bzw. Pine-definierte Trendlinie;
+- VIDYA-Trendlinie gemäß `HIXTON-SPEC-1.0`;
 - obere und untere ATR-Bänder;
 - farbige Trendsegmente/Füllung;
 - Kauf- und Verkaufssignalmarker;
@@ -79,7 +79,7 @@ Die laufende Kerze erhält z. B. gestrichelte Kontur und Label „vorläufig“.
 | 1 Jahr | rollierende letzte 365 Tage |
 | 3 Jahre | rollierende letzte 3 Kalenderjahre bis jetzt |
 
-Alternativ „Kalenderwoche/-monat“ wäre eine andere Semantik und müsste beschlossen werden.
+Standardauswahl ist **1 Monat**. Heute/1W/1M verwenden native `1h`-Bars; 1J wird standardmäßig zu `4h`, 3J zu `1d` aggregiert. Eine verfügbare Auflösung darf manuell gewählt werden. Indikatorwerte und Signalmarker stammen stets aus der nativen `1h`-Strategie; die UI berechnet aus aggregierten Bars keine neuen Signale. Kalenderwoche/-monat sind für V1 ausdrücklich nicht die Semantik.
 
 ## Positionen & Orders
 
@@ -120,7 +120,7 @@ Darstellung:
 - Vergleich mit Buy-and-Hold;
 - Monatsrendite-Tabelle;
 - Trades und Kosten;
-- je Coin Ampel „Ziel erreicht/verfehlt/nicht bewertbar“;
+- je Coin Ampel „netto positiv/netto negativ/nicht bewertbar“ ohne Gewinnversprechen;
 - Portfolioaggregation ohne schlechte Coins auszublenden.
 
 ## Datenqualität
@@ -156,6 +156,7 @@ Pro Coin:
 - Paper-/Live-Positionsgröße startet bei 80 USDT, Slotanzahl bei drei; beide sind später änderbar.
 - UI validiert `Slotanzahl × Zielnotional` gegen verfügbares/konfiguriertes Gesamtkapital und aktuelle Binance-Mindestwerte.
 - Änderungen wirken nur auf künftige Entries; bestehende Positionen werden nicht automatisch angepasst.
+- Einstellungen zeigen die unveränderlichen V1-Baselines: 5 % Tagesverlustpause, 20 % Max-Drawdown-Halt, 25 bp maximale Preisabweichung, 10 Sekunden bis `UNKNOWN` und 30 Sekunden Teilfill-Restfrist.
 
 ## Zustände ohne Daten
 
