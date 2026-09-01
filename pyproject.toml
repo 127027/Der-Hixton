@@ -10,6 +10,7 @@ readme = "README.md"
 requires-python = ">=3.11"
 dependencies = [
   "fastapi==0.115.5",
+  "tzdata==2026.3",
   "uvicorn==0.32.0",
   "websockets==12.0",
 ]

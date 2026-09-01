@@ -7,7 +7,8 @@
 - README und Ordnerregel um verbindliche Sauberkeits-, Build- und Aufräumregeln ergänzt.
 - Implementierter V1-Stand für Strategie, Binance-Daten, SQLite, Backtest, 24/7-Paper-Runtime und lokale TypeScript-UI dokumentiert.
 - Finaler Drei-Jahres-Batch `68e84b25-91f9-4faa-9a65-a6699b8bd7d5`, bytegleicher Reproduktionslauf und ETH-Einzeltest mit echten Binance-Spot-Daten dokumentiert.
-- Gate B mit 47 automatisierten Tests, zehn vollständigen Datenaudits und reproduzierbaren Ergebnis-Hashes geschlossen; positive Baseline, negativer Stressfall und hohe Drawdowns ausdrücklich festgehalten.
+- Gate B mit 48 automatisierten Tests, zehn vollständigen Datenaudits und reproduzierbaren Ergebnis-Hashes geschlossen; positive Baseline, negativer Stressfall und hohe Drawdowns ausdrücklich festgehalten.
+- Windows-Kaltstart um eine fest gepinnte IANA-Zeitzonendatenbank ergänzt; schnelle Coin-/Zeitraumwechsel gegen veraltete Chartantworten abgesichert.
 - Live-Ausführung bleibt bis zu Paper-Soak, Telegram-, Backup-/Restore-, Account- und Eigentümerfreigabe technisch gesperrt.
 
 ## 1.0.0 – 31.08.2026

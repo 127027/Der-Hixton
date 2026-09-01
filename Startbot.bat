@@ -10,7 +10,7 @@ if not exist "%HIXTON_PYTHON%" (
   if errorlevel 1 goto :error
 )
 
-"%HIXTON_PYTHON%" -c "import fastapi, uvicorn, websockets; assert fastapi.__version__ == '0.115.5'; assert uvicorn.__version__ == '0.32.0'; assert websockets.__version__ == '12.0'" >nul 2>&1
+"%HIXTON_PYTHON%" -c "import fastapi, uvicorn, websockets; from importlib.metadata import version; assert fastapi.__version__ == '0.115.5'; assert uvicorn.__version__ == '0.32.0'; assert websockets.__version__ == '12.0'; assert version('tzdata') == '2026.3'" >nul 2>&1
 if errorlevel 1 (
   echo [Hixton] Installiere die festgelegten Python-Abhaengigkeiten ...
   "%HIXTON_PYTHON%" -m pip install .

@@ -89,7 +89,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 
 ## Automatisierter Nachweisstand vom 01.09.2026
 
-- `pytest`: 47 von 47 Tests bestanden;
+- `pytest`: 48 von 48 Tests bestanden;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
 - mypy: keine Typfehler in 30 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;

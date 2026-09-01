@@ -2,12 +2,17 @@ from __future__ import annotations
 
 import json
 from pathlib import Path
+from zoneinfo import ZoneInfo
 
 import pytest
 
 from hixton.cli import main
 from hixton.config import load_project_config
 from hixton.constants import SYMBOLS
+
+
+def test_windows_runtime_timezone_is_available() -> None:
+    assert ZoneInfo("Europe/Berlin").key == "Europe/Berlin"
 
 
 def _payload() -> dict[str, object]:
@@ -88,4 +93,3 @@ def test_live_command_remains_technically_locked(capsys: pytest.CaptureFixture[s
     result = main(["live"])
     assert result == 2
     assert "sicher gesperrt" in capsys.readouterr().err
-
