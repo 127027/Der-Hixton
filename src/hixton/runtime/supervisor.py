@@ -359,10 +359,10 @@ class RuntimeSupervisor:
                     )
 
             snapshot = self.state.snapshot()
-            stale = (
-                snapshot.last_stream_update_utc is None
-                or (now - snapshot.last_stream_update_utc).total_seconds() > 90
-            )
+            if snapshot.last_stream_update_utc is None:
+                stale = (now - snapshot.started_at_utc).total_seconds() > 90
+            else:
+                stale = (now - snapshot.last_stream_update_utc).total_seconds() > 90
             current_hour = now.replace(minute=0, second=0, microsecond=0)
             if stale:
                 self.state.set_status(
