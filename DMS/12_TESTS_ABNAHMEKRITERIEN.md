@@ -87,6 +87,21 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - Retention hält normale Betriebslogs bei höchstens 90 Tagen, ohne Audit-/Trade-/Backtestnachweise zu löschen;
 - Restore ist in einer sauberen Umgebung reproduzierbar und wird vor Live sowie vierteljährlich nachgewiesen.
 
+## Automatisierter Nachweisstand vom 01.09.2026
+
+- `pytest`: 47 von 47 Tests bestanden;
+- Ruff: keine Lint-/Sauberkeitsabweichung;
+- mypy: keine Typfehler in 30 Source-Dateien;
+- TypeScript: `tsc --noEmit` bestanden;
+- npm Audit: 0 bekannte Schwachstellen in 67 Abhängigkeiten;
+- Datenqualität: zehn von zehn Märkten mit drei Jahren plus 400 Warm-up-Bars ohne Lücke;
+- Backtest: 10×250-USDT-Batch und ETH-Einzelmodus ausgeführt;
+- Reproduktion: Metrik-, Trade- und Equity-Dateien bytegleich;
+- Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
+- responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
+
+Diese Nachweise schließen Gate A und Gate B. Sie ersetzen nicht die noch offenen externen Gate-C-Nachweise für Telegram, Backup/Restore, Failure-Injection und Paper-Soak.
+
 ## Freigabegates
 
 ### Gate A – DMS/Strategie eingefroren
