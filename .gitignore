@@ -15,6 +15,7 @@ __pycache__/
 .ruff_cache/
 .venv/
 venv/
+*.egg-info/
 
 # JavaScript/UI
 node_modules/
