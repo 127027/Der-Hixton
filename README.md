@@ -20,8 +20,9 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 
 - Binance Spot für BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT.
 - `HIXTON-SPEC-1.0`: VIDYA/CMO, SMA-Nachglättung, Wilder-ATR, Bänder und geschlossene `1h`-Bars.
-- 24/7-Paper-Ledger mit gemeinsamem Startcash 240 USDT, drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause und Drawdown-Halt.
+- 24/7-Paper-Ledger mit gemeinsamem Startcash 240 USDT, drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
 - WebSocket-Livestream mit REST-Gap-Recovery, Startup-Prüfung und täglichem Audit um 00:05 UTC.
+- Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
 - Backtest v1: zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress.

@@ -10,7 +10,7 @@ from hixton.backtest.models import ExecutionRules
 from hixton.constants import SYMBOLS
 from hixton.domain.models import Candle, IndicatorPoint, TrendState
 from hixton.paper.engine import initialize_paper_at_latest, process_new_closed_points
-from hixton.paper.models import PaperEventStatus, PaperSettings
+from hixton.paper.models import PaperEvent, PaperEventStatus, PaperSettings
 from hixton.paper.storage import PaperStore
 
 
@@ -73,12 +73,80 @@ def test_startup_arms_at_latest_without_historical_orders(tmp_path: Path) -> Non
         symbol: (_point(symbol, start, flip_up=True, strength=1.0),)
         for symbol in SYMBOLS
     }
-    initialize_paper_at_latest(str(path), points, at=start)
+    assert initialize_paper_at_latest(str(path), points, at=start) is True
     emitted = process_new_closed_points(str(path), points, _rules())
     assert emitted == ()
     with PaperStore(path) as store:
         assert store.load_account().cash_usdt == Decimal("240.00")
         assert store.load_positions() == ()
+
+
+def test_restart_preserves_checkpoint_and_recovers_closed_bars(tmp_path: Path) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    assert initialize_paper_at_latest(str(path), _mapping(start), at=start) is True
+
+    recovered_at = start + timedelta(hours=1)
+    recovered = _mapping(recovered_at)
+    recovered[SYMBOLS[0]] = (
+        _point(SYMBOLS[0], recovered_at, flip_up=True, strength=2.0),
+    )
+    assert initialize_paper_at_latest(str(path), recovered, at=recovered_at) is False
+    with PaperStore(path) as store:
+        assert store.checkpoint(SYMBOLS[0]) == start
+
+    emitted = process_new_closed_points(str(path), recovered, _rules())
+    assert [(event.symbol, event.action) for event in emitted] == [
+        (SYMBOLS[0], "ENTER_LONG")
+    ]
+    with PaperStore(path) as store:
+        assert store.checkpoint(SYMBOLS[0]) == recovered_at
+        progress = store.load_soak_progress(at=recovered_at)
+    assert progress.minimum_processed_closed_bars == 1
+    assert progress.processed_closed_bars_by_symbol[SYMBOLS[0]] == 1
+
+
+def test_paper_soak_gate_is_persistent_and_requires_all_three_thresholds(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    events = tuple(
+        PaperEvent(
+            event_id=f"event-{index}",
+            signal_id=f"signal-{index}",
+            occurred_at_utc=start + timedelta(hours=index + 1),
+            symbol=SYMBOLS[index % len(SYMBOLS)],
+            action="EXIT_LONG",
+            status=PaperEventStatus.FILLED,
+            reason=None,
+            reference_price=Decimal("100"),
+            execution_price=Decimal("100"),
+            base_quantity=Decimal("1"),
+            quote_amount_usdt=Decimal("100"),
+            fee_usdt=Decimal("0.10"),
+            realized_pnl_usdt=Decimal("1"),
+            breakout_strength=None,
+        )
+        for index in range(20)
+    )
+    end = start + timedelta(hours=720)
+    with PaperStore(path) as store:
+        store.apply_cycle(
+            account=store.load_account(),
+            positions={},
+            events=events,
+            checkpoints=dict.fromkeys(SYMBOLS, end),
+            processed_bars=dict.fromkeys(SYMBOLS, 720),
+        )
+        progress = store.load_soak_progress(at=start + timedelta(days=30))
+    assert progress.ready is True
+    assert progress.status == "PASSED"
+    assert progress.calendar_days == 30
+    assert progress.minimum_processed_closed_bars == 720
+    assert progress.completed_trades == 20
+    assert progress.blockers == ()
 
 
 def test_slot_priority_is_deterministic_and_cycle_is_idempotent(tmp_path: Path) -> None:

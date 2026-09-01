@@ -44,8 +44,8 @@ def initialize_paper_at_latest(
     points_by_symbol: Mapping[str, tuple[IndicatorPoint, ...]],
     *,
     at: datetime | None = None,
-) -> None:
-    """Arm paper at current closed bars without replaying old entries after startup."""
+) -> bool:
+    """Arm a new account at latest; preserve checkpoints on every later restart."""
 
     if set(points_by_symbol) != set(SYMBOLS):
         raise ValueError("paper initialization requires all ten DMS symbols")
@@ -57,7 +57,15 @@ def initialize_paper_at_latest(
         checkpoints[symbol] = points[-1].candle.close_time_utc
     with PaperStore(database_path) as store:
         store.initialize(at=at)
-        store.save_checkpoints(checkpoints)
+        existing = store.all_checkpoints()
+        if existing and set(existing) != set(SYMBOLS):
+            raise RuntimeError("paper checkpoints are incomplete; recovery must fail closed")
+        first_start = not existing
+        if first_start:
+            store.save_checkpoints(checkpoints)
+            existing = checkpoints
+        store.ensure_soak_started(existing, at=at)
+    return first_start
 
 
 def _signal(point: IndicatorPoint, *, is_long: bool) -> Signal | None:
@@ -150,8 +158,10 @@ def process_new_closed_points(
         checkpoints = store.all_checkpoints()
         if set(checkpoints) != set(SYMBOLS):
             raise RuntimeError("paper checkpoints are incomplete; run startup initialization")
+        store.ensure_soak_started(checkpoints)
 
         pending: dict[datetime, list[IndicatorPoint]] = {}
+        processed_bars = dict.fromkeys(SYMBOLS, 0)
         latest_prices: dict[str, Decimal] = {}
         for symbol in SYMBOLS:
             for point in points_by_symbol[symbol]:
@@ -164,6 +174,7 @@ def process_new_closed_points(
             group_by_symbol = {point.symbol: point for point in group}
             for symbol, point in group_by_symbol.items():
                 latest_prices[symbol] = _d(point.candle.close)
+                processed_bars[symbol] += 1
 
             equity, _ = _equity(account.cash_usdt, positions, latest_prices)
             account, daily_paused, _ = _risk_account(account, equity=equity, at=close_time)
@@ -299,6 +310,7 @@ def process_new_closed_points(
                 positions=positions,
                 events=tuple(emitted),
                 checkpoints=checkpoints,
+                processed_bars=processed_bars,
             )
         return tuple(emitted)
 

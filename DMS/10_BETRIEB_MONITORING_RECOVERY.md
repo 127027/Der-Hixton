@@ -140,6 +140,8 @@ Alle Bedingungen müssen erfüllt sein:
 
 Werden nach 30 Tagen weniger als 20 Trades erreicht, läuft Paper bis zum 20. Trade weiter, jedoch höchstens 90 Tage. Nach 90 Tagen ohne 20 Trades entscheidet der Eigentümer dokumentiert über Verlängerung oder Abbruch; es gibt keine automatische Live-Freigabe.
 
+Der technische Nachweiszähler ist persistent: Der erste Paperstart setzt je Symbol einen Checkpoint, ohne historische Signale nachzuhandeln. Jeder tatsächlich verarbeitete neue Bar-Close erhöht den SQLite-Zähler des Symbols atomar mit Ledger, Events und Checkpoint. Ein späterer Neustart überschreibt diese Checkpoints nicht, sondern verarbeitet zwischenzeitlich geschlossene Bars exakt einmal nach. Die bestehende Systemkarte zeigt Kalendertage, den kleinsten Barzähler aller zehn Märkte, abgeschlossene Trades und `RUNNING`, `REVIEW_REQUIRED` oder `PASSED`. Ein Zählerstand allein ersetzt keinen Test der weiteren Bedingungen dieses Abschnitts.
+
 ## Typische Recovery-Szenarien
 
 - Strom-/Prozessausfall während Orderübermittlung;

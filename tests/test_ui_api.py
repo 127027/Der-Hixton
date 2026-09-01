@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
 
@@ -73,3 +74,22 @@ def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: P
     assert settings.slot_count == 4
     assert settings.target_notional_usdt == Decimal("60.00")
     assert settings.emergency_stop is True
+
+
+def test_status_exposes_restart_persistent_paper_soak_gate(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    started = datetime.now(UTC)
+    checkpoints = dict.fromkeys(SYMBOLS, started)
+    with PaperStore(config.database_path) as store:
+        store.initialize(at=started)
+        store.save_checkpoints(checkpoints)
+        store.ensure_soak_started(checkpoints, at=started)
+    client = TestClient(
+        create_app(config, RuntimeSupervisor(config)),
+        base_url="http://127.0.0.1:8765",
+    )
+    paper = client.get("/api/status").json()["paper"]
+    assert paper["soak"]["status"] == "RUNNING"
+    assert paper["soak"]["minimum_processed_closed_bars"] == 0
+    assert paper["soak"]["completed_trades"] == 0
+    assert paper["soak"]["ready"] is False

@@ -9,6 +9,10 @@
 - Rot/Grün wird zusätzlich durch Text/Icon ergänzt, damit Farbe nie allein Bedeutung trägt.
 - Deutsche Oberfläche; technische IDs dürfen kopierbar sein.
 
+## Visueller Freeze V1
+
+Die am 01.09.2026 abgenommene Desktop- und Mobiloptik ist gemäß `DEC-033` eingefroren. Funktionale Ergänzungen dürfen Inhalte in den bestehenden Ansichten präzisieren, aber keine neue Designsprache, parallele Navigation, zusätzlichen Starter oder unverbundene Sonderseite einführen. Neue Statuswerte nutzen die vorhandenen Karten-, Tabellen-, Badge- und Typografieregeln.
+
 ## Hauptnavigation
 
 1. Übersicht

@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections.abc import Mapping
 from dataclasses import dataclass
 from datetime import datetime
 from decimal import Decimal
@@ -81,3 +82,19 @@ class PaperPortfolio:
     unrealized_pnl_usdt: Decimal
     daily_loss_paused: bool
     drawdown_pct: Decimal
+
+
+@dataclass(frozen=True, slots=True)
+class PaperSoakProgress:
+    started_at_utc: datetime
+    calendar_days: int
+    processed_closed_bars_by_symbol: Mapping[str, int]
+    minimum_processed_closed_bars: int
+    completed_trades: int
+    minimum_days: int
+    minimum_closed_bars_per_symbol: int
+    minimum_completed_trades: int
+    maximum_days_when_trade_count_low: int
+    status: str
+    ready: bool
+    blockers: tuple[str, ...]

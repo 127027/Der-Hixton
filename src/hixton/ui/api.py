@@ -71,7 +71,9 @@ def _paper_payload(
             str(config.database_path),
             _latest_prices(supervisor),
         )
-    except (OSError, RuntimeError):
+        with PaperStore(config.database_path) as store:
+            soak = store.load_soak_progress()
+    except (OSError, RuntimeError, sqlite3.DatabaseError):
         return None
     return {
         "cash_usdt": str(portfolio.account.cash_usdt),
@@ -87,6 +89,22 @@ def _paper_payload(
             "slot_count": portfolio.settings.slot_count,
             "target_notional_usdt": str(portfolio.settings.target_notional_usdt),
             "emergency_stop": portfolio.settings.emergency_stop,
+        },
+        "soak": {
+            "started_at_utc": _iso(soak.started_at_utc),
+            "calendar_days": soak.calendar_days,
+            "processed_closed_bars_by_symbol": dict(
+                soak.processed_closed_bars_by_symbol
+            ),
+            "minimum_processed_closed_bars": soak.minimum_processed_closed_bars,
+            "completed_trades": soak.completed_trades,
+            "minimum_days": soak.minimum_days,
+            "minimum_closed_bars_per_symbol": soak.minimum_closed_bars_per_symbol,
+            "minimum_completed_trades": soak.minimum_completed_trades,
+            "maximum_days_when_trade_count_low": soak.maximum_days_when_trade_count_low,
+            "status": soak.status,
+            "ready": soak.ready,
+            "blockers": list(soak.blockers),
         },
         "positions": [
             {

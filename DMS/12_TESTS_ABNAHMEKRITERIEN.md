@@ -89,7 +89,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 
 ## Automatisierter Nachweisstand vom 01.09.2026
 
-- `pytest`: 48 von 48 Tests bestanden;
+- `pytest`: 51 von 51 Tests bestanden;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
 - mypy: keine Typfehler in 30 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;
@@ -100,7 +100,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
 - responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
 
-Diese Nachweise schließen Gate A und Gate B. Sie ersetzen nicht die noch offenen externen Gate-C-Nachweise für Telegram, Backup/Restore, Failure-Injection und Paper-Soak.
+Diese Nachweise schließen Gate A und Gate B. Restart-Checkpoint, Nachverarbeitung verpasster Bars und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen externen Gate-C-Nachweise für Telegram, Backup/Restore, vollständige Failure-Injection und den real ablaufenden Paper-Soak.
 
 ## Freigabegates
 
@@ -148,4 +148,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu den externen Telegram-/Backup-/Failure-Nachweisen und dem vorgeschriebenen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.
+Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu den externen Telegram-/Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.

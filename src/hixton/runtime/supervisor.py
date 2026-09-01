@@ -143,11 +143,27 @@ class RuntimeSupervisor:
                 points, quality, rules = await asyncio.to_thread(self._synchronous_sync)
                 self.state.replace_analysis(points, quality)
                 if initial:
-                    await asyncio.to_thread(
+                    first_start = await asyncio.to_thread(
                         initialize_paper_at_latest,
                         str(self.config.database_path),
                         points,
                     )
+                    if not first_start:
+                        events = await asyncio.to_thread(
+                            process_new_closed_points,
+                            str(self.config.database_path),
+                            points,
+                            rules,
+                        )
+                        self.state.log(
+                            level="INFO",
+                            component="paper",
+                            event_code="PAPER_STARTUP_RECOVERY",
+                            message=(
+                                "Restart-Recovery abgeschlossen; "
+                                f"{len(events)} Paper-Ereignisse persistiert"
+                            ),
+                        )
                 else:
                     events = await asyncio.to_thread(
                         process_new_closed_points,

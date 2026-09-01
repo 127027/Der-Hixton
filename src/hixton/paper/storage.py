@@ -18,7 +18,13 @@ from hixton.paper.models import (
     PaperEventStatus,
     PaperPosition,
     PaperSettings,
+    PaperSoakProgress,
 )
+
+_SOAK_MINIMUM_DAYS = 30
+_SOAK_MINIMUM_BARS_PER_SYMBOL = 720
+_SOAK_MINIMUM_COMPLETED_TRADES = 20
+_SOAK_MAXIMUM_DAYS_WHEN_TRADE_COUNT_LOW = 90
 
 
 def _now() -> datetime:
@@ -64,10 +70,10 @@ class PaperStore:
     def close(self) -> None:
         self._connection.close()
 
-    def initialize(self, *, at: datetime | None = None) -> None:
+    def initialize(self, *, at: datetime | None = None) -> bool:
         moment = (at or _now()).astimezone(UTC)
         with self._connection:
-            self._connection.execute(
+            cursor = self._connection.execute(
                 """
                 INSERT OR IGNORE INTO paper_account (
                     singleton, cash_text, starting_cash_text, high_water_text,
@@ -85,6 +91,7 @@ class PaperStore:
                 """,
                 (_time(moment),),
             )
+        return cursor.rowcount == 1
 
     def load_account(self) -> PaperAccount:
         row = self._connection.execute(
@@ -282,8 +289,13 @@ class PaperStore:
         positions: Mapping[str, PaperPosition],
         events: tuple[PaperEvent, ...],
         checkpoints: Mapping[str, datetime],
+        processed_bars: Mapping[str, int],
     ) -> None:
         """Atomically persist one deterministic bar-close processing cycle."""
+
+        unknown = set(processed_bars) - set(SYMBOLS)
+        if unknown or any(value < 0 for value in processed_bars.values()):
+            raise ValueError("processed paper bars must be non-negative DMS symbol counts")
 
         with self._connection:
             self._connection.execute(
@@ -379,6 +391,21 @@ class PaperStore:
                 """,
                 [(symbol, _time(value)) for symbol, value in checkpoints.items()],
             )
+            for symbol, count in processed_bars.items():
+                cursor = self._connection.execute(
+                    """
+                    UPDATE paper_soak_symbols
+                    SET processed_closed_bars=processed_closed_bars+?
+                    WHERE symbol=?
+                    """,
+                    (count, symbol),
+                )
+                if cursor.rowcount != 1:
+                    raise RuntimeError(f"paper soak counter missing for {symbol}")
+            self._connection.execute(
+                "UPDATE paper_soak SET updated_at_utc=? WHERE singleton=1",
+                (_time(account.updated_at_utc),),
+            )
 
     def load_events(
         self,
@@ -425,6 +452,98 @@ class PaperStore:
             "SELECT symbol, last_close_utc FROM paper_checkpoints"
         ).fetchall()
         return {str(row["symbol"]): _parse_time(row["last_close_utc"]) for row in rows}
+
+    def ensure_soak_started(
+        self,
+        checkpoints: Mapping[str, datetime],
+        *,
+        at: datetime | None = None,
+    ) -> None:
+        if set(checkpoints) != set(SYMBOLS):
+            raise ValueError("paper soak baseline requires all ten DMS symbols")
+        moment = (at or _now()).astimezone(UTC)
+        with self._connection:
+            self._connection.execute(
+                """
+                INSERT OR IGNORE INTO paper_soak (
+                    singleton, started_at_utc, updated_at_utc
+                ) VALUES (1, ?, ?)
+                """,
+                (_time(moment), _time(moment)),
+            )
+            self._connection.executemany(
+                """
+                INSERT OR IGNORE INTO paper_soak_symbols (
+                    symbol, baseline_close_utc, processed_closed_bars
+                ) VALUES (?, ?, 0)
+                """,
+                [(symbol, _time(checkpoints[symbol])) for symbol in SYMBOLS],
+            )
+
+    def load_soak_progress(self, *, at: datetime | None = None) -> PaperSoakProgress:
+        moment = (at or _now()).astimezone(UTC)
+        state = self._connection.execute(
+            "SELECT started_at_utc FROM paper_soak WHERE singleton=1"
+        ).fetchone()
+        if state is None:
+            raise RuntimeError("paper soak is not initialized")
+        started_at = _parse_time(state["started_at_utc"])
+        rows = self._connection.execute(
+            """
+            SELECT symbol, processed_closed_bars
+            FROM paper_soak_symbols
+            ORDER BY symbol
+            """
+        ).fetchall()
+        bars = {str(row["symbol"]): int(row["processed_closed_bars"]) for row in rows}
+        if set(bars) != set(SYMBOLS):
+            raise RuntimeError("paper soak counters are incomplete")
+        completed_row = self._connection.execute(
+            """
+            SELECT COUNT(*) AS count
+            FROM paper_events
+            WHERE action='EXIT_LONG' AND status='FILLED' AND occurred_at_utc>=?
+            """,
+            (_time(started_at),),
+        ).fetchone()
+        completed_trades = int(completed_row["count"] if completed_row is not None else 0)
+        calendar_days = max(0, (moment.date() - started_at.date()).days)
+        minimum_bars = min(bars.values())
+        blockers: list[str] = []
+        if calendar_days < _SOAK_MINIMUM_DAYS:
+            blockers.append(f"DAYS_{calendar_days}_OF_{_SOAK_MINIMUM_DAYS}")
+        if minimum_bars < _SOAK_MINIMUM_BARS_PER_SYMBOL:
+            blockers.append(
+                f"BARS_{minimum_bars}_OF_{_SOAK_MINIMUM_BARS_PER_SYMBOL}_PER_SYMBOL"
+            )
+        if completed_trades < _SOAK_MINIMUM_COMPLETED_TRADES:
+            blockers.append(
+                f"TRADES_{completed_trades}_OF_{_SOAK_MINIMUM_COMPLETED_TRADES}"
+            )
+        ready = not blockers
+        if ready:
+            status = "PASSED"
+        elif (
+            calendar_days >= _SOAK_MAXIMUM_DAYS_WHEN_TRADE_COUNT_LOW
+            and completed_trades < _SOAK_MINIMUM_COMPLETED_TRADES
+        ):
+            status = "REVIEW_REQUIRED"
+        else:
+            status = "RUNNING"
+        return PaperSoakProgress(
+            started_at_utc=started_at,
+            calendar_days=calendar_days,
+            processed_closed_bars_by_symbol=bars,
+            minimum_processed_closed_bars=minimum_bars,
+            completed_trades=completed_trades,
+            minimum_days=_SOAK_MINIMUM_DAYS,
+            minimum_closed_bars_per_symbol=_SOAK_MINIMUM_BARS_PER_SYMBOL,
+            minimum_completed_trades=_SOAK_MINIMUM_COMPLETED_TRADES,
+            maximum_days_when_trade_count_low=_SOAK_MAXIMUM_DAYS_WHEN_TRADE_COUNT_LOW,
+            status=status,
+            ready=ready,
+            blockers=tuple(blockers),
+        )
 
     def _migrate(self) -> None:
         with self._connection:
@@ -482,6 +601,17 @@ class PaperStore:
                 CREATE TABLE IF NOT EXISTS paper_checkpoints (
                     symbol TEXT PRIMARY KEY,
                     last_close_utc TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS paper_soak (
+                    singleton INTEGER PRIMARY KEY CHECK (singleton=1),
+                    started_at_utc TEXT NOT NULL,
+                    updated_at_utc TEXT NOT NULL
+                );
+                CREATE TABLE IF NOT EXISTS paper_soak_symbols (
+                    symbol TEXT PRIMARY KEY,
+                    baseline_close_utc TEXT NOT NULL,
+                    processed_closed_bars INTEGER NOT NULL
+                        CHECK (processed_closed_bars >= 0)
                 );
                 CREATE TABLE IF NOT EXISTS paper_audit (
                     audit_id TEXT PRIMARY KEY,

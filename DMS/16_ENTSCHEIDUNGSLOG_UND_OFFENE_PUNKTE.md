@@ -50,6 +50,7 @@ Beschlussstand: **31.08.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 | DEC-027 | Markt-/Backtestdaten und Trade-/Audit-Ledger bleiben für Reproduzierbarkeit dauerhaft. Betriebslogs 90 Tage online, danach löschbar; Incidentberichte und Release-Nachweise dauerhaft. | **BESCHLOSSEN** |
 | DEC-028 | Oberfläche Deutsch; technische IDs, API-Felder und Symbole bleiben unverändert/kopierbar. | **BESCHLOSSEN** |
 | DEC-032 | Es gibt genau eine `Startbot.bat` für Windows. Sie enthält keine Fachlogik und delegiert an den einzigen technischen Einstieg `src/main.py start`. Weitere Starterdateien sind verboten. | **BESCHLOSSEN** |
+| DEC-033 | Die am 01.09.2026 browsergeprüfte V1-Optik ist vom Eigentümer freigegeben und visuell eingefroren. Neue Betriebsinformationen verwenden die vorhandenen Karten, Tabellen, Farben, Abstände und Navigation; ein Redesign erfolgt nur nach neuer ausdrücklicher Freigabe. | **BESCHLOSSEN** |
 
 ## Vom Nutzer verbindlich vorgegeben
 

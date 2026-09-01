@@ -11,7 +11,7 @@ Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eig
 | 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
 | 3 – Backtest | 10×250 und Einzeltest, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
 | 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs | **BESTANDEN** in lokaler Browser-Abnahme |
-| 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Checkpoint | **IMPLEMENTIERT**, Gate C/Soak noch nicht bestanden |
+| 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Recovery und Soak-Zähler | **IMPLEMENTIERT**, Gate C/realer Soak noch nicht bestanden |
 | 6 – Live-Adapter | kein privater Orderversand; UI und CLI zeigen `LIVE_DISABLED` | **ABSICHTLICH GESPERRT** |
 | 7 – Live-Freigabe | nicht begonnen | **NICHT FREIGEGEBEN** |
 
@@ -73,8 +73,9 @@ Definition of Done: UI-Abnahmetests bestanden, keine Trading-Schreibfunktion.
 - Paperadapter und realistisches Fillmodell;
 - Positionen/Ledger;
 - Not-Aus, Audit, Reconciliation-Simulation;
-- Failure-Injection und Soak-Test.
+- Failure-Injection und Soak-Test;
 - 24/7-Servicebetrieb mit Binance-Stream, Startup-Recovery und 240-USDT-/3×80-Slotmodell.
+- persistente Zählung der Kalendertage, verarbeiteten Bars je Symbol und abgeschlossenen Trades mit sichtbarem Gate-Status.
 
 Definition of Done: keine Doppelorders in Restart-/Timeouttests; längerer Paperbetrieb ohne kritische Abweichung.
 

@@ -32,6 +32,20 @@ interface PaperPayload {
   unrealized_pnl_usdt: string;
   drawdown_pct: string;
   settings: { slot_count: number; target_notional_usdt: string; emergency_stop: boolean };
+  soak: {
+    started_at_utc: string;
+    calendar_days: number;
+    minimum_processed_closed_bars: number;
+    completed_trades: number;
+    minimum_days: number;
+    minimum_closed_bars_per_symbol: number;
+    minimum_completed_trades: number;
+    maximum_days_when_trade_count_low: number;
+    status: string;
+    ready: boolean;
+    blockers: string[];
+    processed_closed_bars_by_symbol: Record<string, number>;
+  };
   positions: PaperPosition[];
 }
 interface RuntimePayload {
@@ -231,6 +245,10 @@ function renderQuality(markets: Market[]): void {
 }
 
 function renderSystem(status: StatusResponse): void {
+  const soak = status.paper?.soak;
+  const soakLabel = soak
+    ? `${soak.calendar_days}/${soak.minimum_days} Tage · ${soak.minimum_processed_closed_bars}/${soak.minimum_closed_bars_per_symbol} Bars je Coin · ${soak.completed_trades}/${soak.minimum_completed_trades} Trades · ${soak.status}`
+    : "Noch nicht gestartet";
   const items: Array<[string, string]> = [
     ["Datenfeed", `${status.runtime.feed_mode} · ${status.runtime.stream_connected ? "verbunden" : "Fallback"}`],
     ["Letzte Synchronisation", formatDate(status.runtime.last_sync_utc, true)],
@@ -240,7 +258,7 @@ function renderSystem(status: StatusResponse): void {
     ["Live-Ausführung", "Sicher deaktiviert"],
     ["Telegram-Live-Gate", "Nicht konfiguriert · blockiert Live"],
     ["Backup-/Restore-Gate", "Nicht konfiguriert · blockiert Live"],
-    ["Paper-Soak", "Gestartet · 30 Tage / 720 Bars / 20 Trades ausstehend"],
+    ["Paper-Soak", soakLabel],
   ];
   required("#system-grid").innerHTML = items.map(([label, value]) => `<article class="details-card"><strong>${label}</strong><span>${value}</span></article>`).join("");
 }

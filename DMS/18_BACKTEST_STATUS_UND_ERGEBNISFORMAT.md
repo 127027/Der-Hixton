@@ -7,7 +7,7 @@ Am 01.09.2026 wurden der verbindliche Drei-Jahres-Batch für alle zehn DMS-Märk
 Der technische Nachweis ist vollständig genug für Gate B:
 
 - ausführbare Strategie- und Backtestengine vorhanden;
-- 48 automatisierte Tests einschließlich Golden-, Daten-, Paper-, API- und Charttests bestanden;
+- 51 automatisierte Tests einschließlich Golden-, Daten-, Paper-, Restart-, API- und Charttests bestanden;
 - je Markt 26.704 geschlossene 1h-Kerzen geprüft: 26.304 Auswertungsbars plus 400 Warm-up-Bars;
 - zehn isolierte Konten à 250 USDT, ohne automatisches Compounding;
 - Baseline- und Stresskosten auf Ein- und Ausstieg angewendet;
