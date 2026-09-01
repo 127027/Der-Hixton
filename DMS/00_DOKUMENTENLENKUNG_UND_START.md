@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was später gebaut, getestet, angezeigt und betrieben werden soll. Es ist kein Implementierungsstand und kein Nachweis einer profitablen Strategie.
+Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
 ## Geltungsbereich
 
@@ -40,7 +40,7 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1 ist fachlich entscheidungsvollständig und als Implementierungsleitfaden eingefroren.** Kritische Produktentscheidungen stehen nicht mehr auf `OFFEN`. Implementierung, echte Binance-Daten, Backtests, Paper-Soak und Live-Nachweise existieren noch nicht und bleiben ausdrücklich `NACHWEIS AUSSTEHEND`.
+Aktueller Paketstatus: **DMS V1.1 ist fachlich entscheidungsvollständig; Backtest-/Paper-V1 ist als Release Candidate implementiert.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. 30- bis 90-tägiger Paper-Soak, Telegram, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen.
 
 ## Eingangsbestand vom 31.08.2026
 

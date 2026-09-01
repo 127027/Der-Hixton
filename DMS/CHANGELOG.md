@@ -1,5 +1,13 @@
 # DMS-Changelog
 
+## 1.1.0 – 01.09.2026
+
+- Dokumentationsfreeze nach ausdrücklichem Bauauftrag in die Implementierungsphase überführt.
+- Genau eine `Startbot.bat` als Windows-Komfortstarter beschlossen; einziger technischer Einstieg bleibt `src/main.py`.
+- README und Ordnerregel um verbindliche Sauberkeits-, Build- und Aufräumregeln ergänzt.
+- Implementierter V1-Stand für Strategie, Binance-Daten, SQLite, Backtest, 24/7-Paper-Runtime und lokale TypeScript-UI dokumentiert.
+- Live-Ausführung bleibt bis zu Paper-Soak, Telegram-, Backup-/Restore-, Account- und Eigentümerfreigabe technisch gesperrt.
+
 ## 1.0.0 – 31.08.2026
 
 - `HIXTON-SPEC-1.0` als vollständige normative V1-Strategie festgelegt: Formel, `1h`-Timeframe, Parameter, 400-Bar-Warm-up, Initialzustand, Cross-, Bar-Close- und Next-bar-Regeln.

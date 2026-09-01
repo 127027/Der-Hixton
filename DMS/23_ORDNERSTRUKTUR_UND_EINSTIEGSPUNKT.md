@@ -2,15 +2,17 @@
 
 ## Verbindliches Prinzip
 
-Das Projekt besitzt genau **eine zentrale menschliche Startdatei** im Repository: `/README.md`.
+Das Projekt besitzt genau **eine zentrale menschliche Lesestartdatei**: `/README.md`, und genau **einen ausführbaren Windows-Starter**: `/Startbot.bat`.
 
-Die spätere Anwendung besitzt genau **einen technischen Einstiegspunkt**: `/src/main.py` oder ein einziges daraus gebautes Kommando. Backtest, Paper und Live werden als Modi dieses Einstiegs ausgeführt. Es werden keine parallelen Hauptskripte wie `start_backtest.py`, `paper_bot.py`, `live_bot.py`, `run_ui.py` oder durchnummerierte Kopien im Hauptordner angelegt.
+Die Anwendung besitzt genau **einen technischen Einstiegspunkt**: `/src/main.py`. `Startbot.bat` enthält keine zweite Botlogik, sondern bereitet ausschließlich die lokale Python-Umgebung vor und delegiert an `src/main.py start`. Backtest, Paper, UI und der sicher gesperrte Live-Modus sind Modi dieses Einstiegs. Parallele Hauptskripte wie `start_backtest.py`, `paper_bot.py`, `live_bot.py`, `run_ui.py`, weitere `.bat`-Starter oder durchnummerierte Kopien sind verboten.
 
 ## Verbindliche Struktur
 
 ```text
 Der-Hixton/
 ├── README.md                         # einziger Projektstart
+├── Startbot.bat                      # einziger Windows-Starter, delegiert an src/main.py
+├── pyproject.toml                    # Python-Paket und gepinnte Laufzeitabhängigkeiten
 ├── .gitignore
 ├── DMS/                              # verbindliche Dokumentation
 ├── strategy/
@@ -27,8 +29,10 @@ Der-Hixton/
 │   └── v3/                           # erst bei Bedarf anlegen
 ├── config/
 │   └── examples/                     # secretfreie Beispiele
+├── ui/                               # TypeScript-Quelle und reproduzierbarer UI-Build
 ├── src/                              # spätere Anwendung
-│   └── main.py                       # später einziger technischer Einstieg
+│   ├── main.py                       # einziger technischer Einstieg
+│   └── hixton/                       # Domain, Daten, Backtest, Paper, Runtime und UI/API
 └── tests/                            # Tests, Golden-Daten und Fixtures
 ```
 
@@ -36,17 +40,18 @@ Nicht versionierte Laufzeitdaten liegen später in ignorierten Verzeichnissen wi
 
 ## Ein einziger Programmstart
 
-Vorgesehene spätere Bedienform:
+Verbindliche Bedienform:
 
 ```text
-hixton backtest --version v1 --all
-hixton backtest --version v1 --symbol ETHUSDT
-hixton paper
-hixton live
-hixton ui
+Startbot.bat
+py -3 src/main.py backtest all
+py -3 src/main.py backtest single --symbol ETHUSDT
+py -3 src/main.py paper
+py -3 src/main.py live
+py -3 src/main.py ui
 ```
 
-Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations-/Strategieengine. `live` bleibt technisch gesperrt, bis die Live-Gates bestanden sind. Die Beispiele beschreiben nur die Zielstruktur; sie implementieren noch keinen Bot.
+Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations-/Strategieengine. `live` bleibt technisch gesperrt, bis die Live-Gates bestanden sind. `Startbot.bat` startet den vorgesehenen Standard `PAPER + lokale UI`.
 
 ## Backtestversionierung
 
@@ -66,6 +71,16 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 - lose Reports oder CSV-Dateien;
 - API-Keys, `.env`, Datenbanken, Marktdaten oder Logs;
 - temporäre GPT-/Codex-Arbeitsdateien.
+- weitere `.bat`-/PowerShell-Starter oder generierte UI-Abhängigkeiten wie `node_modules`.
+
+## Verbindliche Aufräumregel
+
+- Git ist die Historie; alte Dateien werden nicht als `old`, `backup`, `final2` oder ähnlich aufgehoben.
+- Generierte Inhalte haben genau ein Buildziel. Temporäre Verzeichnisse und Abhängigkeitscaches bleiben ignoriert.
+- Leere Platzhalter werden entfernt, sobald ein Ordner reale Inhalte besitzt.
+- Lose Berichte, Datenbanken und Downloads im Hauptordner sind ein Fehler.
+- Vor einem Commit werden verwaiste Dateien, konkurrierende Einstiegspunkte und nicht ignorierte Laufzeitdaten geprüft.
+- Löschen oder Verschieben fremder/unklarer Dateien erfolgt erst nach Zielprüfung; Nutzeränderungen werden nicht still überschrieben.
 
 ## Neue Datei oder neuer Ordner
 

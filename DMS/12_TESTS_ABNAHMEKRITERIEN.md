@@ -133,4 +133,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie lässt sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Das ist **keine** Aussage, dass Bot, Backtest, Paper- oder Live-Gates bereits bestanden sind; deren reale Testartefakte stehen bis zur jeweiligen Umsetzungsphase auf `NACHWEIS AUSSTEHEND`.
+Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu den externen Telegram-/Backup-/Failure-Nachweisen und dem vorgeschriebenen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.

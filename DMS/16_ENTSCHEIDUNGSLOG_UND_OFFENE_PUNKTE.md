@@ -49,10 +49,11 @@ Beschlussstand: **31.08.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 | DEC-026 | Chart: Heute/1W/1M nativ `1h`, 1J deterministisch `4h`, 3J deterministisch `1d`; Nutzer darf eine verfügbare Auflösung wählen. Strategie und Signale werden immer auf `1h` berechnet, nie auf aggregierten UI-Bars. | **BESCHLOSSEN** |
 | DEC-027 | Markt-/Backtestdaten und Trade-/Audit-Ledger bleiben für Reproduzierbarkeit dauerhaft. Betriebslogs 90 Tage online, danach löschbar; Incidentberichte und Release-Nachweise dauerhaft. | **BESCHLOSSEN** |
 | DEC-028 | Oberfläche Deutsch; technische IDs, API-Felder und Symbole bleiben unverändert/kopierbar. | **BESCHLOSSEN** |
+| DEC-032 | Es gibt genau eine `Startbot.bat` für Windows. Sie enthält keine Fachlogik und delegiert an den einzigen technischen Einstieg `src/main.py start`. Weitere Starterdateien sind verboten. | **BESCHLOSSEN** |
 
 ## Vom Nutzer verbindlich vorgegeben
 
-- In dieser Phase ausschließlich Dokumentation, kein Botcode.
+- Die reine Dokumentationsphase wurde nach dem DMS-Freeze beendet; anschließend wurde der Bau ausdrücklich beauftragt.
 - Zehn Kryptowährungen auf Binance Spot/USDT.
 - Backtest-Batch: zehn isolierte Tests à 250 USDT; Einzeltest für einen wählbaren Coin ebenfalls 250 USDT.
 - 24/7-Paperbetrieb als Pflichtvorbereitung für Live.
@@ -62,6 +63,7 @@ Beschlussstand: **31.08.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 - Startup-Vollprüfung aller zehn Coins und tägliches Nachziehen.
 - Die Strategie basiert ausschließlich auf der dokumentierten Hixton-V1-Logik.
 - GitHub ist die zentrale Projektablage; übersichtliche Struktur, ein technischer Einstiegspunkt, Backtestversionen in getrennten Versionsordnern.
+- Eine einzige `Startbot.bat` startet Paper-Bot und UI; Ordnung, laufendes Aufräumen und dokumentierte Sauberkeitsregeln sind verbindlich.
 
 ## Umgang mit dem nicht vorliegenden Pine-Quelltext
 

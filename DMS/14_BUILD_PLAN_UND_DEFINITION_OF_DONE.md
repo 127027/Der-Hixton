@@ -1,6 +1,19 @@
 # 14 – Build-Plan und Definition of Done
 
-Dieses Dokument beschreibt nur die spätere Reihenfolge. Es autorisiert in diesem Auftrag keine Bot-Implementierung.
+Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eigentümer hat nach dem DMS-Freeze die Implementierung ausdrücklich beauftragt.
+
+## Implementierungsstand am 01.09.2026
+
+| Phase | Technischer Stand | Freigabestatus |
+|---|---|---|
+| 0 – Spezifikation | DMS V1/`HIXTON-SPEC-1.0` eingefroren | **BESTANDEN** |
+| 1 – Strategie-Domain | eine Engine, Golden-/Replay-/Zustandstests | **BESTANDEN** gegen eigene normative Spezifikation; keine unbelegte Herstellerparität |
+| 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
+| 3 – Backtest | 10×250 und Einzeltest, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
+| 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs | **BESTANDEN** in lokaler Browser-Abnahme |
+| 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Checkpoint | **IMPLEMENTIERT**, Gate C/Soak noch nicht bestanden |
+| 6 – Live-Adapter | kein privater Orderversand; UI und CLI zeigen `LIVE_DISABLED` | **ABSICHTLICH GESPERRT** |
+| 7 – Live-Freigabe | nicht begonnen | **NICHT FREIGEGEBEN** |
 
 ## Phase 0 – Spezifikation schließen
 
