@@ -150,6 +150,7 @@ let candleSeries: ISeriesApi<"Candlestick"> | null = null;
 let vidyaSeries: ISeriesApi<"Line"> | null = null;
 let upperSeries: ISeriesApi<"Line"> | null = null;
 let lowerSeries: ISeriesApi<"Line"> | null = null;
+let chartLoadGeneration = 0;
 
 function showToast(message: string, error = false): void {
   const toast = required<HTMLDivElement>("#toast");
@@ -270,12 +271,16 @@ function ensureChart(): void {
 }
 
 async function loadChart(): Promise<void> {
+  const generation = ++chartLoadGeneration;
+  const requestedSymbol = selectedSymbol;
+  const requestedRange = selectedRange;
+  const timezone = required<HTMLSelectElement>("#timezone-select").value;
   ensureChart();
   required("#chart-loading").classList.remove("hidden");
-  text("#chart-symbol", selectedSymbol.replace("USDT", "/USDT"));
+  text("#chart-symbol", requestedSymbol.replace("USDT", "/USDT"));
   try {
-    const timezone = required<HTMLSelectElement>("#timezone-select").value;
-    const payload = await api<ChartPayload>(`/api/chart?symbol=${selectedSymbol}&range=${selectedRange}&timezone=${encodeURIComponent(timezone)}`);
+    const payload = await api<ChartPayload>(`/api/chart?symbol=${requestedSymbol}&range=${requestedRange}&timezone=${encodeURIComponent(timezone)}`);
+    if (generation !== chartLoadGeneration) return;
     text("#resolution-label", `Trading ${payload.trading_timeframe} · Anzeige ${payload.display_resolution}`);
     const candles = payload.bars.map((bar) => ({ time: timestamp(bar.time), open: bar.open, high: bar.high, low: bar.low, close: bar.close }));
     candleSeries!.setData(candles);
@@ -283,7 +288,7 @@ async function loadChart(): Promise<void> {
     upperSeries!.setData(payload.bars.filter((bar) => bar.upper !== null).map((bar) => ({ time: timestamp(bar.time), value: bar.upper! })));
     lowerSeries!.setData(payload.bars.filter((bar) => bar.lower !== null).map((bar) => ({ time: timestamp(bar.time), value: bar.lower! })));
     const validTimes = new Set(candles.map((bar) => bar.time));
-    const compactMarkers = selectedRange === "1y" || selectedRange === "3y";
+    const compactMarkers = requestedRange === "1y" || requestedRange === "3y";
     const markers: SeriesMarker<Time>[] = payload.signals
       .filter((signal) => validTimes.has(timestamp(signal.display_time)))
       .map((signal) => ({
@@ -306,9 +311,13 @@ async function loadChart(): Promise<void> {
     chart!.timeScale().fitContent();
     if (!payload.available) showToast("Für diesen Zeitraum sind noch keine lokalen Daten vorhanden.", true);
   } catch (error) {
-    showToast(error instanceof Error ? error.message : String(error), true);
+    if (generation === chartLoadGeneration) {
+      showToast(error instanceof Error ? error.message : String(error), true);
+    }
   } finally {
-    required("#chart-loading").classList.add("hidden");
+    if (generation === chartLoadGeneration) {
+      required("#chart-loading").classList.add("hidden");
+    }
   }
 }
 
