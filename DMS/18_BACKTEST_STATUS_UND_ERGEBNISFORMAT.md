@@ -7,7 +7,7 @@ Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-M�
 Der technische Nachweis ist vollständig genug für Gate B:
 
 - ausführbare Strategie- und Backtestengine vorhanden;
-- 59 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Portfolio-, Restart-, API-, Reporting- und Charttests bestanden;
+- 61 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Portfolio-Risiko-, Restart-, API-, Reporting- und Charttests bestanden;
 - je Markt 26.704 geschlossene 1h-Kerzen geprüft: 26.304 Auswertungsbars plus 400 Warm-up-Bars;
 - zehn isolierte Konten à 250 USDT, ohne automatisches Compounding;
 - Baseline- und Stresskosten auf Ein- und Ausstieg angewendet;
@@ -102,9 +102,9 @@ Der vollständige Stand liegt unter `backtests/v2/README.md`. Kandidat 1 verwend
 
 Der Primär-Run `8dbdeb5b-a4e8-4b56-b6dc-61c7f0d54e93` und Wiederholungs-Run `a7c96450-29f6-437d-af97-402d9d9c58cc` wurden über denselben technischen Einstieg ausgeführt. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich. UI und CLI können V1/V2 getrennt rechnen und auflisten; V2-Manifeste tragen `paper_approved: false`.
 
-## V2-Spiegelportfolio mit gemeinsam 3×80 USDT
+## V2-Strategiereplay mit gemeinsam 3×80 USDT
 
-Der für den Paperbetrieb relevante Kapitalschnitt wurde zusätzlich als eigener Modus gerechnet: ein gemeinsamer Cashbestand von 240 USDT, höchstens drei gleichzeitig offene Positionen, je Einstieg maximal 80 USDT und kein automatisches Hochskalieren der Zielgröße aus Gewinnen. Ausstiege erfolgen am nächsten 1h-Bar-Open vor neuen Einstiegen; bei Konkurrenz entscheidet die dokumentierte Ausbruchsstärke mit fester Coin-Tie-Break-Reihenfolge.
+Zunächst wurde die reine Strategie mit einem gemeinsamen Cashbestand von 240 USDT, höchstens drei gleichzeitig offenen Positionen, je Einstieg maximal 80 USDT und ohne automatische Hochskalierung gerechnet. Ausstiege erfolgen am nächsten 1h-Bar-Open vor neuen Einstiegen; bei Konkurrenz entscheidet die dokumentierte Ausbruchsstärke mit fester Coin-Tie-Break-Reihenfolge. Dieser erste Lauf enthielt noch nicht die Paper-Risikogates und heißt deshalb rückwirkend eindeutig `strategy-only`, nicht Paper-/Live-Spiegel.
 
 | Szenario | Start | Ende | Netto-PnL | Rendite | Trades | Max. Drawdown | Profit Factor |
 |---|---:|---:|---:|---:|---:|---:|---:|
@@ -120,6 +120,26 @@ Im Baselinefall wurde das Konto historisch mehr als verdoppelt; im Stressfall bl
 - `trades.csv`: `47D6063FE662E0223D0A4FB3E6C27613D765E6C0C98A606DB6A47D707BB74AA0`
 - `equity.csv`: `5B8994F48EC7B2756CC73B58839B7AF521F7D3A6E6FD2FAE34F3A5A15AE43E48`
 
-Die drei Kernartefakte sind zwischen beiden Läufen bytegleich. Dieses Ergebnis ist der korrekte Vergleich für „240 USDT über alle zehn Coins“, während der 10×250-Lauf ausschließlich die isolierte Eignung jedes Coins misst.
+Die drei Kernartefakte sind zwischen beiden Läufen bytegleich. Dieses Ergebnis beschreibt die Strategieauslastung mit 240 USDT, während der 10×250-Lauf ausschließlich die isolierte Eignung jedes Coins misst.
+
+## Korrigierter Paper-/Live-Risikospiegel
+
+Bei der Prüfung vor Live wurde eine Paritätslücke gefunden und behoben: Der gemeinsame Kapitallauf musste zusätzlich die bereits verbindlichen Paperregeln anwenden. Ab dieser Korrektur pausiert ein Verlust von 5 % gegenüber der UTC-Tagesstart-Equity neue Einstiege bis zum nächsten UTC-Tag; 20 % Drawdown vom globalen High-Water-Mark setzt dauerhaft `HALTED`. Ausstiege bleiben erlaubt, offene Positionen werden nicht notliquidiert.
+
+| Szenario | Start | Ende | Netto-PnL | Rendite | Trades | Max. Drawdown | Risikohalt |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Baseline | 240,00 | 542,49 | +302,49 | +126,04 % | 108 | 22,77 % | 06.02.2025 15:59:59,999 UTC |
+| Stress | 240,00 | 406,29 | +166,29 | +69,29 % | 30 | 20,13 % | 05.02.2024 21:59:59,999 UTC |
+
+Das höhere Baseline-Endkapital gegenüber `strategy-only` entstand nicht durch bessere Signale, sondern weil der Halt spätere Verlustphasen vermied. Danach wurden jedoch keine neuen Positionen mehr eröffnet. Im Baselinefall blockierte der Halt 307 weitere Einstiege, im Stressfall 487. Ein positiver Endwert darf daher nicht als drei Jahre kontinuierlicher Betrieb oder täglicher Profit gelesen werden.
+
+- Primär-Run: `83b38ab1-cf26-4ab2-a4b1-6e1e290822ea`
+- Wiederholungs-Run: `c908cf2f-5910-4dfe-97b0-e6c40465205d`
+- Code-Commit beider Manifeste: `50c5327af42328824b9d06387d0bb19d7e9e92eb`
+- `metrics.json`: `DBF2F599F533A2B8BED40DB71835DA2B197E3D9F306E12D22B6FA3D09BE5446C`
+- `trades.csv`: `FFD91869C4FD3F4D24AA41F00B2758D2FE70B05FF9215D8B95FA14E1016B15D8`
+- `equity.csv`: `3914FC1FDC11C24DCAD94F95D65EA29842678E3BDA25A9CB414338DE70DBCB6C`
+
+Die Kernartefakte sind in beiden korrigierten Läufen bytegleich. Zwei ältere lückenlose Segmente bestätigen die fehlende Live-Reife: Im Segment 16.10.2021–24.03.2023 endete der Risikospiegel bei 227,42 USDT Baseline beziehungsweise 223,32 USDT Stress und hielt am 04.12.2021. Im Segment 10.04.2023–01.09.2024 endete er bei 207,24 beziehungsweise 201,90 USDT und hielt am 10.06.2023.
 
 Ältere Segmente zeigen jedoch Verlustfenster: Im Abschnitt 16.10.2021–24.03.2023 erreichte der Kandidat aggregiert nur +4,26 % Baseline und −7,82 % Stress. V2 bleibt deshalb `RESEARCH_ONLY`; der laufende Paperbot bleibt V1.

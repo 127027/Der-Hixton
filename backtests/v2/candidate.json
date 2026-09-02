@@ -27,7 +27,7 @@
     "stress": 40
   },
   "selection_reason": "Beste Kosten- und Mehrfenster-Robustheit der geprüften gemeinsamen Parametersätze; nicht wegen maximaler Tradezahl allein.",
-  "shared_portfolio_current_window": {
+  "shared_portfolio_strategy_only_current_window": {
     "report_start_utc": "2023-09-01T12:00:00Z",
     "report_end_utc": "2026-09-01T12:00:00Z",
     "primary_run_id": "4aa4d135-b077-4c29-a839-fa141952113b",
@@ -43,6 +43,28 @@
       "return_pct": 81.79426743545546,
       "completed_trades": 227,
       "max_drawdown_pct": 43.33207445679281
+    }
+  },
+  "paper_risk_mirror_current_window": {
+    "risk_limits": {
+      "daily_loss_pause_pct": 5,
+      "max_drawdown_halt_pct": 20
+    },
+    "primary_run_id": "83b38ab1-cf26-4ab2-a4b1-6e1e290822ea",
+    "reproduction_run_id": "c908cf2f-5910-4dfe-97b0-e6c40465205d",
+    "baseline": {
+      "ending_equity_usdt": 542.4931231026223,
+      "return_pct": 126.03880129275927,
+      "completed_trades": 108,
+      "max_drawdown_pct": 22.766810116821964,
+      "risk_halted_at_utc": "2025-02-06T15:59:59.999Z"
+    },
+    "stress": {
+      "ending_equity_usdt": 406.2898649232532,
+      "return_pct": 69.28744371802217,
+      "completed_trades": 30,
+      "max_drawdown_pct": 20.13032047125736,
+      "risk_halted_at_utc": "2024-02-05T21:59:59.999Z"
     }
   },
   "promotion_requirements": [

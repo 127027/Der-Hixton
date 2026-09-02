@@ -1,4 +1,4 @@
-# HIXTON V2 – Forschungsstand vom 01.09.2026
+# HIXTON V2 – Forschungsstand vom 02.09.2026
 
 Status: `RESEARCH_ONLY`. Die laufende Paperstrategie bleibt `HIXTON-SPEC-1.0`. Dieser Ordner überschreibt weder V1 noch alte Runs.
 
@@ -71,9 +71,9 @@ Die Wiederholung erzeugte bytegleiche Kernartefakte:
 | `trades.csv` | `E40EECBDF15674E69B77BC5F4F0D6E418BCE75ADC7CF8914BD05F9E2E34DF843` |
 | `equity.csv` | `E90DD77892565E553CA8C8D04F5C07F010CD89247B2E1050DA430FEC8593FA7D` |
 
-## Gemeinsames 3×80-USDT-Spiegelportfolio
+## Gemeinsames 3×80-USDT-Strategiereplay
 
-Der isolierte 10×250-Lauf beantwortet nicht, was aus real gemeinsam eingesetzten 240 USDT geworden wäre. Deshalb wurde Kandidat 1 zusätzlich mit genau dem Paper-Kapitalmodell gerechnet: ein Cashpool, maximal drei gleichzeitige Slots, höchstens 80 USDT je Einstieg, kein automatisches Compounding und dieselbe deterministische Slotpriorität.
+Der isolierte 10×250-Lauf beantwortet nicht, was aus gemeinsam eingesetzten 240 USDT geworden wäre. Deshalb wurde Kandidat 1 zusätzlich mit dem Paper-Kapitalmodell gerechnet: ein Cashpool, maximal drei gleichzeitige Slots, höchstens 80 USDT je Einstieg, kein automatisches Compounding und dieselbe deterministische Slotpriorität. Dieser erste Stand enthielt noch nicht die operativen 5-/20-%-Risikogates und wird deshalb klar als `strategy-only` bezeichnet.
 
 - Primär-Run: `4aa4d135-b077-4c29-a839-fa141952113b`
 - Wiederholungs-Run: `060745da-5e9f-4445-a768-0b2c2da63851`
@@ -93,6 +93,31 @@ Die Wiederholung erzeugte erneut bytegleiche Kernartefakte:
 | `metrics.json` | `62BE829B0B57354AB2EBD5F824C576ECEE86B6B9829ABA33382272C8820B0119` |
 | `trades.csv` | `47D6063FE662E0223D0A4FB3E6C27613D765E6C0C98A606DB6A47D707BB74AA0` |
 | `equity.csv` | `5B8994F48EC7B2756CC73B58839B7AF521F7D3A6E6FD2FAE34F3A5A15AE43E48` |
+
+## Paper-/Live-Risikospiegel nach Paritätskorrektur
+
+Vor einer Livefreigabe wurde die fehlende Risikoparität geschlossen. Der Modus `backtest portfolio` nutzt nun zusätzlich dieselbe 5-%-Tagesverlustpause und denselben persistenten 20-%-Drawdown-Halt wie das Paperledger.
+
+- Primär-Run: `83b38ab1-cf26-4ab2-a4b1-6e1e290822ea`
+- Wiederholungs-Run: `c908cf2f-5910-4dfe-97b0-e6c40465205d`
+- Ausführung: `py -3 src/main.py backtest portfolio --strategy v2 --end 2026-09-01T12:00:00Z --cost both`
+
+| Szenario | Endkapital | Rendite | Trades | Profit Factor | Max-DD | Risikohalt |
+|---|---:|---:|---:|---:|---:|---|
+| Baseline | 542,49 USDT | +126,04 % | 108 | 2,04 | 22,77 % | 06.02.2025 |
+| Stress | 406,29 USDT | +69,29 % | 30 | 3,52 | 20,13 % | 05.02.2024 |
+
+Das Ergebnis ist positiv, aber der Bot hätte nicht drei Jahre durchgehend weitergehandelt. Der Baseline-Halt blockierte danach 307 Einstiege, der Stress-Halt 487. Die älteren Risikospiegel endeten mit Verlust: 227,42/223,32 USDT im ersten und 207,24/201,90 USDT im zweiten Segment. V2 bleibt daher ohne Diskussion `RESEARCH_ONLY`.
+
+| Artefakt | SHA-256 in beiden korrigierten Runs |
+|---|---|
+| `metrics.json` | `DBF2F599F533A2B8BED40DB71835DA2B197E3D9F306E12D22B6FA3D09BE5446C` |
+| `trades.csv` | `FFD91869C4FD3F4D24AA41F00B2758D2FE70B05FF9215D8B95FA14E1016B15D8` |
+| `equity.csv` | `3914FC1FDC11C24DCAD94F95D65EA29842678E3BDA25A9CB414338DE70DBCB6C` |
+
+## Fokussierter Band-4,0-Challenger verworfen
+
+Band 4,0 wirkte im aktuellen gemeinsamen Portfolio mit 776,56 USDT Baseline und 684,84 USDT Stress zunächst deutlich besser als 3,8. Im älteren Segment 16.10.2021–24.03.2023 fiel es jedoch auf 230,07 USDT Baseline und 178,58 USDT Stress, während Band 3,8 dort 291,76 beziehungsweise 208,73 USDT erreichte. Band 4,0 wird deshalb als jüngst überangepasst verworfen und nicht aktiviert.
 
 ## Ältere Marktsegmente
 

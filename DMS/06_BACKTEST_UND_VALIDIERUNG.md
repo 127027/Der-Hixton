@@ -90,6 +90,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Einzelmodus: Coin-Auswahl, zum Beispiel ETH, darf ohne die übrigen neun ausgeführt werden;
 - Spiegelportfolio: gemeinsamer Cashpool 240 USDT, drei 80-USDT-Slots und dokumentierte Slotpriorisierung;
 - Im Spiegelportfolio werden Ausstiege am nächsten Bar-Open vor Einstiegen verarbeitet. Gleichzeitige Einstiege werden nach normalisierter Ausbruchsstärke und danach in der festen DMS-Coinreihenfolge sortiert. Blockierte Signale werden nicht später künstlich nachgeholt;
+- Der echte Paper-/Live-Spiegel wendet zusätzlich dieselbe 5-%-UTC-Tagesverlustpause und denselben persistenten 20-%-High-Water-Drawdown-Halt wie die Paperengine an. Ein Lauf ohne diese Gates heißt ausdrücklich `strategy-only` und darf nicht als Paper-/Live-Ergebnis bezeichnet werden;
 - keine Verwechslung zwischen rechnerischer Batchsumme und realistischem gemeinsamen Cashbestand;
 - Equity nach gemeinsamer UTC-Zeitachse;
 - Korrelationen der Tagesrenditen;
