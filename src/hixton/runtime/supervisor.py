@@ -376,6 +376,7 @@ class RuntimeSupervisor:
         streams = "/".join(f"{symbol.lower()}@kline_1h" for symbol in SYMBOLS)
         url = f"wss://stream.binance.com:9443/stream?streams={streams}"
         delay = 1
+        last_stream_error: str | None = None
         while not self._stop.is_set():
             try:
                 async with websockets.connect(
@@ -386,15 +387,8 @@ class RuntimeSupervisor:
                     max_size=1_000_000,
                 ) as websocket:
                     recovery_required = delay > 1
-                    self.state.set_status(
-                        stream_connected=True,
-                        feed_mode="WEBSOCKET",
-                        message=(
-                            f"Paper-Betrieb {self.strategy.version} aktiv; "
-                            "Binance-Livestream verbunden"
-                        ),
-                        last_stream_update_utc=datetime.now(UTC),
-                    )
+                    self._mark_stream_connected(last_stream_error)
+                    last_stream_error = None
                     delay = 1
                     if recovery_required:
                         self._closed_bar_event.set()
@@ -411,15 +405,37 @@ class RuntimeSupervisor:
             except asyncio.CancelledError:
                 raise
             except Exception as error:
+                last_stream_error = str(error)
                 self.state.set_status(
                     stream_connected=False,
                     feed_mode="REST_FALLBACK",
                     health="DEGRADED",
                     message="Livestream getrennt; REST-Recovery aktiv",
-                    last_error=str(error),
+                    last_error=last_stream_error,
                 )
                 await asyncio.sleep(delay)
                 delay = min(delay * 2, 60)
+
+    def _mark_stream_connected(self, last_stream_error: str | None) -> None:
+        """Mark a connected feed and clear only the stream error we own."""
+        snapshot = self.state.snapshot()
+        update: dict[str, object] = {
+            "stream_connected": True,
+            "feed_mode": "WEBSOCKET",
+            "message": (
+                f"Paper-Betrieb {self.strategy.version} aktiv; "
+                "Binance-Livestream verbunden"
+            ),
+            "last_stream_update_utc": datetime.now(UTC),
+        }
+        if (
+            last_stream_error is not None
+            and snapshot.health == "DEGRADED"
+            and snapshot.last_error == last_stream_error
+        ):
+            update["health"] = "HEALTHY"
+            update["last_error"] = None
+        self.state.set_status(**update)
 
     def _store_stream_candle(self, candle: Candle) -> None:
         with CandleStore(self.config.database_path) as store:

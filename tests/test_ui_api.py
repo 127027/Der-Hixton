@@ -53,6 +53,32 @@ def test_local_ui_status_and_ten_market_placeholders(tmp_path: Path) -> None:
     assert logs.json()["logs"][0]["event_code"] == "PROCESS_START"
 
 
+def test_reconnected_stream_clears_only_its_own_error(tmp_path: Path) -> None:
+    supervisor = RuntimeSupervisor(_config(tmp_path))
+    stream_error = "keepalive ping timeout"
+    supervisor.state.set_status(
+        health="DEGRADED",
+        stream_connected=False,
+        feed_mode="REST_FALLBACK",
+        last_error=stream_error,
+    )
+
+    supervisor._mark_stream_connected(stream_error)
+
+    recovered = supervisor.state.snapshot()
+    assert recovered.health == "HEALTHY"
+    assert recovered.stream_connected is True
+    assert recovered.feed_mode == "WEBSOCKET"
+    assert recovered.last_error is None
+
+    supervisor.state.set_status(health="DEGRADED", last_error="data audit failed")
+    supervisor._mark_stream_connected(stream_error)
+
+    unrelated = supervisor.state.snapshot()
+    assert unrelated.health == "DEGRADED"
+    assert unrelated.last_error == "data audit failed"
+
+
 def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: Path) -> None:
     config = _config(tmp_path)
     client = TestClient(
