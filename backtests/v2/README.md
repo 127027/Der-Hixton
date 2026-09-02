@@ -71,6 +71,29 @@ Die Wiederholung erzeugte bytegleiche Kernartefakte:
 | `trades.csv` | `E40EECBDF15674E69B77BC5F4F0D6E418BCE75ADC7CF8914BD05F9E2E34DF843` |
 | `equity.csv` | `E90DD77892565E553CA8C8D04F5C07F010CD89247B2E1050DA430FEC8593FA7D` |
 
+## Gemeinsames 3×80-USDT-Spiegelportfolio
+
+Der isolierte 10×250-Lauf beantwortet nicht, was aus real gemeinsam eingesetzten 240 USDT geworden wäre. Deshalb wurde Kandidat 1 zusätzlich mit genau dem Paper-Kapitalmodell gerechnet: ein Cashpool, maximal drei gleichzeitige Slots, höchstens 80 USDT je Einstieg, kein automatisches Compounding und dieselbe deterministische Slotpriorität.
+
+- Primär-Run: `a03df78c-409c-4e51-be0a-049de7c1e1f6`
+- Wiederholungs-Run: `d030497b-ed72-40bd-b519-2c2fe454b11b`
+- Ausführung: `py -3 src/main.py backtest portfolio --strategy v2 --end 2026-09-01T12:00:00Z --cost both`
+
+| Szenario | Endkapital | Rendite | Trades | Gewinnquote | Profit Factor | Max-DD | Buy & Hold Ende |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Baseline | 528,38 USDT | +120,16 % | 227 | 37,44 % | 1,37 | 34,10 % | 490,90 USDT |
+| Stress | 436,31 USDT | +81,79 % | 227 | 35,68 % | 1,22 | 43,33 % | 489,68 USDT |
+
+Die Baseline verdoppelte das gemeinsame Startkapital historisch und übertraf die gleichgewichtete Buy-and-Hold-Benchmark. Unter Stress blieb das Ergebnis positiv, aber unter 480 USDT und unter Buy-and-Hold. Von 781 Order-Signalen wurden 456 ausgeführt; 325 Einstiegssignale wurden ausschließlich als `NO_FREE_SLOT` protokolliert. Am Ende waren BTC und SOL noch offen und zum letzten Schlusskurs enthalten. Damit wird insbesondere nicht behauptet, die isolierten 6.592,22 USDT seien mit realen 240 USDT erreichbar gewesen.
+
+Die Wiederholung erzeugte erneut bytegleiche Kernartefakte:
+
+| Artefakt | SHA-256 in beiden Runs |
+|---|---|
+| `metrics.json` | `35D4485152ACC15DFE30A4ED87E35072C20134679703CACE99D28EB46DF6E73D` |
+| `trades.csv` | `47D6063FE662E0223D0A4FB3E6C27613D765E6C0C98A606DB6A47D707BB74AA0` |
+| `equity.csv` | `5B8994F48EC7B2756CC73B58839B7AF521F7D3A6E6FD2FAE34F3A5A15AE43E48` |
+
 ## Ältere Marktsegmente
 
 Wegen echter Binance-Wartungslücken wurden keine Kerzen erfunden. Statt eines künstlich geschlossenen Dreijahresfensters wurden zwei nach Datenprüfung lückenlose Segmente verwendet.

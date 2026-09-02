@@ -17,6 +17,9 @@
   "capital": {
     "isolated_start_usdt_per_coin": 250,
     "coin_count": 10,
+    "shared_portfolio_start_usdt": 240,
+    "shared_portfolio_slot_count": 3,
+    "shared_portfolio_target_notional_usdt": 80,
     "automatic_compounding": false
   },
   "cost_scenarios_bps_per_side": {
@@ -24,6 +27,24 @@
     "stress": 40
   },
   "selection_reason": "Beste Kosten- und Mehrfenster-Robustheit der geprüften gemeinsamen Parametersätze; nicht wegen maximaler Tradezahl allein.",
+  "shared_portfolio_current_window": {
+    "report_start_utc": "2023-09-01T12:00:00Z",
+    "report_end_utc": "2026-09-01T12:00:00Z",
+    "primary_run_id": "a03df78c-409c-4e51-be0a-049de7c1e1f6",
+    "reproduction_run_id": "d030497b-ed72-40bd-b519-2c2fe454b11b",
+    "baseline": {
+      "ending_equity_usdt": 528.3759665477908,
+      "return_pct": 120.15665272824617,
+      "completed_trades": 227,
+      "max_drawdown_pct": 34.10185907206493
+    },
+    "stress": {
+      "ending_equity_usdt": 436.3062418450931,
+      "return_pct": 81.79426743545546,
+      "completed_trades": 227,
+      "max_drawdown_pct": 43.33207445679281
+    }
+  },
   "promotion_requirements": [
     "reproduzierbarer versionierter V2-Lauf",
     "V2-UI-Auswahl ohne Überschreiben von V1",

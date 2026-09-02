@@ -6,6 +6,7 @@ import csv
 import dataclasses
 import html
 import json
+from collections import Counter
 from datetime import UTC, datetime
 from decimal import Decimal
 from enum import Enum
@@ -71,7 +72,12 @@ def _metrics_payload(result: RunResult) -> dict[str, object]:
                 "slot_count": result.slot_count,
                 "max_concurrent_positions": result.max_concurrent_positions,
                 "open_symbols_at_end": _primitive(result.open_symbols_at_end),
+                "signal_count": len(result.signals),
+                "fill_count": len(result.fills),
                 "blocked_signal_count": len(result.blocked_signals),
+                "blocked_reasons": dict(
+                    Counter(item.rsplit(":", 1)[-1] for item in result.blocked_signals)
+                ),
                 "metrics": _primitive(result.metrics),
             }
         }
@@ -90,6 +96,17 @@ def write_report_bundle(
 ) -> Path:
     """Create one new run directory; existing runs are never overwritten."""
 
+    run_modes = {
+        "portfolio"
+        if isinstance(result, PortfolioBacktestResult)
+        else "batch"
+        if isinstance(result, BatchResult)
+        else "single"
+        for result in scenarios.values()
+    }
+    if len(run_modes) != 1:
+        raise ValueError("all cost scenarios must use the same backtest mode")
+    run_mode = run_modes.pop()
     run_id = str(uuid4())
     run_directory = output_root / run_id
     run_directory.mkdir(parents=True, exist_ok=False)
@@ -120,6 +137,7 @@ def write_report_bundle(
         "run_id": run_id,
         "created_at_utc": created_at.isoformat(),
         "status": "VALID",
+        "run_mode": run_mode,
         "strategy": {
             "version": strategy.version,
             "reference": strategy.reference,

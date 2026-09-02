@@ -47,7 +47,9 @@ Verbindliche Bedienform:
 Startbot.bat
 py -3 src/main.py backtest all
 py -3 src/main.py backtest single --symbol ETHUSDT
+py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
+py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py paper
 py -3 src/main.py live
 py -3 src/main.py ui

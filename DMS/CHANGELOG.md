@@ -11,7 +11,8 @@
 - Telegram auf ausdrücklichen Eigentümerwunsch aus Pflicht- und Live-Gates entfernt; lokale UI und strukturierte Logs sind die verbindlichen Überwachungskanäle.
 - Kombinierte Backtest-Drawdown-Aggregation gegen abweichende Provider-Close-Millisekunden korrigiert und per Regressionstest gesichert.
 - V1/V2 über denselben CLI-Einstieg und in der bestehenden Backtest-UI getrennt auswählbar gemacht; V2-Manifeste enthalten Parameter, Pine-Referenz, Semantik und `paper_approved: false`.
-- Vollständigen V2-10er-Batch bytegleich wiederholt und Kernartefakt-Hashes im V2-Bericht fixiert; aktueller Prüfstand 56 grüne Python-Tests.
+- Vollständigen V2-10er-Batch bytegleich wiederholt und Kernartefakt-Hashes im V2-Bericht fixiert; damaliger Prüfstand 56 grüne Python-Tests.
+- Gemeinsamen 240-USDT-Spiegellauf mit drei festen 80-USDT-Slots als eigenen CLI-/UI-Modus implementiert, zweimal bytegleich reproduziert und ehrlich gegen das gleichgewichtete Buy-and-Hold-Portfolio ausgewiesen; aktueller Prüfstand 59 grüne Python-Tests.
 
 ## 1.1.0 – 01.09.2026
 

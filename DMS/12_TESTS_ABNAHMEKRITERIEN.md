@@ -89,13 +89,13 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 
 ## Automatisierter Nachweisstand vom 01.09.2026
 
-- `pytest`: 56 von 56 Tests bestanden;
+- `pytest`: 59 von 59 Tests bestanden;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
 - mypy: keine Typfehler in 30 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;
 - npm Audit: 0 bekannte Schwachstellen in 67 Abhängigkeiten;
 - Datenqualität: zehn von zehn Märkten mit drei Jahren plus 400 Warm-up-Bars ohne Lücke;
-- Backtest: 10×250-USDT-Batch und ETH-Einzelmodus ausgeführt;
+- Backtest: 10×250-USDT-Batch, ETH-Einzelmodus und gemeinsames 3×80-USDT-Portfolio ausgeführt;
 - Reproduktion: Metrik-, Trade- und Equity-Dateien bytegleich;
 - Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
 - responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.

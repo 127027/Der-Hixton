@@ -103,7 +103,7 @@ Startmaske:
 
 - `Alle 10 Coins`: zehn isolierte Läufe mit je 250 USDT;
 - `Einzeltest`: genau ein auswählbares Paar, etwa ETH/USDT, mit 250 USDT;
-- optional `Paper-/Live-Spiegel`: 240 USDT gemeinsamer Cashpool mit 3×80-USDT-Slots;
+- `Gemeinsames 3×80-Portfolio`: 240 USDT gemeinsamer Cashpool mit höchstens drei festen 80-USDT-Slots;
 - Zeitraum, Timeframe, Kostenmodell und Strategieversion vor Start sichtbar;
 - Backteststart löst niemals eine Börsenorder aus.
 
@@ -126,6 +126,7 @@ Darstellung:
 - Trades und Kosten;
 - je Coin Ampel „netto positiv/netto negativ/nicht bewertbar“ ohne Gewinnversprechen;
 - Portfolioaggregation ohne schlechte Coins auszublenden.
+- Spiegelportfolio als eigene Ergebniszeile mit Start, Ende, Rendite, Trades, Drawdown und gleichgewichtetem Buy-and-Hold; es darf nicht als 10×250-Batch beschriftet werden.
 
 ## Datenqualität
 

@@ -26,7 +26,7 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
-- Backtest v1: zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress.
+- Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung. Kandidat 1 bleibt `RESEARCH_ONLY`.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
@@ -47,15 +47,17 @@ py -3 src/main.py data sync --symbol ALL
 py -3 src/main.py data audit --symbol ALL
 py -3 src/main.py backtest all
 py -3 src/main.py backtest single --symbol ETHUSDT
+py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
 py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDT
+py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
 
 `live` beendet sich absichtlich mit einer Sperrmeldung.
 
-Die Backtestseite besitzt dieselbe eindeutige Auswahl `V1 · aktives Paper` oder `V2 · Forschung`. Diese Auswahl ändert niemals die aktive Paperstrategie.
+Die Backtestseite besitzt dieselbe eindeutige Auswahl `V1 · aktives Paper` oder `V2 · Forschung` sowie `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
 
 ## Entwicklung und Prüfung
 

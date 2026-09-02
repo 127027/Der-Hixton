@@ -7,7 +7,7 @@ Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-M�
 Der technische Nachweis ist vollständig genug für Gate B:
 
 - ausführbare Strategie- und Backtestengine vorhanden;
-- 56 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Restart-, API-, Reporting- und Charttests bestanden;
+- 59 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Portfolio-, Restart-, API-, Reporting- und Charttests bestanden;
 - je Markt 26.704 geschlossene 1h-Kerzen geprüft: 26.304 Auswertungsbars plus 400 Warm-up-Bars;
 - zehn isolierte Konten à 250 USDT, ohne automatisches Compounding;
 - Baseline- und Stresskosten auf Ein- und Ausstieg angewendet;
@@ -101,5 +101,25 @@ Große, reproduzierbare Run-Dateien und Marktdaten werden nicht in Git eingechec
 Der vollständige Stand liegt unter `backtests/v2/README.md`. Kandidat 1 verwendet 1h, VIDYA 6, Momentum 20, SMA 8, ATR 60 und Band 3,8. Im aktuellen Dreijahresfenster endeten die zehn isolierten 250-USDT-Konten zusammen bei 6.592,22 USDT (+163,69 %) in der Baseline und 5.843,73 USDT (+133,75 %) im Stress, jeweils mit 549 Trades. Alle zehn waren dort positiv; sieben überschritten 500 USDT.
 
 Der Primär-Run `8dbdeb5b-a4e8-4b56-b6dc-61c7f0d54e93` und Wiederholungs-Run `a7c96450-29f6-437d-af97-402d9d9c58cc` wurden über denselben technischen Einstieg ausgeführt. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich. UI und CLI können V1/V2 getrennt rechnen und auflisten; V2-Manifeste tragen `paper_approved: false`.
+
+## V2-Spiegelportfolio mit gemeinsam 3×80 USDT
+
+Der für den Paperbetrieb relevante Kapitalschnitt wurde zusätzlich als eigener Modus gerechnet: ein gemeinsamer Cashbestand von 240 USDT, höchstens drei gleichzeitig offene Positionen, je Einstieg maximal 80 USDT und kein automatisches Hochskalieren der Zielgröße aus Gewinnen. Ausstiege erfolgen am nächsten 1h-Bar-Open vor neuen Einstiegen; bei Konkurrenz entscheidet die dokumentierte Ausbruchsstärke mit fester Coin-Tie-Break-Reihenfolge.
+
+| Szenario | Start | Ende | Netto-PnL | Rendite | Trades | Max. Drawdown | Profit Factor |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| Baseline | 240,00 | 528,38 | +288,38 | +120,16 % | 227 | 34,10 % | 1,37 |
+| Stress | 240,00 | 436,31 | +196,31 | +81,79 % | 227 | 43,33 % | 1,22 |
+
+Im Baselinefall wurde das Konto historisch mehr als verdoppelt; im Stressfall blieb es deutlich positiv, erreichte 480 USDT aber nicht. Die Baseline übertraf im selben Fenster ein gleichgewichtet gekauftes und gehaltenes 10-Coin-Portfolio von 490,90 USDT; im Stress lag die Strategie mit 436,31 USDT unter dessen 489,68 USDT. Von 781 erzeugten Order-Signalen wurden 456 ausgeführt; 325 Einstiegssignale wurden ausschließlich mit `NO_FREE_SLOT` dokumentiert und nicht später nachgeholt. Am Fensterende waren BTC und SOL noch offen und deshalb zum letzten Schlusskurs bewertet.
+
+- Primär-Run: `a03df78c-409c-4e51-be0a-049de7c1e1f6`
+- Wiederholungs-Run: `d030497b-ed72-40bd-b519-2c2fe454b11b`
+- Code-Commit beider Manifeste: `9274f6b66e9381fc5303528688d91cb7f51b457b`
+- `metrics.json`: `35D4485152ACC15DFE30A4ED87E35072C20134679703CACE99D28EB46DF6E73D`
+- `trades.csv`: `47D6063FE662E0223D0A4FB3E6C27613D765E6C0C98A606DB6A47D707BB74AA0`
+- `equity.csv`: `5B8994F48EC7B2756CC73B58839B7AF521F7D3A6E6FD2FAE34F3A5A15AE43E48`
+
+Die drei Kernartefakte sind zwischen beiden Läufen bytegleich. Dieses Ergebnis ist der korrekte Vergleich für „240 USDT über alle zehn Coins“, während der 10×250-Lauf ausschließlich die isolierte Eignung jedes Coins misst.
 
 Ältere Segmente zeigen jedoch Verlustfenster: Im Abschnitt 16.10.2021–24.03.2023 erreichte der Kandidat aggregiert nur +4,26 % Baseline und −7,82 % Stress. V2 bleibt deshalb `RESEARCH_ONLY`; der laufende Paperbot bleibt V1.

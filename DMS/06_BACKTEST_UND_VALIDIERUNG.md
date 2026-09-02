@@ -24,7 +24,7 @@ Für regelmäßige Neubewertung wird ein rollierendes 3-Jahres-Fenster verwendet
 2. Standard-Batch mit zehn isolierten Einzeltests à 250 USDT;
 3. Einzelmodus für ein frei gewähltes Paar, zum Beispiel nur ETH/USDT, mit 250 USDT;
 4. Vergleichsaggregation der zehn isolierten Ergebnisse (2.500 USDT rechnerisches Simulationskapital, kein gemeinsamer Cashpool);
-5. optionaler Paper-/Live-Spiegellauf mit gemeinsam 240 USDT und höchstens drei 80-USDT-Slots;
+5. Paper-/Live-Spiegellauf mit gemeinsam 240 USDT und höchstens drei 80-USDT-Slots;
 6. Buy-and-Hold-Benchmark je Coin;
 7. Sensitivität gegenüber Kosten und Slippage;
 8. Walk-forward-/Out-of-sample-Prüfung, falls Parameter überhaupt abgestimmt werden;
@@ -89,6 +89,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Batch: zehn Resultate mit je 250 USDT werden einzeln gezeigt und nur zum Vergleich summiert;
 - Einzelmodus: Coin-Auswahl, zum Beispiel ETH, darf ohne die übrigen neun ausgeführt werden;
 - Spiegelportfolio: gemeinsamer Cashpool 240 USDT, drei 80-USDT-Slots und dokumentierte Slotpriorisierung;
+- Im Spiegelportfolio werden Ausstiege am nächsten Bar-Open vor Einstiegen verarbeitet. Gleichzeitige Einstiege werden nach normalisierter Ausbruchsstärke und danach in der festen DMS-Coinreihenfolge sortiert. Blockierte Signale werden nicht später künstlich nachgeholt;
 - keine Verwechslung zwischen rechnerischer Batchsumme und realistischem gemeinsamen Cashbestand;
 - Equity nach gemeinsamer UTC-Zeitachse;
 - Korrelationen der Tagesrenditen;

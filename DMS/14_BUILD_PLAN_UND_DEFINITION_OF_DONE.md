@@ -9,7 +9,7 @@ Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eig
 | 0 – Spezifikation | DMS V1/`HIXTON-SPEC-1.0` eingefroren | **BESTANDEN** |
 | 1 – Strategie-Domain | eine Engine, V1- und Eigentümer-Pine-v6-Golden-/Replay-/Zustandstests | **BESTANDEN**; V2 bleibt getrennt `RESEARCH_ONLY` |
 | 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
-| 3 – Backtest | 10×250 und Einzeltest, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
+| 3 – Backtest | 10×250, Einzeltest und gemeinsames 3×80-Portfolio, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
 | 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs | **BESTANDEN** in lokaler Browser-Abnahme |
 | 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Recovery und Soak-Zähler | **IMPLEMENTIERT**, Gate C/realer Soak noch nicht bestanden |
 | 6 – Live-Adapter | kein privater Orderversand; UI und CLI zeigen `LIVE_DISABLED` | **ABSICHTLICH GESPERRT** |
@@ -51,7 +51,7 @@ Definition of Done: drei Jahre plus Warm-up pro Paar, Lücken/Fehler nachweislic
 - Gebühren, Slippage, Rundung;
 - isolierte 250-USDT-Ledger;
 - Standard-Batch 10×250 USDT und frei wählbarer Einzeltest;
-- optionaler 240-USDT-Spiegellauf mit drei 80-USDT-Slots;
+- 240-USDT-Spiegellauf mit drei 80-USDT-Slots;
 - Metriken/Benchmarks;
 - Manifest und Reports;
 - Sensitivität und Holdoutprozess.
