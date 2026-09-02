@@ -148,4 +148,12 @@ Der nachträglich mit identischem Fenster, Kapital und Risikomodell erzeugte V1-
 
 Run `76a78440-405a-4624-bc0b-7765558b801c` verwendete exakt die V2-Signale, erlaubte aber bis zu drei 80-USDT-Slots auf demselben stärksten gleichzeitigen Kaufsignal. Baseline endete bei 287,85 USDT (+19,94 %), Stress bei 282,16 USDT (+17,57 %); beide Fälle hielten am 12.10.2023 nach nur vier abgeschlossenen Positionen. Das ist deutlich schlechter als V2 `one_per_symbol`. V3 ist daher verworfen und nicht im Paper aktiv. Weitere Details stehen unter `backtests/v3/README.md`.
 
+## Kontrollierte V2-Paperaktivierung und Ist-Stand
+
+Am 02.09.2026 um 13:36:56 UTC wurde `DEC-037` einmalig ausgeführt. Vorher wurden alle zehn Märkte mit jeweils 26.704 lokalen 1h-Bars ohne Lücke auditiert und die SQLite-Datei lokal byte-/hashgleich gesichert. Die einzige offene V1-Position in DOT wurde mit dem Migrationsgrund `STRATEGY_SWITCH_TO_HIXTON-V2-RESEARCH-CANDIDATE-1` geschlossen; realisierter V1-Paper-PnL dieses Trades: `-2,55367424142 USDT`. Das historische V1-Entry- und Exit-Ereignis bleibt versioniert im Ledger.
+
+Die neue V2-Session startete vorwärtsgerichtet bei `237,44632575858 USDT`, ohne offene Position und mit drei freien 80-USDT-Slots. Unmittelbar nach Aktivierung und Neustart lautet ihr eigener PnL `0 USDT`, ihre abgeschlossene Tradezahl `0`; historische V1-Ergebnisse werden nicht V2 zugerechnet. Der neue 30- bis 90-tägige Soak begann mit der Aktivierungszeit und ist ausdrücklich noch nicht erfüllt.
+
+Die anschließende Betriebsabnahme bestätigte `PAPER`, `LIVE_DISABLED`, `HEALTHY`, zehn valide Märkte, Websocket-Feed, 50 von 50 verfügbare Coin-/Zeitraumcharts, sichtbare Strategie- und Paper-Fill-Markierungen sowie eine fehlerfreie Browserkonsole. Ein während der Abnahme beobachteter, bereits wieder verbundener Stream mit stehen gebliebenem Fehlerstatus wurde in Commit `3deea9e` behoben und durch einen Regressionstest abgesichert. Das ist ein Betriebsnachweis, kein Profitversprechen und keine Live-Freigabe.
+
 Paperfreigabe bedeutet ausschließlich, dass V2 jetzt mit echten Binance-Marktdaten und simulierten Fills vorwärts geprüft wird. Sie verspricht keinen täglichen Gewinn, hebt keinen Risikohalt auf und erteilt keine Live-Freigabe.

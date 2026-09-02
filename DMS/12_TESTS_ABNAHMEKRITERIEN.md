@@ -89,7 +89,7 @@ Verbindliche Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Mä
 
 ## Automatisierter Nachweisstand vom 02.09.2026
 
-- `pytest`: 67 von 67 Tests bestanden, einschließlich versionierter Ledger-Migration, Fail-closed-Strategiekonflikt, Mehrfachslot-Allokation und Aktivierungssperre der verworfenen V3;
+- `pytest`: 68 von 68 Tests bestanden, einschließlich versionierter Ledger-Migration, Fail-closed-Strategiekonflikt, Mehrfachslot-Allokation, Aktivierungssperre der verworfenen V3 und Websocket-Health-Recovery ohne Verdecken fremder Fehler;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
 - mypy: keine Typfehler in 34 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;
@@ -148,4 +148,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1.3 erreicht: Die Strategien lassen sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen 67 automatisierte Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Migration-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit und reproduzierte Backtests. Die lokale UI wird nach der V2-Aktivierung erneut vollständig gegen alle 50 Coin-/Zeitraumkombinationen geprüft. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen V2-Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.
+Dieser Dokumentationszustand ist mit DMS V1.3 erreicht: Die Strategien lassen sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen 68 automatisierte Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Migration-/Restart-/Recovery-/API-/Charttests, der echte Drei-Jahres-Datenaudit und reproduzierte Backtests. Nach der V2-Aktivierung bestanden alle 50 Coin-/Zeitraumkombinationen die lokale API-Prüfung; Übersicht, Chartbedienung, Signalhistorie, Paper-Ledger und Status wurden zusätzlich im gerenderten Browser geprüft, die Konsole meldete keine Warnung und keinen Fehler. Gate C bleibt bis zu externem Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen V2-Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.

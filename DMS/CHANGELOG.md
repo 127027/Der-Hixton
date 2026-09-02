@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.3.1 – 02.09.2026
+
+- Kontrollierte V1→V2-Paperaktivierung mit Sicherungshash, DOT-Migrationsschluss, V2-Start-Equity, getrenntem Session-PnL und neu gestartetem Soak dokumentiert.
+- V2-Betriebsabnahme abgeschlossen: zehn valide Märkte, 50/50 Coin-/Zeitraumcharts, sichtbare Signal-/Paper-Fill-Daten, korrekte Strategie-/Ledgeranzeige und leere Browser-Fehlerkonsole.
+- Dauerhaft falschen `DEGRADED`-Status nach erfolgreichem Websocket-Reconnect behoben; fremde Daten-/Auditfehler bleiben erhalten.
+- Prüfstand auf 68 grüne Python-Tests angehoben; Ruff und mypy weiterhin ohne Befund. Live bleibt `LIVE_DISABLED`.
+
 ## 1.3.0 – 02.09.2026
 
 - V2 nach ausdrücklicher Eigentümerentscheidung `DEC-037` vom Forschungskandidaten zur aktiven Paperstrategie erhoben; Live bleibt `LIVE_DISABLED`.

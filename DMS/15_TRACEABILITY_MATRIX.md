@@ -36,7 +36,7 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | DAT-002 Startup-Vollprüfung | Nutzerauftrag | Startup/UI Health | Lücken-/Duplikat-Fixtures |
 | DAT-003 inkrementelles Nachladen | Nutzerauftrag | Data Adapter | Paging-/Retry-Test |
 | DAT-004 00:05-UTC-Audit | DMS 05; DEC-012 | Scheduler/UI | Scheduler-/DST-Test |
-| DAT-005 Stream + REST-Fallback | Live-UI-Ziel | Data Adapter | Disconnect-/Recovery-Test |
+| DAT-005 Stream + REST-Fallback | Live-UI-Ziel | Data Adapter | Disconnect-/Recovery-Test einschließlich Löschen nur des stream-eigenen Fehlers |
 | DAT-006 offene Kerze vorläufig | DMS 05 | Engine/UI | kein Signal auf provisional |
 | DAT-007 lokale 3-Jahres-Historie | Nutzerauftrag | Chart API/UI | Range-/Datenquellentest |
 | BKT-001 drei Jahre | Nutzerauftrag | Backtest/Report | Fenstergrenzen-Test |

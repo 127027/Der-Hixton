@@ -42,6 +42,8 @@ Nach bestandener Paperfreigabe läuft der Bot als Windows-Service mit verzögert
 
 Ein Backtest wird nicht ungeprüft jeden Tag automatisch zum Live-Entscheider. Neue Ergebnisse müssen gesichtet und freigegeben werden.
 
+Nach einer bestätigten Websocket-Wiederverbindung wechselt der Feed zurück auf `WEBSOCKET`. Eine vom Streamloop selbst gesetzte Fehlermeldung wird dabei gelöscht und `DEGRADED` zu `HEALTHY` zurückgeführt. Stammt der aktuelle Fehler inzwischen aus Datenprüfung, Audit oder einer anderen Komponente, darf die Wiederverbindung ihn nicht löschen oder den Healthstatus gesund melden.
+
 ## Health Checks
 
 Pflichtprüfungen:
