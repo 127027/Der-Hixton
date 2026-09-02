@@ -1,4 +1,4 @@
-# 03 – Normative Strategie: Hixton VIDYA/ATR V1
+# 03 – Normative Strategie: Hixton VIDYA/ATR V1 und V2-Referenz
 
 Status: `VERBINDLICH` für Strategieversion `HIXTON-SPEC-1.0`.
 
@@ -6,7 +6,14 @@ Status: `VERBINDLICH` für Strategieversion `HIXTON-SPEC-1.0`.
 
 Dieses Dokument ist die vollständige mathematische Referenz für die spätere Botimplementierung. Ein Entwickler darf keine fehlenden Werte ergänzen, keine Bibliotheksdefaults übernehmen und keine ähnliche Internetstrategie an die Stelle dieser Definition setzen.
 
-Der originale proprietäre Hixton-Pine-Quelltext liegt nicht vor. Deshalb wird keine wort- oder bitgleiche Identität mit einem nicht einsehbaren Herstellerskript behauptet. Für dieses Projekt heißt „Hixton V1“ ausschließlich die nachfolgend festgelegte VIDYA-/CMO-/ATR-Strategie. Wenn später ein rechtmäßig zugänglicher Originalcode abweicht, entsteht eine neue Strategieversion mit eigenem Backtest; V1 wird nicht rückwirkend verändert.
+Für V1 heißt „Hixton“ ausschließlich die nachfolgend eingefrorene VIDYA-/CMO-/ATR-Spezifikation. Am 01.09.2026 hat der Eigentümer zusätzlich den vollständigen Pine-v6-Code zur Projektverwendung übermittelt. Er liegt einmal unter `strategy/pine/Der_Hixton_Indikator_v6.pine` (SHA-256 `8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd`) und ist die Referenz für V2. V1 wird dadurch nicht rückwirkend verändert; beide Versionen behalten getrennte Tests, Runs und Freigabestatus.
+
+## Status der Strategieversionen
+
+| Version | Formelreferenz | Parameter | Betriebsstatus |
+|---|---|---|---|
+| `HIXTON-SPEC-1.0` | normative V1-Definition in diesem Dokument | 10/20/SMA15/ATR200/Band2,0 | aktive Paperstrategie |
+| `HIXTON-V2-RESEARCH-CANDIDATE-1` | Eigentümer-Pine v6 | 6/20/SMA8/ATR60/Band3,8 | `RESEARCH_ONLY`, nicht Paper/Live |
 
 ## Verbindliche Defaultparameter
 
@@ -217,3 +224,19 @@ Für Golden-Tests gilt je numerischem Indikatorwert: bestanden, wenn absolute Ab
 ## Versionsregel
 
 Änderungen an Formel, Seed, Parameter, Timeframe, Warm-up, Cross, Positionsabbildung oder Slotranking erzeugen mindestens `HIXTON-SPEC-2.0` und `backtests/v2`. V1-Ergebnisse werden nicht überschrieben.
+
+## Pine-v6-Semantik und V2-Kandidat
+
+Die V2-Engine bildet die Eigentümerquelle ausdrücklich ab:
+
+- `math.sum` wird erst bei vollständigem Momentumfenster gültig;
+- das lokale persistente `var float v` startet mit `na` und folgt der Pine-Historiensemantik;
+- die Nachglättung entspricht `ta.sma` mit der jeweils versionierten Länge;
+- ATR entspricht `ta.atr`, also True Range mit Wilder-RMA;
+- `trendUp` startet als `false` und wird über bestätigte Crosses fortgeschrieben;
+- `flipUp`/`flipDn` sind tatsächliche Wechsel des Trendzustands, nicht beliebig wiederholte Bandkreuzungen im selben Zustand;
+- Orders bleiben trotz Pine-Berechnung erst nach 400 lückenlosen Warm-up-Bars handelbar und werden im Backtest frühestens am nächsten Bar-Open gefüllt.
+
+Mit den Pine-Defaultparametern 10/20/SMA15/ATR200/Band2,0 ergab der aktuelle Drei-Jahres-Produktionslauf dieselben Trades und dieselbe Performance wie V1. Die Pine-Startsemantik erklärt die schwachen V1-Coins deshalb nicht. Der ausgewählte gemeinsame V2-Forschungskandidat 6/20/SMA8/ATR60/Band3,8 reduziert kurze Fehlausbrüche durch deutlich weitere Bänder. Auswahl, Ergebnisse, ältere Segmente und verworfene Varianten stehen ausschließlich in `backtests/v2/README.md`.
+
+Eine Freigabe benötigt einen unveränderlichen V2-Run, UI-seitig eindeutige Versionswahl, mindestens 30 Tage parallelen Shadow-/Papervergleich und eine ausdrückliche Eigentümerentscheidung. Bis dahin darf keine V2-Konfiguration Orders im laufenden Paperkonto auslösen.

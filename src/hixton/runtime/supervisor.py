@@ -12,6 +12,7 @@ import websockets
 
 from hixton.backtest.engine import run_isolated_batch, run_single_backtest
 from hixton.backtest.models import BASELINE_COSTS, STRESS_COSTS, ExecutionRules
+from hixton.backtest.portfolio import run_shared_portfolio_backtest
 from hixton.backtest.reporting import RunResult, write_report_bundle
 from hixton.config import ProjectConfig
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
@@ -20,6 +21,7 @@ from hixton.data.quality import DataQualityReport
 from hixton.data.storage import CandleStore
 from hixton.data.sync import synchronize_symbol
 from hixton.domain.models import Candle, IndicatorPoint
+from hixton.domain.versions import strategy_definition
 from hixton.paper.engine import initialize_paper_at_latest, process_new_closed_points
 from hixton.runtime.analysis import rebuild_analysis
 from hixton.runtime.state import RuntimeState
@@ -78,30 +80,55 @@ class RuntimeSupervisor:
     async def request_sync(self) -> None:
         await self._sync_and_analyze(initial=False)
 
-    def start_backtest(self, *, mode: str, symbol: str | None = None) -> bool:
+    def start_backtest(
+        self,
+        *,
+        mode: str,
+        symbol: str | None = None,
+        strategy_key: str = "v1",
+    ) -> bool:
         if self.state.snapshot().backtest_status == "RUNNING":
             return False
-        if mode not in {"all", "single"}:
-            raise ValueError("backtest mode must be all or single")
+        if mode not in {"all", "single", "portfolio"}:
+            raise ValueError("backtest mode must be all, single or portfolio")
         normalized = symbol.replace("/", "").upper() if symbol else None
         if mode == "single" and normalized not in SYMBOLS:
             raise ValueError("single backtest requires one DMS symbol")
+        strategy_definition(strategy_key)
         self.state.set_status(backtest_status="RUNNING")
         self._backtest_task_handle = asyncio.create_task(
-            self._backtest_task(mode=mode, symbol=normalized),
+            self._backtest_task(
+                mode=mode,
+                symbol=normalized,
+                strategy_key=strategy_key,
+            ),
             name="hixton-backtest",
         )
         return True
 
-    async def _backtest_task(self, *, mode: str, symbol: str | None) -> None:
+    async def _backtest_task(
+        self,
+        *,
+        mode: str,
+        symbol: str | None,
+        strategy_key: str,
+    ) -> None:
         try:
-            await asyncio.to_thread(self._synchronous_backtest, mode, symbol)
+            await asyncio.to_thread(
+                self._synchronous_backtest,
+                mode,
+                symbol,
+                strategy_key,
+            )
             self.state.set_status(backtest_status="COMPLETE")
             self.state.log(
                 level="INFO",
                 component="backtest",
                 event_code="BACKTEST_COMPLETE",
-                message=f"Backtest {mode} {symbol or 'ALL'} erfolgreich abgeschlossen",
+                message=(
+                    f"Backtest {strategy_key} {mode} {symbol or 'ALL'} "
+                    "erfolgreich abgeschlossen"
+                ),
             )
         except Exception as error:
             self.state.set_status(backtest_status="FAILED", last_error=str(error))
@@ -236,8 +263,14 @@ class RuntimeSupervisor:
                 )
         return points, quality, rules
 
-    def _synchronous_backtest(self, mode: str, symbol: str | None) -> None:
+    def _synchronous_backtest(
+        self,
+        mode: str,
+        symbol: str | None,
+        strategy_key: str,
+    ) -> None:
         _, report_start, report_end = safe_closed_window()
+        strategy = strategy_definition(strategy_key)
         points = self.state.points()
         if set(points) != set(SYMBOLS):
             raise RuntimeError("backtest requires synchronized data for all ten symbols")
@@ -266,6 +299,23 @@ class RuntimeSupervisor:
                     report_end_utc=report_end,
                     costs=costs,
                     execution_rules=rules,
+                    strategy_parameters=strategy.parameters,
+                    strategy_semantics=strategy.semantics,
+                    strategy_version=strategy.version,
+                )
+            elif mode == "portfolio":
+                scenarios[costs.name] = run_shared_portfolio_backtest(
+                    candles_by_symbol=candles,
+                    report_start_utc=report_start,
+                    report_end_utc=report_end,
+                    starting_cash=self.config.paper_starting_cash_usdt,
+                    target_notional=self.config.paper_target_notional_usdt,
+                    slot_count=self.config.paper_slot_count,
+                    costs=costs,
+                    execution_rules=rules,
+                    strategy_parameters=strategy.parameters,
+                    strategy_semantics=strategy.semantics,
+                    strategy_version=strategy.version,
                 )
             else:
                 if symbol is None:
@@ -279,6 +329,9 @@ class RuntimeSupervisor:
                     target_notional=self.config.target_notional_usdt,
                     costs=costs,
                     execution_rules=rules[symbol],
+                    strategy_parameters=strategy.parameters,
+                    strategy_semantics=strategy.semantics,
+                    strategy_version=strategy.version,
                 )
         completed = subprocess.run(
             ["git", "rev-parse", "HEAD"],
@@ -290,11 +343,16 @@ class RuntimeSupervisor:
         code_commit = completed.stdout.strip() if completed.returncode == 0 else "UNKNOWN"
         write_report_bundle(
             scenarios=scenarios,
-            output_root=self.config.run_output_root,
+            output_root=(
+                self.config.run_output_root.parents[1]
+                / strategy.backtest_version
+                / "runs"
+            ),
             config_sha256=self.config.sha256,
             code_commit=code_commit,
             report_start_utc=report_start,
             report_end_utc=report_end,
+            strategy=strategy,
         )
 
     async def _stream_loop(self) -> None:

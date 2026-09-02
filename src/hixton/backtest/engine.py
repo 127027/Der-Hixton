@@ -23,7 +23,13 @@ from hixton.backtest.models import (
 )
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.quality import audit_candles
-from hixton.domain.models import Candle, Signal, SignalAction
+from hixton.domain.models import (
+    Candle,
+    Signal,
+    SignalAction,
+    StrategyParameters,
+    StrategySemantics,
+)
 from hixton.domain.strategy import HixtonStrategy
 
 _HUNDRED = Decimal("100")
@@ -47,7 +53,9 @@ def _round_down(value: Decimal, step: Decimal) -> Decimal:
     return (value / step).to_integral_value(rounding=ROUND_DOWN) * step
 
 
-def _snapshot_hash(candles: list[Candle]) -> str:
+def candle_snapshot_sha256(candles: list[Candle]) -> str:
+    """Hash the exact in-memory candle sequence used by a backtest."""
+
     digest = hashlib.sha256()
     for candle in candles:
         row = (
@@ -89,6 +97,9 @@ def run_single_backtest(
     target_notional: Decimal = Decimal("250.00"),
     costs: CostModel = BASELINE_COSTS,
     execution_rules: ExecutionRules | None = None,
+    strategy_parameters: StrategyParameters | None = None,
+    strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
+    strategy_version: str | None = None,
 ) -> BacktestResult:
     """Run an isolated no-compounding test and return immutable result records."""
 
@@ -98,7 +109,8 @@ def run_single_backtest(
         raise ValueError("capital values must be positive")
     if report_start_utc >= report_end_utc:
         raise ValueError("report_start_utc must be before report_end_utc")
-    warmup_start = report_start_utc - 400 * TIMEFRAME_DELTA
+    parameters = strategy_parameters or StrategyParameters()
+    warmup_start = report_start_utc - parameters.warmup_bars * TIMEFRAME_DELTA
     selected = [
         candle
         for candle in candles
@@ -112,7 +124,12 @@ def run_single_backtest(
     )
     quality.require_valid()
 
-    strategy = HixtonStrategy(normalized)
+    strategy = HixtonStrategy(
+        normalized,
+        parameters=parameters,
+        semantics=strategy_semantics,
+        strategy_version=strategy_version,
+    )
     cash = starting_cash
     dust = ZERO
     open_trade: _OpenTrade | None = None
@@ -133,7 +150,7 @@ def run_single_backtest(
                 reference = _d(candle.open)
                 fill_price = reference * (ONE + costs.adverse_price_rate)
                 gross_quantity = _round_down(budget / fill_price, rules.step_size)
-                quote_spend = gross_quantity * fill_price
+                quote_spend = min(gross_quantity * fill_price, budget)
                 if gross_quantity < rules.min_qty or quote_spend < rules.min_notional:
                     blocked.append(f"{pending_signal.signal_id}:BELOW_EXCHANGE_MINIMUM")
                 elif quote_spend <= ZERO:
@@ -285,7 +302,7 @@ def run_single_backtest(
         open_position_quantity=active_quantity,
         dust_quantity=dust,
         metrics=metrics,
-        data_snapshot_sha256=_snapshot_hash(selected),
+        data_snapshot_sha256=candle_snapshot_sha256(selected),
     )
 
 
@@ -296,6 +313,9 @@ def run_isolated_batch(
     report_end_utc: datetime,
     costs: CostModel = BASELINE_COSTS,
     execution_rules: dict[str, ExecutionRules] | None = None,
+    strategy_parameters: StrategyParameters | None = None,
+    strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
+    strategy_version: str | None = None,
 ) -> BatchResult:
     if len(candles_by_symbol) != len(SYMBOLS) or set(candles_by_symbol) != set(SYMBOLS):
         raise ValueError("batch input must contain all ten symbols in the fixed DMS order")
@@ -308,18 +328,24 @@ def run_isolated_batch(
             report_end_utc=report_end_utc,
             costs=costs,
             execution_rules=rules.get(symbol),
+            strategy_parameters=strategy_parameters,
+            strategy_semantics=strategy_semantics,
+            strategy_version=strategy_version,
         )
         for symbol in SYMBOLS
     )
     starting = sum((result.metrics.starting_equity for result in results), ZERO)
     ending = sum((result.metrics.ending_equity for result in results), ZERO)
-    synchronized: dict[datetime, Decimal] = {}
-    for result in results:
-        for point in result.equity_curve:
-            synchronized[point.time_utc] = synchronized.get(point.time_utc, ZERO) + point.equity
+    curves = tuple(result.equity_curve for result in results)
     combined_curve = tuple(
-        EquityPoint(time, ZERO, ZERO, equity, False)
-        for time, equity in sorted(synchronized.items())
+        EquityPoint(
+            points[0].time_utc,
+            ZERO,
+            ZERO,
+            sum((point.equity for point in points), ZERO),
+            False,
+        )
+        for points in zip(*curves, strict=True)
     )
     max_drawdown, max_drawdown_pct = drawdown(combined_curve)
     return BatchResult(

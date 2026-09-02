@@ -28,7 +28,8 @@ strategy:
   version: HIXTON-SPEC-1.0
   normative_spec: DMS/03_STRATEGIE_HIXTON.md
   normative_spec_git_commit: REQUIRED_AT_BUILD
-  vendor_pine_sha256: null
+  owner_pine_reference_sha256: 8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd  # V2-Referenz, nicht aktive V1-Formel
+  semantics: dms_v1
   timeframe: 1h
   source: close
   vidya_length: 10
@@ -114,7 +115,7 @@ operations:
   paper_soak_max_days_when_trade_count_low: 90
   manual_trading_same_account: false
   ui_bind: 127.0.0.1
-  alert_primary: telegram
+  alert_primary: local_ui_and_structured_log
   windows_service_after_paper_gate: true
   operational_log_retention_days: 90
   backup_target_outside_git_required: true
@@ -134,7 +135,7 @@ ui:
   strategy_signal_resolution: 1h
 ```
 
-Runtimewerte wie Secret-Referenzen, konkrete Account-ID und Telegram-Ziel werden bei der Installation gesetzt. Die fachlichen V1-Defaults oben sind verbindlich und dürfen nicht durch Frameworkdefaults ersetzt werden.
+Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die fachlichen V1-Defaults oben sind verbindlich und dürfen nicht durch Frameworkdefaults ersetzt werden. Telegram ist nicht erforderlich.
 
 ## Strategie-Snapshot
 
@@ -142,7 +143,7 @@ Jedes Signal und jeder Backtest referenziert mindestens:
 
 - Strategie-ID/-Version;
 - Git-Commit der normativen Spezifikation;
-- optionaler Hersteller-Pine-Hash, sofern rechtmäßig verfügbar;
+- Hash der vom Eigentümer bereitgestellten Pine-Referenz;
 - Parameterhash;
 - Timeframe und Quelle;
 - Warm-up-Regel;
@@ -159,7 +160,7 @@ status: valid|invalid|failed|stale
 code_version: COMMIT_OR_BUILD_HASH
 strategy_version: HIXTON-SPEC-1.0
 normative_spec_git_commit: VALUE
-vendor_pine_sha256: null
+owner_pine_reference_sha256: null  # historische V1; für V2 verpflichtend der dokumentierte Hash
 config_sha256: VALUE
 data_snapshot_sha256: VALUE
 exchange: VALUE

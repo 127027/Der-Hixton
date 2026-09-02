@@ -41,7 +41,7 @@ Kapital, Slotanzahl und Zielnotional müssen wegen Gebühren und verfügbarem Ca
 - Jeder Test startet ohne Position und Altorder.
 - Einzeltests beeinflussen einander nicht; Ergebnisse werden je Coin und zusätzlich als Vergleichstabelle gezeigt.
 - Optionaler Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT nach.
-- Es gibt kein festes Ziel „250 oder 500 USDT“. Zuerst wird korrekte Indikatorreaktion bewiesen; Performance wird ohne Wunschwert berichtet.
+- 250→500 USDT je Coin in drei Jahren ist das angestrebte Optimierungsziel, aber keine Garantie. Zuerst wird korrekte Indikatorreaktion bewiesen; danach wird die vollständige Performance einschließlich Zielverfehlungen berichtet.
 
 ## Positionsgröße
 

@@ -83,7 +83,7 @@ Metriken umfassen mindestens Datenlatenz, letzte Barzeit, Lückenanzahl, Stream-
 | P3 mittel | einzelnes Symbol stale, Rate-Limit-Spitze | Symbol pausieren/überwachen |
 | P4 info | täglicher Audit erfolgreich, Backtest fertig | protokollieren |
 
-Alle Klassen erscheinen in UI und strukturiertem Log. Für P1/P2 ist Telegram der verbindliche externe Kanal; P3 wird mindestens in der UI und optional per Telegram gemeldet, P4 bleibt standardmäßig UI/Log. Ein erfolgreicher Telegram-Testalarm ist Live-Gate. Ist Telegram im Livebetrieb länger als fünf Minuten nicht erreichbar, wechselt das System auf `DEGRADED` und pausiert neue Entries; Positions- und Reconciliation-Überwachung laufen weiter.
+Alle Klassen erscheinen in UI und strukturiertem Log. P1/P2 müssen dort dauerhaft auffällig bleiben, bis sie quittiert oder behoben sind; P3 wird mindestens in der UI protokolliert, P4 bleibt UI/Log. Der Eigentümer hat regelmäßige manuelle Überwachung als Betriebsmodell bestätigt. Telegram ist weder Pflichtkanal noch Live-Gate. Ein später optional ergänzter externer Kanal darf die lokale Alarmierung nicht ersetzen und benötigt eine eigene Konfigurationsversion.
 
 ## Sicheres Herunterfahren
 
@@ -136,7 +136,7 @@ Alle Bedingungen müssen erfüllt sein:
 - mindestens 720 verarbeitete geschlossene 1h-Bars je aktivem Symbol;
 - mindestens 20 vollständig abgeschlossene Papertrades portfolioübergreifend;
 - keine ungeklärte Doppelorder, Kontodifferenz oder kritische Datenlücke;
-- Restart-, Internet-/Streamausfall-, Telegram- und Restore-Szenario bestanden.
+- Restart-, Internet-/Streamausfall-, sichtbares P1/P2-Alarm- und Restore-Szenario bestanden.
 
 Werden nach 30 Tagen weniger als 20 Trades erreicht, läuft Paper bis zum 20. Trade weiter, jedoch höchstens 90 Tage. Nach 90 Tagen ohne 20 Trades entscheidet der Eigentümer dokumentiert über Verlängerung oder Abbruch; es gibt keine automatische Live-Freigabe.
 

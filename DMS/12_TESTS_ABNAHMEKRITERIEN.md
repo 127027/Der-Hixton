@@ -3,7 +3,7 @@
 ## Testebenen
 
 1. Unit-Tests für Mathematik, Zustände, Rundung und Gebühren.
-2. Golden-Tests gegen unabhängig berechnete Werte aus `HIXTON-SPEC-1.0`; optional zusätzlicher Vergleich mit rechtmäßig verfügbarem Pine-Source.
+2. Golden-Tests gegen unabhängig berechnete Werte aus `HIXTON-SPEC-1.0` für V1 und gegen die gehashte Eigentümer-Pine-Semantik für V2;
 3. Integrationsprüfungen für Datenprovider, DB und Börsenadapter.
 4. Replay-/Backtests mit historischen Bars.
 5. End-to-End-Tests der UI bis Ledger/Report.
@@ -89,7 +89,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 
 ## Automatisierter Nachweisstand vom 01.09.2026
 
-- `pytest`: 51 von 51 Tests bestanden;
+- `pytest`: 56 von 56 Tests bestanden;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
 - mypy: keine Typfehler in 30 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;
@@ -100,7 +100,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
 - responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
 
-Diese Nachweise schließen Gate A und Gate B. Restart-Checkpoint, Nachverarbeitung verpasster Bars und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen externen Gate-C-Nachweise für Telegram, Backup/Restore, vollständige Failure-Injection und den real ablaufenden Paper-Soak.
+Diese Nachweise schließen Gate A und Gate B für V1. Restart-Checkpoint, Nachverarbeitung verpasster Bars und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen Gate-C-Nachweise für Backup/Restore, vollständige Failure-Injection und den real ablaufenden Paper-Soak. Der V2-Forschungskandidat besitzt ein eigenes, noch offenes Freigabegate.
 
 ## Freigabegates
 
@@ -112,7 +112,7 @@ Diese Nachweise schließen Gate A und Gate B. Restart-Checkpoint, Nachverarbeitu
 - keine kritische Strategieentscheidung steht auf `OFFEN`;
 - DMS-Version/Tag und Changelog sind gesetzt.
 
-Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich und wird ohne Rechte nicht veröffentlicht. Eine Herstellerparität darf ohne ihn nicht behauptet werden.
+V1 bleibt durch seine eigene eingefrorene Spezifikation reproduzierbar. Die später vom Eigentümer bereitgestellte Pine-v6-Datei wird zusätzlich für V2 gehasht und per unabhängiger Golden-Implementierung geprüft; sie deutet V1 nicht rückwirkend um.
 
 ### Gate B – Backtest valide
 
@@ -126,7 +126,7 @@ Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich
 
 - alle Integrations-, UI- und Failure-Tests grün;
 - keine kritischen offenen Defekte;
-- Monitoring, Telegram-Testalarm und Backups aktiv;
+- Monitoring in UI/strukturierten Logs und Backups aktiv;
 - dedizierter Bot-Account/Subaccount ohne manuellen Handel vorbereitet.
 
 ### Gate D – Live bereit
@@ -148,4 +148,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu den externen Telegram-/Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.
+Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`. V2 bleibt bis Shadow-/Papervergleich und Eigentümerfreigabe `RESEARCH_ONLY`.

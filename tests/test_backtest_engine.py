@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import timedelta
 from decimal import Decimal
 
@@ -13,8 +14,14 @@ from hixton.backtest.models import (
     CostModel,
     ExecutionRules,
 )
-from hixton.constants import SYMBOLS
-from hixton.domain.models import Candle, SignalAction
+from hixton.backtest.portfolio import run_shared_portfolio_backtest
+from hixton.constants import HIXTON_SPEC_VERSION, HIXTON_V2_RESEARCH_VERSION, SYMBOLS
+from hixton.domain.models import (
+    Candle,
+    SignalAction,
+    StrategyParameters,
+    StrategySemantics,
+)
 from tests.golden_reference import deterministic_candles
 
 
@@ -107,6 +114,41 @@ def test_batch_runs_exactly_ten_isolated_250_usdt_ledgers() -> None:
     assert all(result.starting_cash == Decimal("250.00") for result in batch.results)
 
 
+def test_batch_drawdown_aligns_bars_not_provider_close_milliseconds() -> None:
+    original = {
+        symbol: deterministic_candles(symbol, 1_000, market_index)
+        for market_index, symbol in enumerate(SYMBOLS)
+    }
+    shifted = {
+        symbol: [
+            replace(
+                candle,
+                close_time_utc=candle.close_time_utc + timedelta(milliseconds=market_index),
+            )
+            for candle in candles
+        ]
+        for market_index, (symbol, candles) in enumerate(original.items())
+    }
+    first = original[SYMBOLS[0]]
+    report_start = first[400].open_time_utc
+    report_end = first[-1].open_time_utc + timedelta(hours=1)
+
+    reference = run_isolated_batch(
+        candles_by_symbol=original,
+        report_start_utc=report_start,
+        report_end_utc=report_end,
+    )
+    varied_closes = run_isolated_batch(
+        candles_by_symbol=shifted,
+        report_start_utc=report_start,
+        report_end_utc=report_end,
+    )
+
+    assert varied_closes.ending_equity == reference.ending_equity
+    assert varied_closes.max_drawdown == reference.max_drawdown
+    assert varied_closes.max_drawdown_pct == reference.max_drawdown_pct
+
+
 def test_batch_rejects_missing_market() -> None:
     with pytest.raises(ValueError, match="all ten"):
         run_isolated_batch(
@@ -115,3 +157,79 @@ def test_batch_rejects_missing_market() -> None:
             report_end_utc=deterministic_candles("BTCUSDT", 500)[-1].open_time_utc
             + timedelta(hours=1),
         )
+
+
+def test_shared_portfolio_uses_one_240_cash_ledger_and_three_fixed_slots() -> None:
+    candles_by_symbol = {
+        symbol: deterministic_candles(symbol, 1_200, market_index)
+        for market_index, symbol in enumerate(SYMBOLS)
+    }
+    first = candles_by_symbol[SYMBOLS[0]]
+    result = run_shared_portfolio_backtest(
+        candles_by_symbol=candles_by_symbol,
+        report_start_utc=first[400].open_time_utc,
+        report_end_utc=first[-1].open_time_utc + timedelta(hours=1),
+    )
+
+    entries = [fill for fill in result.fills if fill.action is SignalAction.ENTER_LONG]
+    assert result.metrics.starting_equity == Decimal("240.00")
+    assert result.slot_count == 3
+    assert result.max_concurrent_positions <= 3
+    assert entries
+    assert all(fill.quote_value <= Decimal("80.00") for fill in entries)
+    assert all(point.cash >= 0 for point in result.equity_curve)
+    assert set(result.data_snapshot_sha256_by_symbol) == set(SYMBOLS)
+
+
+def test_shared_portfolio_is_deterministic() -> None:
+    candles_by_symbol = {
+        symbol: deterministic_candles(symbol, 900, market_index)
+        for market_index, symbol in enumerate(SYMBOLS)
+    }
+    first = candles_by_symbol[SYMBOLS[0]]
+    arguments = {
+        "candles_by_symbol": candles_by_symbol,
+        "report_start_utc": first[400].open_time_utc,
+        "report_end_utc": first[-1].open_time_utc + timedelta(hours=1),
+    }
+
+    first_result = run_shared_portfolio_backtest(**arguments)
+    second_result = run_shared_portfolio_backtest(**arguments)
+
+    assert first_result == second_result
+
+
+def test_research_parameters_and_pine_semantics_are_explicit_overrides() -> None:
+    candles = deterministic_candles("ETHUSDT", 1_200, 1)
+    parameters = StrategyParameters(
+        vidya_length=6,
+        momentum_length=20,
+        smoothing_length=8,
+        atr_length=60,
+        band_multiplier=2.0,
+    )
+    research = run_single_backtest(
+        symbol="ETHUSDT",
+        candles=candles,
+        report_start_utc=candles[400].open_time_utc,
+        report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),
+        strategy_parameters=parameters,
+        strategy_semantics=StrategySemantics.PINE_V6,
+    )
+    default = run_single_backtest(
+        symbol="ETHUSDT",
+        candles=candles,
+        report_start_utc=candles[400].open_time_utc,
+        report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),
+    )
+
+    assert research.data_snapshot_sha256 == default.data_snapshot_sha256
+    assert {signal.strategy_version for signal in research.signals} == {
+        HIXTON_V2_RESEARCH_VERSION
+    }
+    assert {signal.strategy_version for signal in default.signals} == {
+        HIXTON_SPEC_VERSION
+    }
+    assert [signal.signal_id for signal in research.signals] != [
+        signal.signal_id for signal in default.signals
+    ]

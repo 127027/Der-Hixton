@@ -13,10 +13,11 @@ from pathlib import Path
 from typing import TypeAlias
 from uuid import uuid4
 
-from hixton.backtest.models import BacktestResult, BatchResult
-from hixton.constants import HIXTON_SPEC_VERSION, TIMEFRAME
+from hixton.backtest.models import BacktestResult, BatchResult, PortfolioBacktestResult
+from hixton.constants import TIMEFRAME
+from hixton.domain.versions import V1_STRATEGY, StrategyDefinition
 
-RunResult: TypeAlias = BacktestResult | BatchResult
+RunResult: TypeAlias = BacktestResult | BatchResult | PortfolioBacktestResult
 
 
 def _primitive(value: object) -> object:
@@ -41,7 +42,40 @@ def _primitive(value: object) -> object:
 
 
 def _single_results(result: RunResult) -> tuple[BacktestResult, ...]:
-    return result.results if isinstance(result, BatchResult) else (result,)
+    if isinstance(result, BatchResult):
+        return result.results
+    if isinstance(result, BacktestResult):
+        return (result,)
+    return ()
+
+
+def _metrics_payload(result: RunResult) -> dict[str, object]:
+    if isinstance(result, BatchResult):
+        return {
+            "batch": {
+                field.name: _primitive(getattr(result, field.name))
+                for field in dataclasses.fields(result)
+                if field.name != "results"
+            },
+            "per_symbol": {
+                single.symbol: _primitive(single.metrics)
+                for single in _single_results(result)
+            },
+        }
+    if isinstance(result, PortfolioBacktestResult):
+        return {
+            "portfolio": {
+                "symbols": _primitive(result.symbols),
+                "starting_cash": _primitive(result.starting_cash),
+                "target_notional": _primitive(result.target_notional),
+                "slot_count": result.slot_count,
+                "max_concurrent_positions": result.max_concurrent_positions,
+                "open_symbols_at_end": _primitive(result.open_symbols_at_end),
+                "blocked_signal_count": len(result.blocked_signals),
+                "metrics": _primitive(result.metrics),
+            }
+        }
+    return {"per_symbol": {result.symbol: _primitive(result.metrics)}}
 
 
 def write_report_bundle(
@@ -52,6 +86,7 @@ def write_report_bundle(
     code_commit: str,
     report_start_utc: datetime,
     report_end_utc: datetime,
+    strategy: StrategyDefinition = V1_STRATEGY,
 ) -> Path:
     """Create one new run directory; existing runs are never overwritten."""
 
@@ -62,25 +97,13 @@ def write_report_bundle(
 
     data_hashes: dict[str, str] = {}
     for result in scenarios.values():
+        if isinstance(result, PortfolioBacktestResult):
+            data_hashes.update(result.data_snapshot_sha256_by_symbol)
         for single in _single_results(result):
             data_hashes[single.symbol] = single.data_snapshot_sha256
 
     metrics_payload = {
-        scenario: (
-            {
-                "batch": {
-                    field.name: _primitive(getattr(result, field.name))
-                    for field in dataclasses.fields(result)
-                    if field.name != "results"
-                },
-                "per_symbol": {
-                    single.symbol: _primitive(single.metrics)
-                    for single in _single_results(result)
-                },
-            }
-            if isinstance(result, BatchResult)
-            else {"per_symbol": {result.symbol: _primitive(result.metrics)}}
-        )
+        scenario: _metrics_payload(result)
         for scenario, result in scenarios.items()
     }
     (run_directory / "metrics.json").write_text(
@@ -89,17 +112,20 @@ def write_report_bundle(
     )
     _write_trades(run_directory / "trades.csv", scenarios)
     _write_equity(run_directory / "equity.csv", scenarios)
-    _write_html(run_directory / "report.html", run_id, metrics_payload)
+    _write_html(run_directory / "report.html", run_id, metrics_payload, strategy)
 
     manifest = {
         "schema_version": 1,
-        "backtest_version": "v1",
+        "backtest_version": strategy.backtest_version,
         "run_id": run_id,
         "created_at_utc": created_at.isoformat(),
         "status": "VALID",
         "strategy": {
-            "version": HIXTON_SPEC_VERSION,
-            "normative_spec": "DMS/03_STRATEGIE_HIXTON.md",
+            "version": strategy.version,
+            "reference": strategy.reference,
+            "semantics": strategy.semantics.value,
+            "parameters": _primitive(strategy.parameters),
+            "paper_approved": strategy.paper_approved,
             "code_commit": code_commit,
             "config_sha256": config_sha256,
         },
@@ -141,24 +167,29 @@ def _write_trades(path: Path, scenarios: dict[str, RunResult]) -> None:
             )
         )
         for scenario, result in scenarios.items():
-            for single in _single_results(result):
-                for trade in single.trades:
-                    writer.writerow(
-                        (
-                            scenario,
-                            trade.symbol,
-                            trade.entry_time_utc.isoformat(),
-                            trade.exit_time_utc.isoformat(),
-                            trade.entry_signal_id,
-                            trade.exit_signal_id,
-                            trade.entry_quote_spend,
-                            trade.exit_quote_receive,
-                            trade.realized_pnl,
-                            trade.realized_return_pct,
-                            trade.holding_hours,
-                            trade.residual_dust_quantity,
-                        )
+            if isinstance(result, PortfolioBacktestResult):
+                result_trades = result.trades
+            else:
+                result_trades = tuple(
+                    trade for single in _single_results(result) for trade in single.trades
+                )
+            for trade in result_trades:
+                writer.writerow(
+                    (
+                        scenario,
+                        trade.symbol,
+                        trade.entry_time_utc.isoformat(),
+                        trade.exit_time_utc.isoformat(),
+                        trade.entry_signal_id,
+                        trade.exit_signal_id,
+                        trade.entry_quote_spend,
+                        trade.exit_quote_receive,
+                        trade.realized_pnl,
+                        trade.realized_return_pct,
+                        trade.holding_hours,
+                        trade.residual_dust_quantity,
                     )
+                )
 
 
 def _write_equity(path: Path, scenarios: dict[str, RunResult]) -> None:
@@ -166,6 +197,19 @@ def _write_equity(path: Path, scenarios: dict[str, RunResult]) -> None:
         writer = csv.writer(handle)
         writer.writerow(("scenario", "symbol", "time_utc", "cash", "position_value", "equity"))
         for scenario, result in scenarios.items():
+            if isinstance(result, PortfolioBacktestResult):
+                for point in result.equity_curve:
+                    writer.writerow(
+                        (
+                            scenario,
+                            "PORTFOLIO",
+                            point.time_utc.isoformat(),
+                            point.cash,
+                            point.position_value,
+                            point.equity,
+                        )
+                    )
+                continue
             for single in _single_results(result):
                 for point in single.equity_curve:
                     writer.writerow(
@@ -180,7 +224,12 @@ def _write_equity(path: Path, scenarios: dict[str, RunResult]) -> None:
                     )
 
 
-def _write_html(path: Path, run_id: str, metrics_payload: object) -> None:
+def _write_html(
+    path: Path,
+    run_id: str,
+    metrics_payload: object,
+    strategy: StrategyDefinition,
+) -> None:
     payload = html.escape(json.dumps(metrics_payload, ensure_ascii=False, indent=2))
     document = f"""<!doctype html>
 <html lang="de">
@@ -195,7 +244,8 @@ def _write_html(path: Path, run_id: str, metrics_payload: object) -> None:
   </style>
 </head>
 <body>
-  <h1>Hixton Backtest V1</h1>
+  <h1>Hixton Backtest {html.escape(strategy.backtest_version.upper())}</h1>
+  <p>Strategie: <code>{html.escape(strategy.version)}</code></p>
   <p>Run-ID: <code>{html.escape(run_id)}</code></p>
   <p class="warning">Historische Ergebnisse sind keine Gewinngarantie.</p>
   <h2>Kennzahlen</h2>

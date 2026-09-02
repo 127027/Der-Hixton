@@ -17,6 +17,7 @@ from hixton.backtest.models import (
     CostModel,
     ExecutionRules,
 )
+from hixton.backtest.portfolio import run_shared_portfolio_backtest
 from hixton.backtest.reporting import RunResult, write_report_bundle
 from hixton.config import ProjectConfig, load_project_config
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS, TIMEFRAME_DELTA
@@ -25,6 +26,7 @@ from hixton.data.quality import audit_candles
 from hixton.data.storage import CandleStore
 from hixton.data.sync import synchronize_symbol
 from hixton.domain.models import Candle
+from hixton.domain.versions import StrategyDefinition, strategy_definition
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "config" / "examples" / "config.example.json"
@@ -121,6 +123,7 @@ def command_status(config: ProjectConfig) -> int:
             "binance_public_data",
             "sqlite_quality",
             "backtest_v1",
+            "backtest_v2_research",
             "paper_v1",
             "local_ui",
         ],
@@ -191,6 +194,7 @@ def _run_single_scenarios(
     rules: ExecutionRules,
     costs: tuple[CostModel, ...],
     config: ProjectConfig,
+    strategy: StrategyDefinition,
 ) -> dict[str, RunResult]:
     scenarios: dict[str, RunResult] = {}
     for cost in costs:
@@ -203,6 +207,9 @@ def _run_single_scenarios(
             target_notional=config.target_notional_usdt,
             costs=cost,
             execution_rules=rules,
+            strategy_parameters=strategy.parameters,
+            strategy_semantics=strategy.semantics,
+            strategy_version=strategy.version,
         )
     return scenarios
 
@@ -210,6 +217,7 @@ def _run_single_scenarios(
 def command_backtest_single(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
     symbol = _symbols(args.symbol)[0]
+    strategy = strategy_definition(args.strategy)
     with CandleStore(config.database_path) as store:
         candles = store.load_candles(symbol, start=warmup_start, end_exclusive=report_end)
         rules = _execution_rules(store, symbol)
@@ -221,14 +229,16 @@ def command_backtest_single(args: argparse.Namespace, config: ProjectConfig) -> 
         rules=rules,
         costs=_cost_scenarios(args.cost, config),
         config=config,
+        strategy=strategy,
     )
     output = write_report_bundle(
         scenarios=scenarios,
-        output_root=config.run_output_root,
+        output_root=PROJECT_ROOT / "backtests" / strategy.backtest_version / "runs",
         config_sha256=config.sha256,
         code_commit=_code_commit(),
         report_start_utc=report_start,
         report_end_utc=report_end,
+        strategy=strategy,
     )
     print(f"Backtest gespeichert: {output}")
     return 0
@@ -236,6 +246,7 @@ def command_backtest_single(args: argparse.Namespace, config: ProjectConfig) -> 
 
 def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
+    strategy = strategy_definition(args.strategy)
     candles_by_symbol = {}
     rules_by_symbol = {}
     with CandleStore(config.database_path) as store:
@@ -254,17 +265,62 @@ def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int
             report_end_utc=report_end,
             costs=cost,
             execution_rules=rules_by_symbol,
+            strategy_parameters=strategy.parameters,
+            strategy_semantics=strategy.semantics,
+            strategy_version=strategy.version,
         )
         scenarios[cost.name] = batch
     output = write_report_bundle(
         scenarios=scenarios,
-        output_root=config.run_output_root,
+        output_root=PROJECT_ROOT / "backtests" / strategy.backtest_version / "runs",
         config_sha256=config.sha256,
         code_commit=_code_commit(),
         report_start_utc=report_start,
         report_end_utc=report_end,
+        strategy=strategy,
     )
     print(f"10er-Batch gespeichert: {output}")
+    return 0
+
+
+def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) -> int:
+    warmup_start, report_start, report_end = _window(args.end)
+    strategy = strategy_definition(args.strategy)
+    candles_by_symbol = {}
+    rules_by_symbol = {}
+    with CandleStore(config.database_path) as store:
+        for symbol in SYMBOLS:
+            candles_by_symbol[symbol] = store.load_candles(
+                symbol,
+                start=warmup_start,
+                end_exclusive=report_end,
+            )
+            rules_by_symbol[symbol] = _execution_rules(store, symbol)
+    scenarios: dict[str, RunResult] = {}
+    for cost in _cost_scenarios(args.cost, config):
+        scenarios[cost.name] = run_shared_portfolio_backtest(
+            candles_by_symbol=candles_by_symbol,
+            report_start_utc=report_start,
+            report_end_utc=report_end,
+            starting_cash=config.paper_starting_cash_usdt,
+            target_notional=config.paper_target_notional_usdt,
+            slot_count=config.paper_slot_count,
+            costs=cost,
+            execution_rules=rules_by_symbol,
+            strategy_parameters=strategy.parameters,
+            strategy_semantics=strategy.semantics,
+            strategy_version=strategy.version,
+        )
+    output = write_report_bundle(
+        scenarios=scenarios,
+        output_root=PROJECT_ROOT / "backtests" / strategy.backtest_version / "runs",
+        config_sha256=config.sha256,
+        code_commit=_code_commit(),
+        report_start_utc=report_start,
+        report_end_utc=report_end,
+        strategy=strategy,
+    )
+    print(f"3x80-Portfolio gespeichert: {output}")
     return 0
 
 
@@ -310,9 +366,17 @@ def build_parser() -> argparse.ArgumentParser:
     single.add_argument("--symbol", required=True)
     single.add_argument("--end", type=parse_utc)
     single.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
+    single.add_argument("--strategy", choices=("v1", "v2"), default="v1")
     all_ten = backtest_commands.add_parser("all", help="10x250-USDT-Batch testen")
     all_ten.add_argument("--end", type=parse_utc)
     all_ten.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
+    all_ten.add_argument("--strategy", choices=("v1", "v2"), default="v1")
+    portfolio = backtest_commands.add_parser(
+        "portfolio", help="gemeinsames 240-USDT-Konto mit 3x80-USDT-Slots testen"
+    )
+    portfolio.add_argument("--end", type=parse_utc)
+    portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
+    portfolio.add_argument("--strategy", choices=("v1", "v2"), default="v1")
 
     paper = commands.add_parser("paper", help="24/7-Paper-Bot mit lokaler UI starten")
     paper.add_argument("--no-browser", action="store_true")
@@ -339,6 +403,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_backtest_single(args, config)
         if args.command == "backtest" and args.backtest_command == "all":
             return command_backtest_all(args, config)
+        if args.command == "backtest" and args.backtest_command == "portfolio":
+            return command_backtest_portfolio(args, config)
         if args.command == "live":
             return _not_ready(args.command.upper())
     except (BinanceApiError, OSError, ValueError) as error:

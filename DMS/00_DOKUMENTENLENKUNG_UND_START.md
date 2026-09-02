@@ -22,9 +22,9 @@ Die Dokumentation deckt ab:
 Bei einem Widerspruch gilt diese Reihenfolge:
 
 1. schriftlich vom Eigentümer freigegebene Entscheidung im Entscheidungslog;
-2. normative Strategie `HIXTON-SPEC-1.0` in Dokument 03;
+2. für den aktiven Paperbetrieb die normative Strategie `HIXTON-SPEC-1.0` in Dokument 03;
 3. diese DMS-Dokumente mit Status `VERBINDLICH`;
-4. ein später rechtmäßig verfügbarer Pine-Quellcode samt Hash und Parameter-Snapshot als Vergleichsquelle, nicht als stille Überschreibung von V1;
+4. für V2 die am 01.09.2026 vom Eigentümer bereitgestellte Pine-v6-Quelle samt Hash und versioniertem Parameter-Snapshot; sie überschreibt V1 nicht;
 5. vorhandene Analyse `Der Hixton Indikator.md`;
 6. Kommentare, Beispiele, UI-Mockups und sonstige Hinweise.
 
@@ -40,15 +40,16 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1.1 ist fachlich entscheidungsvollständig; Backtest-/Paper-V1 ist als Release Candidate implementiert.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. 30- bis 90-tägiger Paper-Soak, Telegram, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen.
+Aktueller Paketstatus: **DMS V1.2 ist fachlich entscheidungsvollständig; Backtest-/Paper-V1 läuft, V2 bleibt ein getrennter Forschungskandidat.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. Der 30- bis 90-tägige Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
 
 ## Eingangsbestand vom 31.08.2026
 
 | Datei | Umfang | SHA-256 | Bewertung |
 |---|---:|---|---|
 | `Der Hixton Indikator.md` | 7.226 Bytes / 27 Zeilen | `3577700EAFA4738D8941769F8275024BEDE86B6D8CB344C7B1EA8E60E7E4E117` | Analyse/Beschreibung, kein Pine-Quellcode |
+| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Pine-Referenz für V2-Forschung, nicht rückwirkend für V1 |
 
-Die Datei beschreibt unter anderem Pine-v6-Verhalten, Bar-Close-Auswertung und fehlendes Repainting. Sie bleibt als unverändertes Eingangsmaterial erhalten, ist aber keine normative Signalquelle. Die selbstständige und vollständig implementierbare Projektdefinition steht in `03_STRATEGIE_HIXTON.md`; eine Identität mit nicht einsehbarem Hersteller-Source wird nicht behauptet.
+Die ursprüngliche Markdown-Analyse bleibt als unverändertes Eingangsmaterial erhalten. Der später vom Eigentümer vollständig übermittelte Pine-v6-Code liegt einmalig unter `strategy/pine/` und ist die Referenz für V2. Die selbstständige V1-Projektdefinition in Dokument 03 und sämtliche V1-Runs bleiben unverändert erhalten.
 
 ## Dokumentenkarte
 

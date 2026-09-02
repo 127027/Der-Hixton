@@ -25,6 +25,11 @@ class SignalAction(StrEnum):
     EXIT_LONG = "EXIT_LONG"
 
 
+class StrategySemantics(StrEnum):
+    DMS_V1 = "DMS_V1"
+    PINE_V6 = "PINE_V6"
+
+
 @dataclass(frozen=True, slots=True)
 class Candle:
     """One provider candle. Numeric OHLCV fields intentionally use Binary64."""
@@ -107,10 +112,11 @@ class StrategyParameters:
 @dataclass(frozen=True, slots=True)
 class IndicatorPoint:
     symbol: str
+    strategy_version: str
     index: int
     candle: Candle
-    abs_cmo: float
-    vidya_raw: float
+    abs_cmo: float | None
+    vidya_raw: float | None
     vidya: float | None
     true_range: float
     atr: float | None

@@ -22,6 +22,9 @@ def _config(tmp_path: Path) -> ProjectConfig:
         target_notional_usdt=Decimal("250.00"),
         run_baseline_and_stress=True,
         paper_poll_seconds=30,
+        paper_starting_cash_usdt=Decimal("240.00"),
+        paper_slot_count=3,
+        paper_target_notional_usdt=Decimal("80.00"),
         daily_audit_utc="00:05",
         ui_bind="127.0.0.1",
         ui_port=8765,
@@ -93,3 +96,23 @@ def test_status_exposes_restart_persistent_paper_soak_gate(tmp_path: Path) -> No
     assert paper["soak"]["minimum_processed_closed_bars"] == 0
     assert paper["soak"]["completed_trades"] == 0
     assert paper["soak"]["ready"] is False
+
+
+def test_backtest_api_keeps_v1_and_v2_run_views_separate(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    client = TestClient(
+        create_app(config, RuntimeSupervisor(config)),
+        base_url="http://127.0.0.1:8765",
+    )
+
+    v1 = client.get("/api/backtests?strategy=v1")
+    v2 = client.get("/api/backtests?strategy=v2")
+    invalid = client.get("/api/backtests?strategy=unknown")
+
+    assert v1.status_code == 200
+    assert v1.json()["strategy"]["version"] == "HIXTON-SPEC-1.0"
+    assert v1.json()["strategy"]["paper_approved"] is True
+    assert v2.status_code == 200
+    assert v2.json()["strategy"]["version"] == "HIXTON-V2-RESEARCH-CANDIDATE-1"
+    assert v2.json()["strategy"]["paper_approved"] is False
+    assert invalid.status_code == 400

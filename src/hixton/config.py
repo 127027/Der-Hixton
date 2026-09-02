@@ -22,6 +22,9 @@ class ProjectConfig:
     target_notional_usdt: Decimal
     run_baseline_and_stress: bool
     paper_poll_seconds: int
+    paper_starting_cash_usdt: Decimal
+    paper_slot_count: int
+    paper_target_notional_usdt: Decimal
     daily_audit_utc: str
     ui_bind: str
     ui_port: int
@@ -136,6 +139,9 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
         target_notional_usdt=target,
         run_baseline_and_stress=bool(backtest.get("run_baseline_and_stress", True)),
         paper_poll_seconds=int(paper["poll_seconds"]),
+        paper_starting_cash_usdt=Decimal(str(paper["starting_cash_usdt"])),
+        paper_slot_count=int(paper["slot_count"]),
+        paper_target_notional_usdt=Decimal(str(paper["target_notional_usdt"])),
         daily_audit_utc=str(paper["daily_audit_utc"]),
         ui_bind=str(ui["bind"]),
         ui_port=int(ui["port"]),

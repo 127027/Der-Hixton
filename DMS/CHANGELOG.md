@@ -1,5 +1,18 @@
 # DMS-Changelog
 
+## 1.2.0 – 01.09.2026
+
+- Vollständigen, vom Eigentümer übermittelten Pine-v6-Code einmalig unter `strategy/pine/` aufgenommen, gehasht und als V2-Referenz dokumentiert; V1 bleibt unverändert.
+- Pine-v6-Semantik in der Strategieengine getrennt ergänzt und mit einer unabhängigen Golden-Implementierung getestet.
+- V1-Verlustursache analysiert: kurze Trades unter 72 Stunden verloren über alle zehn Coins in Summe; mehr Trades allein deshalb verworfen.
+- V2-Forschung sauber unter `backtests/v2` angelegt: 1.280 breite Kandidaten, 75 Mehrfenster-Finalisten und 48 Nachbarvarianten dokumentiert.
+- Gemeinsamen Kandidaten 6/20/SMA8/ATR60/Band3,8 als `RESEARCH_ONLY` ausgewählt; aktuelles Fenster stark, ältere Verlustfenster ausdrücklich festgehalten, keine Paperumschaltung.
+- 250→500 USDT je Coin als gewünschtes, aber nicht garantiertes Optimierungsziel präzisiert; höhere Tradezahl bleibt der Robustheit nach Kosten untergeordnet.
+- Telegram auf ausdrücklichen Eigentümerwunsch aus Pflicht- und Live-Gates entfernt; lokale UI und strukturierte Logs sind die verbindlichen Überwachungskanäle.
+- Kombinierte Backtest-Drawdown-Aggregation gegen abweichende Provider-Close-Millisekunden korrigiert und per Regressionstest gesichert.
+- V1/V2 über denselben CLI-Einstieg und in der bestehenden Backtest-UI getrennt auswählbar gemacht; V2-Manifeste enthalten Parameter, Pine-Referenz, Semantik und `paper_approved: false`.
+- Vollständigen V2-10er-Batch bytegleich wiederholt und Kernartefakt-Hashes im V2-Bericht fixiert; aktueller Prüfstand 56 grüne Python-Tests.
+
 ## 1.1.0 – 01.09.2026
 
 - Dokumentationsfreeze nach ausdrücklichem Bauauftrag in die Implementierungsphase überführt.

@@ -69,13 +69,15 @@ Ein nach 30 Sekunden verbleibender Teilfill-Rest wird nach Statusklärung storni
 - Keine der beiden Grenzen liquidiert Positionen automatisch.
 - Vor manueller Wiederaufnahme nach Drawdown: Ursachen-, Ledger-, Daten- und Konfigurationsprüfung, Incidentabschluss und ausdrückliche Eigentümerfreigabe.
 
-## Telegram-Kanal gestört
+## Lokale Alarmanzeige oder Log gestört
 
-1. Fehler in UI und Log sichtbar machen;
-2. bei Liveausfall über fünf Minuten `DEGRADED` setzen und neue Entries pausieren;
-3. Token/Ziel nur über Secret-Referenz prüfen, nie ausgeben;
-4. Testalarm senden und Empfang bestätigen;
+1. Botstatus direkt über die lokale Status-API und Datenbank nur lesend prüfen;
+2. bei Ausfall der UI **oder** des strukturierten Logs `DEGRADED` setzen und neue Entries pausieren;
+3. Ursache in API, Dateisystem, Datenbank und Browserkonsole prüfen;
+4. P1-Testereignis auslösen und Sichtbarkeit in UI sowie Log bestätigen;
 5. erst danach Entries wieder freigeben.
+
+Telegram ist kein Pflichtbestandteil. Ein später optionaler externer Alarmkanal wird als Zusatz behandelt und darf die lokalen Pflichtnachweise nicht ersetzen.
 
 ## Positions-/Saldodifferenz
 

@@ -7,7 +7,7 @@ from pathlib import Path
 import pytest
 
 from hixton.backtest.models import ExecutionRules
-from hixton.constants import SYMBOLS
+from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
 from hixton.domain.models import Candle, IndicatorPoint, TrendState
 from hixton.paper.engine import initialize_paper_at_latest, process_new_closed_points
 from hixton.paper.models import PaperEvent, PaperEventStatus, PaperSettings
@@ -35,6 +35,7 @@ def _point(
     )
     return IndicatorPoint(
         symbol=symbol,
+        strategy_version=HIXTON_SPEC_VERSION,
         index=500,
         candle=candle,
         abs_cmo=0.5,

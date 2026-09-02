@@ -6,13 +6,13 @@ from dataclasses import dataclass
 from datetime import UTC, datetime, timedelta
 from math import cos, sin
 
-from hixton.domain.models import Candle, TrendState
+from hixton.domain.models import Candle, StrategyParameters, TrendState
 
 
 @dataclass(frozen=True, slots=True)
 class ReferencePoint:
-    abs_cmo: float
-    vidya_raw: float
+    abs_cmo: float | None
+    vidya_raw: float | None
     vidya: float | None
     true_range: float
     atr: float | None
@@ -21,6 +21,117 @@ class ReferencePoint:
     trend: TrendState
     flip_up: bool
     flip_down: bool
+
+
+def independent_pine_v6_reference(
+    candles: list[Candle], parameters: StrategyParameters
+) -> list[ReferencePoint]:
+    """Literal array oracle for the owner-supplied Pine v6 calculation semantics."""
+
+    closes = [candle.close for candle in candles]
+    positive: list[float] = []
+    negative: list[float] = []
+    raw_values: list[float | None] = []
+    non_null_raw_values: list[float] = []
+    true_ranges: list[float] = []
+    atr_values: list[float | None] = []
+    points: list[ReferencePoint] = []
+    trend = TrendState.DOWN
+    alpha = 2.0 / (parameters.vidya_length + 1.0)
+
+    for index, candle in enumerate(candles):
+        momentum = 0.0 if index == 0 else closes[index] - closes[index - 1]
+        positive.append(max(momentum, 0.0))
+        negative.append(max(-momentum, 0.0))
+        abs_cmo: float | None = None
+        if index >= parameters.momentum_length - 1:
+            low_index = index - parameters.momentum_length + 1
+            pos_sum = sum(positive[low_index : index + 1])
+            neg_sum = sum(negative[low_index : index + 1])
+            denominator = pos_sum + neg_sum
+            abs_cmo = (
+                0.0
+                if denominator == 0.0
+                else abs((pos_sum - neg_sum) / denominator)
+            )
+
+        previous_raw = raw_values[index - 1] if index else None
+        if previous_raw is None:
+            vidya_raw = candle.close
+        elif abs_cmo is None:
+            vidya_raw = None
+        else:
+            effective_alpha = alpha * abs_cmo
+            vidya_raw = (
+                effective_alpha * candle.close + (1.0 - effective_alpha) * previous_raw
+            )
+        raw_values.append(vidya_raw)
+        if vidya_raw is not None:
+            non_null_raw_values.append(vidya_raw)
+        vidya = (
+            sum(non_null_raw_values[-parameters.smoothing_length :])
+            / parameters.smoothing_length
+            if len(non_null_raw_values) >= parameters.smoothing_length
+            else None
+        )
+
+        if index == 0:
+            true_range = candle.high - candle.low
+        else:
+            true_range = max(
+                candle.high - candle.low,
+                abs(candle.high - closes[index - 1]),
+                abs(candle.low - closes[index - 1]),
+            )
+        true_ranges.append(true_range)
+        atr: float | None = None
+        if index == parameters.atr_length - 1:
+            atr = sum(true_ranges[: parameters.atr_length]) / parameters.atr_length
+        elif index >= parameters.atr_length:
+            previous_atr = atr_values[index - 1]
+            assert previous_atr is not None
+            atr = (
+                previous_atr * (parameters.atr_length - 1) + true_range
+            ) / parameters.atr_length
+        atr_values.append(atr)
+
+        upper = (
+            vidya + atr * parameters.band_multiplier
+            if vidya is not None and atr is not None
+            else None
+        )
+        lower = (
+            vidya - atr * parameters.band_multiplier
+            if vidya is not None and atr is not None
+            else None
+        )
+        previous_trend = trend
+        if index and upper is not None and lower is not None:
+            previous_upper = points[index - 1].upper
+            previous_lower = points[index - 1].lower
+            if previous_upper is not None and previous_lower is not None:
+                if candle.close > upper and closes[index - 1] <= previous_upper:
+                    trend = TrendState.UP
+                if candle.close < lower and closes[index - 1] >= previous_lower:
+                    trend = TrendState.DOWN
+        flip_up = previous_trend is TrendState.DOWN and trend is TrendState.UP
+        flip_down = previous_trend is TrendState.UP and trend is TrendState.DOWN
+
+        points.append(
+            ReferencePoint(
+                abs_cmo=abs_cmo,
+                vidya_raw=vidya_raw,
+                vidya=vidya,
+                true_range=true_range,
+                atr=atr,
+                upper=upper,
+                lower=lower,
+                trend=trend,
+                flip_up=flip_up,
+                flip_down=flip_down,
+            )
+        )
+    return points
 
 
 def deterministic_candles(symbol: str, count: int, market_index: int = 0) -> list[Candle]:
@@ -154,4 +265,3 @@ def independent_reference(candles: list[Candle]) -> list[ReferencePoint]:
             )
         )
     return points
-

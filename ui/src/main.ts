@@ -107,7 +107,8 @@ interface ChartPayload {
 }
 interface BacktestScenario {
   batch?: Record<string, unknown>;
-  per_symbol: Record<string, Record<string, unknown>>;
+  portfolio?: { metrics?: Record<string, unknown>; [key: string]: unknown };
+  per_symbol?: Record<string, Record<string, unknown>>;
 }
 interface BacktestRun {
   manifest: Record<string, unknown>;
@@ -256,7 +257,7 @@ function renderSystem(status: StatusResponse): void {
     ["Letzter Tagesaudit", status.runtime.last_daily_audit_utc ? `${formatUtc(status.runtime.last_daily_audit_utc)} / ${formatDate(status.runtime.last_daily_audit_utc, true)} Europe/Berlin` : "—"],
     ["Datenbank", status.runtime.sync_in_progress ? "Synchronisierung läuft" : "WAL · bereit"],
     ["Live-Ausführung", "Sicher deaktiviert"],
-    ["Telegram-Live-Gate", "Nicht konfiguriert · blockiert Live"],
+    ["Betriebsüberwachung", "UI & strukturierte Logs · manuell bestätigt"],
     ["Backup-/Restore-Gate", "Nicht konfiguriert · blockiert Live"],
     ["Paper-Soak", soakLabel],
   ];
@@ -360,23 +361,30 @@ async function refreshEvents(): Promise<void> {
 
 async function refreshBacktests(): Promise<void> {
   try {
-    const response = await api<{ runs: BacktestRun[]; status: string }>("/api/backtests");
+    const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
+    const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?strategy=${strategy}`);
+    text("#backtest-eyebrow", `BACKTEST ${strategy.toUpperCase()}`);
+    text("#backtest-title", strategy === "v2" ? "3×80 oder 10×250 · Forschungskandidat" : "3×80, 10×250 oder Einzeltest");
     const button = required<HTMLButtonElement>("#backtest-button");
     button.disabled = response.status === "RUNNING";
     button.textContent = response.status === "RUNNING" ? "Backtest läuft …" : "Backtest starten";
     required("#backtest-runs").innerHTML = response.runs.length ? response.runs.map((run) => {
       const manifest = run.manifest;
       const baseline = run.metrics.baseline;
-      const firstMetric = baseline ? Object.values(baseline.per_symbol)[0] : undefined;
-      const summary = baseline?.batch ?? firstMetric;
+      const firstMetric = baseline ? Object.values(baseline.per_symbol ?? {})[0] : undefined;
+      const summary = baseline?.portfolio?.metrics ?? baseline?.batch ?? firstMetric;
       const result = summary
         ? `${formatNumber(summary.ending_equity as string)} USDT · ${formatNumber(summary.return_pct as string)} %`
         : "Kennzahlen nicht verfügbar";
-      return `<article class="run-card"><div><strong>Run ${String(manifest.run_id ?? "—")}</strong><small>${String(manifest.created_at_utc ?? "")} · ${String(manifest.status ?? "")}</small></div><span>${result}<br>${Array.isArray(manifest.scenarios) ? manifest.scenarios.join(" + ") : ""}</span></article>`;
+      const version = (manifest.strategy as Record<string, unknown> | undefined)?.version ?? strategy.toUpperCase();
+      return `<article class="run-card"><div><strong>Run ${String(manifest.run_id ?? "—")}</strong><small>${String(version)} · ${String(manifest.created_at_utc ?? "")} · ${String(manifest.status ?? "")}</small></div><span>${result}<br>${Array.isArray(manifest.scenarios) ? manifest.scenarios.join(" + ") : ""}</span></article>`;
     }).join("") : `<article class="run-card"><div><strong>Noch kein realer Backtestlauf</strong><small>Nach vollständiger Synchronisation hier starten.</small></div></article>`;
     const batchRun = response.runs.find((run) => Object.keys(run.metrics.baseline?.per_symbol ?? {}).length === 10) ?? response.runs[0];
     const perSymbol = batchRun?.metrics.baseline?.per_symbol ?? {};
-    required("#backtest-detail-body").innerHTML = Object.keys(perSymbol).length
+    const portfolioMetric = batchRun?.metrics.baseline?.portfolio?.metrics;
+    required("#backtest-detail-body").innerHTML = portfolioMetric
+      ? `<tr><td class="mono">PORTFOLIO 3×80</td><td>${formatNumber(portfolioMetric.starting_equity as string)}</td><td>${formatNumber(portfolioMetric.ending_equity as string)}</td><td class="${Number(portfolioMetric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(portfolioMetric.return_pct as string)} %</td><td>${String(portfolioMetric.completed_trades ?? "—")}</td><td>${formatNumber(portfolioMetric.max_drawdown_pct as string)} %</td><td>${formatNumber(portfolioMetric.buy_and_hold_ending_equity as string)}</td></tr>`
+      : Object.keys(perSymbol).length
       ? Object.entries(perSymbol).map(([symbol, metric]) => `<tr><td class="mono">${symbol}</td><td>${formatNumber(metric.starting_equity as string)}</td><td>${formatNumber(metric.ending_equity as string)}</td><td class="${Number(metric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(metric.return_pct as string)} %</td><td>${String(metric.completed_trades ?? "—")}</td><td>${formatNumber(metric.max_drawdown_pct as string)} %</td><td>${formatNumber(metric.buy_and_hold_ending_equity as string)}</td></tr>`).join("")
       : `<tr><td colspan="7">Noch kein auswertbarer Run vorhanden.</td></tr>`;
   } catch { /* Read view remains available while startup runs. */ }
@@ -402,6 +410,7 @@ function initializeControls(): void {
     void loadChart();
   }));
   required<HTMLSelectElement>("#coin-select").addEventListener("change", (event) => { selectedSymbol = (event.target as HTMLSelectElement).value as SymbolName; void loadChart(); });
+  required<HTMLSelectElement>("#backtest-strategy").addEventListener("change", () => void refreshBacktests());
   required<HTMLSelectElement>("#timezone-select").addEventListener("change", () => void loadChart());
   required<HTMLInputElement>("#overlay-toggle").addEventListener("change", (event) => {
     const visible = (event.target as HTMLInputElement).checked;
@@ -422,7 +431,9 @@ function initializeControls(): void {
   });
   required<HTMLButtonElement>("#backtest-button").addEventListener("click", async () => {
     const symbol = required<HTMLSelectElement>("#backtest-symbol").value;
-    try { await api("/api/backtests/run", { method: "POST", body: JSON.stringify({ mode: symbol === "ALL" ? "all" : "single", symbol }) }); showToast("Backtest wurde gestartet."); await refreshBacktests(); }
+    const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
+    const mode = symbol === "PORTFOLIO" ? "portfolio" : symbol === "ALL" ? "all" : "single";
+    try { await api("/api/backtests/run", { method: "POST", body: JSON.stringify({ mode, symbol, strategy }) }); showToast(`${strategy.toUpperCase()}-Backtest wurde gestartet.`); await refreshBacktests(); }
     catch (error) { showToast(error instanceof Error ? error.message : String(error), true); }
   });
 }

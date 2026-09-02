@@ -21,6 +21,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 from hixton import __version__
 from hixton.config import ProjectConfig
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
+from hixton.domain.versions import strategy_definition
 from hixton.paper.engine import load_paper_portfolio
 from hixton.paper.models import PaperSettings
 from hixton.paper.storage import PaperStore
@@ -348,9 +349,23 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         }
 
     @app.get("/api/backtests")
-    def backtests() -> dict[str, object]:
+    def backtests(strategy: str = Query(default="v1")) -> dict[str, object]:
+        try:
+            definition = strategy_definition(strategy)
+        except ValueError as error:
+            raise HTTPException(status_code=400, detail=str(error)) from error
+        output_root = (
+            config.run_output_root.parents[1]
+            / definition.backtest_version
+            / "runs"
+        )
         return {
-            "runs": _list_backtests(config.run_output_root),
+            "strategy": {
+                "key": definition.key,
+                "version": definition.version,
+                "paper_approved": definition.paper_approved,
+            },
+            "runs": _list_backtests(output_root),
             "status": supervisor.state.snapshot().backtest_status,
         }
 
@@ -381,6 +396,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             started = supervisor.start_backtest(
                 mode=str(payload.get("mode", "")),
                 symbol=str(payload.get("symbol")) if payload.get("symbol") else None,
+                strategy_key=str(payload.get("strategy", "v1")),
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error

@@ -105,10 +105,11 @@
         </section>
 
         <section id="backtests" class="page">
-          <div class="section-heading"><div><p class="eyebrow">BACKTEST V1</p><h2>10×250 USDT oder Einzeltest</h2></div></div>
+          <div class="section-heading"><div><p id="backtest-eyebrow" class="eyebrow">BACKTEST V1</p><h2 id="backtest-title">10×250 USDT oder Einzeltest</h2></div></div>
           <article class="action-card">
             <div><strong>Historischer Test</strong><p>Drei Jahre, 400 Warm-up-Bars, Baseline und Stress, Next-Bar-Open.</p></div>
-            <select id="backtest-symbol"><option value="ALL">Alle 10 Coins</option></select>
+            <select id="backtest-strategy"><option value="v1">V1 · aktives Paper</option><option value="v2">V2 · Forschung</option></select>
+            <select id="backtest-symbol"><option value="PORTFOLIO">Gemeinsames 3×80-Portfolio</option><option value="ALL">10×250 isoliert</option></select>
             <button id="backtest-button" class="button primary">Backtest starten</button>
           </article>
           <div id="backtest-runs" class="run-list"></div>

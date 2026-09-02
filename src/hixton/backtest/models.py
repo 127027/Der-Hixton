@@ -174,3 +174,27 @@ class BatchResult:
     max_drawdown: Decimal
     max_drawdown_pct: Decimal
 
+
+@dataclass(frozen=True, slots=True)
+class PortfolioBacktestResult:
+    """One shared-cash ledger trading all ten DMS markets."""
+
+    symbols: tuple[str, ...]
+    report_start_utc: datetime
+    report_end_utc: datetime
+    warmup_start_utc: datetime
+    cost_model: CostModel
+    starting_cash: Decimal
+    target_notional: Decimal
+    slot_count: int
+    signals: tuple[Signal, ...]
+    fills: tuple[Fill, ...]
+    trades: tuple[Trade, ...]
+    equity_curve: tuple[EquityPoint, ...]
+    blocked_signals: tuple[str, ...]
+    pending_signals_at_end: tuple[Signal, ...]
+    open_symbols_at_end: tuple[str, ...]
+    dust_quantity_by_symbol: dict[str, Decimal]
+    max_concurrent_positions: int
+    metrics: BacktestMetrics
+    data_snapshot_sha256_by_symbol: dict[str, str]

@@ -7,7 +7,7 @@ Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eig
 | Phase | Technischer Stand | Freigabestatus |
 |---|---|---|
 | 0 – Spezifikation | DMS V1/`HIXTON-SPEC-1.0` eingefroren | **BESTANDEN** |
-| 1 – Strategie-Domain | eine Engine, Golden-/Replay-/Zustandstests | **BESTANDEN** gegen eigene normative Spezifikation; keine unbelegte Herstellerparität |
+| 1 – Strategie-Domain | eine Engine, V1- und Eigentümer-Pine-v6-Golden-/Replay-/Zustandstests | **BESTANDEN**; V2 bleibt getrennt `RESEARCH_ONLY` |
 | 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
 | 3 – Backtest | 10×250 und Einzeltest, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
 | 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs | **BESTANDEN** in lokaler Browser-Abnahme |
@@ -29,8 +29,9 @@ Ergebnis: **mit DMS V1 erreicht**; Implementierung kann ohne Strategieerfindung 
 
 - Candle-/Decimal-/Zeitmodell;
 - VIDYA, ATR, Bänder, Trendzustand;
-- Golden-Spezifikationsparität; optionaler Herstellervergleich bei rechtmäßig verfügbarem Source;
-- Signal-IDs, Parameterhashes und Unit-Tests.
+- Golden-Spezifikationsparität für V1 und Eigentümer-Pine-Parität für V2;
+- Signal-IDs, Parameterhashes und Unit-Tests;
+- Pine-v6-Semantik mit eigener Versionskennung; V1-/V2-Signale dürfen nicht kollidieren.
 
 Definition of Done: Null Signalabweichungen in Golden-Daten, Batch = Replay, keine externe API nötig.
 
@@ -56,6 +57,8 @@ Definition of Done: drei Jahre plus Warm-up pro Paar, Lücken/Fehler nachweislic
 - Sensitivität und Holdoutprozess.
 
 Definition of Done: alle zehn Einzeltests und Aggregation exakt reproduzierbar; keine erfundenen Ergebnisse.
+
+V2-Zusatzstand: Parametersuche, Mehrfenstervergleich und Sensitivität sind unter `backtests/v2` dokumentiert. Eine Aktivierung gehört nicht zu dieser bestandenen historischen Phase, sondern benötigt den separaten Shadow-/Paper-Nachweis.
 
 ## Phase 4 – UI-Lesemodus
 

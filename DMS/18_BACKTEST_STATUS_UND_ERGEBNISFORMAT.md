@@ -2,12 +2,12 @@
 
 ## Wahrheitsgemäßer Ist-Stand
 
-Am 01.09.2026 wurden der verbindliche Drei-Jahres-Batch für alle zehn DMS-Märkte und ein ETH-Einzeltest erfolgreich ausgeführt. Die Strategie reagiert im Backtest deterministisch gemäß `HIXTON-SPEC-1.0`. Die Ergebnisse sind kein Beleg für Herstellerparität und keine Zusage zukünftiger Gewinne.
+Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-Märkte und ein ETH-Einzeltest erfolgreich ausgeführt. Die Strategie reagiert im Backtest deterministisch gemäß `HIXTON-SPEC-1.0`. Zusätzlich wurde ein getrennter V2-Forschungskandidat gegen die Eigentümer-Pine-Quelle geprüft. Kein Ergebnis ist eine Zusage zukünftiger Gewinne.
 
 Der technische Nachweis ist vollständig genug für Gate B:
 
 - ausführbare Strategie- und Backtestengine vorhanden;
-- 51 automatisierte Tests einschließlich Golden-, Daten-, Paper-, Restart-, API- und Charttests bestanden;
+- 56 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Restart-, API-, Reporting- und Charttests bestanden;
 - je Markt 26.704 geschlossene 1h-Kerzen geprüft: 26.304 Auswertungsbars plus 400 Warm-up-Bars;
 - zehn isolierte Konten à 250 USDT, ohne automatisches Compounding;
 - Baseline- und Stresskosten auf Ein- und Ausstieg angewendet;
@@ -91,6 +91,15 @@ Große, reproduzierbare Run-Dateien und Marktdaten werden nicht in Git eingechec
 - Der Stressfall ist deutlich negativ; Gebühren, Spread und Slippage sind daher erfolgskritisch.
 - Drawdowns bis 86,16 % je Coin und 68,06 % im Stress-Batch sind hoch. Ein positiver Endwert bedeutet keine akzeptable Live-Risikoeignung.
 - Der Test optimiert keine Parameter und verspricht keine künftige Rendite.
-- Herstellerparität bleibt unbelegt, solange kein rechtmäßig verfügbarer Pine-Referenzcode verglichen wurde.
+- Eine Identität der Eigentümerquelle mit einem separat vertriebenen Herstellerprodukt wird ohne Herkunftsnachweis nicht behauptet.
+- Parität der V2-Pythonsemantik zur vom Eigentümer bereitgestellten Pine-v6-Quelle wird durch einen unabhängigen Golden-Test geprüft; dies ist keine Behauptung über die Herkunft eines Herstellerprodukts.
 - Der 240-USDT-Paperbetrieb ist implementiert, muss Gate C und den vorgeschriebenen Soak-Test aber noch bestehen.
 - Echtes Binance-Trading bleibt technisch `LIVE_DISABLED` und ist nicht Bestandteil dieses Backtestnachweises.
+
+## Getrennter V2-Forschungsstand
+
+Der vollständige Stand liegt unter `backtests/v2/README.md`. Kandidat 1 verwendet 1h, VIDYA 6, Momentum 20, SMA 8, ATR 60 und Band 3,8. Im aktuellen Dreijahresfenster endeten die zehn isolierten 250-USDT-Konten zusammen bei 6.592,22 USDT (+163,69 %) in der Baseline und 5.843,73 USDT (+133,75 %) im Stress, jeweils mit 549 Trades. Alle zehn waren dort positiv; sieben überschritten 500 USDT.
+
+Der Primär-Run `8dbdeb5b-a4e8-4b56-b6dc-61c7f0d54e93` und Wiederholungs-Run `a7c96450-29f6-437d-af97-402d9d9c58cc` wurden über denselben technischen Einstieg ausgeführt. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich. UI und CLI können V1/V2 getrennt rechnen und auflisten; V2-Manifeste tragen `paper_approved: false`.
+
+Ältere Segmente zeigen jedoch Verlustfenster: Im Abschnitt 16.10.2021–24.03.2023 erreichte der Kandidat aggregiert nur +4,26 % Baseline und −7,82 % Stress. V2 bleibt deshalb `RESEARCH_ONLY`; der laufende Paperbot bleibt V1.

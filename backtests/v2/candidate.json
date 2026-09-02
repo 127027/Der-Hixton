@@ -1,0 +1,33 @@
+{
+  "strategy_version": "HIXTON-V2-RESEARCH-CANDIDATE-1",
+  "status": "RESEARCH_ONLY",
+  "paper_and_live_approved": false,
+  "timeframe": "1h",
+  "source": "strategy/pine/Der_Hixton_Indikator_v6.pine",
+  "source_sha256": "8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd",
+  "semantics": "PINE_V6",
+  "parameters": {
+    "vidya_length": 6,
+    "momentum_length": 20,
+    "smoothing_length": 8,
+    "atr_length": 60,
+    "band_multiplier": 3.8,
+    "warmup_bars": 400
+  },
+  "capital": {
+    "isolated_start_usdt_per_coin": 250,
+    "coin_count": 10,
+    "automatic_compounding": false
+  },
+  "cost_scenarios_bps_per_side": {
+    "baseline": 15,
+    "stress": 40
+  },
+  "selection_reason": "Beste Kosten- und Mehrfenster-Robustheit der geprüften gemeinsamen Parametersätze; nicht wegen maximaler Tradezahl allein.",
+  "promotion_requirements": [
+    "reproduzierbarer versionierter V2-Lauf",
+    "V2-UI-Auswahl ohne Überschreiben von V1",
+    "mindestens 30 Tage paralleler Shadow-/Papervergleich",
+    "ausdrückliche Eigentümerfreigabe"
+  ]
+}

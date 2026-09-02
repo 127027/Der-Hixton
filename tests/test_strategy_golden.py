@@ -6,9 +6,18 @@ from datetime import timedelta
 import pytest
 
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
-from hixton.domain.models import SignalAction, TrendState
+from hixton.domain.models import (
+    SignalAction,
+    StrategyParameters,
+    StrategySemantics,
+    TrendState,
+)
 from hixton.domain.strategy import HixtonStrategy, StrategyInputError, evaluate_batch, rank_strength
-from tests.golden_reference import deterministic_candles, independent_reference
+from tests.golden_reference import (
+    deterministic_candles,
+    independent_pine_v6_reference,
+    independent_reference,
+)
 
 
 def _assert_close(actual: float | None, expected: float | None) -> None:
@@ -47,6 +56,43 @@ def test_initial_state_and_first_tradable_bar_are_exact() -> None:
     assert points[399].trend is TrendState.DOWN
     assert not points[399].tradable
     assert points[400].tradable
+
+
+def test_owner_pine_v6_semantics_match_independent_oracle() -> None:
+    parameters = StrategyParameters(
+        vidya_length=6,
+        momentum_length=20,
+        smoothing_length=8,
+        atr_length=60,
+        band_multiplier=3.8,
+        warmup_bars=400,
+    )
+    candles = deterministic_candles("BTCUSDT", 1_200)
+    expected = independent_pine_v6_reference(candles, parameters)
+    actual = evaluate_batch(
+        "BTCUSDT",
+        candles,
+        parameters=parameters,
+        semantics=StrategySemantics.PINE_V6,
+    )
+
+    for point, reference in zip(actual, expected, strict=True):
+        _assert_close(point.abs_cmo, reference.abs_cmo)
+        _assert_close(point.vidya_raw, reference.vidya_raw)
+        _assert_close(point.vidya, reference.vidya)
+        _assert_close(point.true_range, reference.true_range)
+        _assert_close(point.atr, reference.atr)
+        _assert_close(point.upper, reference.upper)
+        _assert_close(point.lower, reference.lower)
+        assert point.trend is reference.trend
+        assert point.flip_up is reference.flip_up
+        assert point.flip_down is reference.flip_down
+
+    assert all(point.trend is TrendState.DOWN for point in actual[:59])
+    assert actual[0].vidya_raw == candles[0].close
+    assert actual[1].vidya_raw is None
+    assert not actual[399].tradable
+    assert actual[400].tradable
 
 
 def test_batch_and_bar_by_bar_replay_are_identical() -> None:

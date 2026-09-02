@@ -2,7 +2,7 @@
 
 ## Ziel
 
-Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß `HIXTON-SPEC-1.0` reagiert; danach reproduzierbar messen, wie diese unveränderte Strategie unter realistischen Kosten abgeschnitten hätte. Ein zusätzlicher Vergleich mit einem später rechtmäßig verfügbaren Hersteller-Indikator ist zulässig, aber keine Voraussetzung für die Projektspezifikation. Der Backtest beweist keine zukünftige Profitabilität.
+Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß der ausgewählten, versionierten Strategie reagiert; danach reproduzierbar messen, wie diese unveränderte Version unter realistischen Kosten abgeschnitten hätte. V1 referenziert `HIXTON-SPEC-1.0`, V2 die vom Eigentümer bereitgestellte Pine-v6-Datei und einen eingefrorenen Parameter-Snapshot. Der Backtest beweist keine zukünftige Profitabilität.
 
 ## Testfenster
 
@@ -94,7 +94,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Korrelationen der Tagesrenditen;
 - Beitrag jedes Coins zu PnL und Drawdown;
 - maximale gleichzeitig investierte Summe;
-- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; kein festes 250-/500-USDT-Ziel.
+- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; 250→500 USDT je Coin darf als Wunschziel ausgewiesen werden, aber nie als Garantie oder Grund zum Verbergen schlechter Ergebnisse.
 
 ## Validierungsdesign und Anti-Overfitting
 
@@ -106,6 +106,9 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Sensitivität prüft Nachbarparameter; ein nur an einem exakten Punkt gutes Ergebnis gilt als fragil.
 - Monte-Carlo/Trade-Reordering kann als Robustheitsanalyse dienen, ersetzt aber keine Marktzeitsimulation.
 - Die Strategie wird nicht so lange verändert, bis ein gewünschter Gewinnwert erscheint.
+- Jede Verbesserung erhält `backtests/v2`, `v3` usw.; der aktive Paperstand wird nie still überschrieben.
+- Ein gemeinsamer Parametersatz für alle zehn Coins wird vor Coin-spezifischen Sonderwerten bevorzugt, solange kein sauberer Out-of-sample-Nachweis die zusätzliche Komplexität rechtfertigt.
+- Höhere Tradezahl ist nur ein Sekundärkriterium, wenn Baseline, Kosten-Stress, ältere Marktphasen und Nachbarparameter mindestens gleich robust bleiben.
 
 ## Mindest-Gates für fachliche Freigabe
 
@@ -123,3 +126,7 @@ Ein Backtest ist nur `VALID`, wenn:
 ## Ergebnisinterpretation
 
 Korrekte Botreaktion und Profitabilität sind zwei verschiedene Ergebnisse. Korrekte Software kann Verlust ausweisen. Dann wird die Strategie nicht still verändert; der Eigentümer entscheidet separat über eine neue Strategieversion. Hohe Tradezahl wird nur positiv bewertet, wenn die Nettoperformance nach Binance-Gebühren und Slippage nicht dadurch verschlechtert wird.
+
+## V2-Forschungszyklus
+
+Der Stand vom 01.09.2026 ist vollständig in `backtests/v2/README.md` und maschinenlesbar in `backtests/v2/candidate.json` dokumentiert. Der Zyklus umfasste ein breites Raster von 1.280 gemeinsamen Parametersätzen, eine Mehrfensterprüfung von 75 Finalisten, 48 Nachbarvarianten, Baseline-/Stresskosten und erneute Rechnung der Finalisten in der Produktionsengine. Der Kandidat bleibt `RESEARCH_ONLY`, weil ältere Coin-Fenster weiterhin Verluste enthalten und eine historische Optimierung keinen 24/7-Forward-Test ersetzt.

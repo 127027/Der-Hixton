@@ -13,6 +13,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | STR-005 | Verbindliche V1-Referenz ist `HIXTON-SPEC-1.0` aus DMS 03: 1h, Close, VIDYA 10, CMO 20, SMA 15, Wilder-ATR 200, Band 2.0, Warm-up 400, Startzustand DOWN ohne Initialorder. | VERBINDLICH |
 | STR-006 | Spezifikationsparität wird über Golden-Testvektoren für mindestens 1.000 aufeinanderfolgende Bars je Testmarkt belegt. | VERBINDLICH |
 | STR-007 | Ein Signal wird mit Symbol, Kerzenzeit, Strategieversion, Parametern, Eingabewerten und Grund gespeichert. | VERBINDLICH |
+| STR-008 | Die Eigentümer-Pine-Quelle ist die Formelreferenz für V2. V1 und V2 besitzen getrennte Versionen, Backtestordner und Freigabestatus; ein Forschungskandidat darf die aktive Paperstrategie nicht still ersetzen. | VERBINDLICH |
 
 ## Märkte und Kapital
 
@@ -24,7 +25,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | CAP-001 | Paper-/späteres Live-Portfolio startet mit 240,00 USDT aus einem gemeinsamen Cashbestand. | VERBINDLICH |
 | CAP-002 | Paper-/Live-Anfangskonfiguration: höchstens drei gleichzeitig belegte Positionsslots mit 80,00 USDT Zielnotional je Einstieg. | VERBINDLICH |
 | CAP-003 | Positionsgröße und Slotanzahl sind später in der UI änderbar; Änderungen gelten nur vorwärts, werden validiert, bestätigt und auditierbar versioniert. | VERBINDLICH |
-| CAP-004 | Der Dreijahresbacktest besitzt kein festes 250-/500-USDT-Gewinnziel. Er prüft zunächst korrekte Reaktion auf den Indikator und berichtet danach die reale Nettoperformance. | VERBINDLICH |
+| CAP-004 | 250 auf mindestens 500 USDT je Coin innerhalb von drei Jahren ist ein gewünschtes Optimierungsziel, aber keine Garantie und kein Freigabegrund allein. Jeder Backtest prüft zuerst korrekte Reaktion und berichtet danach die vollständige Nettoperformance. | VERBINDLICH |
 | CAP-005 | Bei mehr Kaufkandidaten als freien Slots gewinnt der auf 12 Dezimalstellen Half-Even gerundete größte Wert `(close-upper)/ATR`; Gleichstand folgt der festen Coinreihenfolge aus DMS 03. | VERBINDLICH |
 | CAP-006 | Primärziel der Portfolioauswahl ist maximaler Nettogewinn nach Kosten; hohe Tradezahl ist nur Sekundärziel. | VERBINDLICH |
 | RSK-001 | Kein Leverage, keine Margin, keine Futures und keine API-Auszahlungsrechte. | VERBINDLICH |
@@ -59,6 +60,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | BKT-009 | Einzelmodus: ein frei wählbares Paar, zum Beispiel ETH/USDT, wird separat mit 250,00 USDT getestet. | VERBINDLICH |
 | BKT-010 | Optionaler Paper-/Live-Spiegellauf simuliert das gemeinsame 240-USDT-Portfolio mit drei 80-USDT-Slots. | VERBINDLICH |
 | BKT-011 | Baseline je Orderseite: 10 bps Gebühr + 2 bps Spread + 3 bps Slippage; Stress: 10 + 10 + 20 bps. Kosten wirken advers auf Kauf und Verkauf. | VERBINDLICH |
+| BKT-012 | Strategieverbesserungen werden nur als neue Backtestversion angelegt. Suchraum, Auswahlregel, ältere Marktsegmente, Kosten-Stress, Nachbarparameter und verworfene Varianten werden dokumentiert; mehr Trades sind nur bei robuster Nettowirkung besser. | VERBINDLICH |
 
 ## Ausführung
 
@@ -93,7 +95,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | OPS-003 | Backups und Restore werden automatisiert erstellt bzw. regelmäßig getestet. | VERBINDLICH |
 | OPS-004 | Paper-Soak dauert mindestens 30 Tage und 720 geschlossene 1h-Bars je aktivem Symbol; bei weniger als 20 abgeschlossenen Trades wird bis 20 Trades, höchstens 90 Tage, verlängert. | VERBINDLICH |
 | OPS-005 | Manuelles Trading auf demselben Binance-Konto ist verboten; V1 nutzt einen eigenen Bot-Subaccount bzw. ein ausschließlich dem Bot zugeordnetes Spot-Konto. | VERBINDLICH |
-| OPS-006 | P1/P2-Alarme werden extern per Telegram zugestellt; ein erfolgreicher Testalarm ist Live-Gate. | VERBINDLICH |
+| OPS-006 | P1/P2-Ereignisse müssen dauerhaft und auffällig in lokaler UI sowie strukturierten Logs erscheinen. Der Eigentümer überwacht den Bot regelmäßig manuell; Telegram ist kein Pflichtkanal und kein Live-Gate. | VERBINDLICH |
 | OPS-007 | Verschlüsselte Backups außerhalb Git/aktiver DB: 7 täglich, 4 wöchentlich, 12 monatlich; Restore vor Live und vierteljährlich. | VERBINDLICH |
 | OPS-008 | V1-UI bindet nur an localhost; nach Paperfreigabe läuft der Bot als Windows-Service mit Reconciliation bei jedem Start. | VERBINDLICH |
 | SEC-001 | Secrets stehen nie in Quellcode, DMS, Logs oder UI-Exporten. | VERBINDLICH |
@@ -101,4 +103,4 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | SEC-003 | Live wird nur nach Strategieparität, Backtest, Paper-Soak-Test und Restore-Test freigeschaltet. | VERBINDLICH |
 | QLT-001 | Kritische Anforderungen sind in der Traceability-Matrix mit mindestens einem Test verknüpft. | VERBINDLICH |
 | COL-001 | Zentrale Projektablage ist `https://github.com/127027/Der-Hixton`. Geprüfte Arbeitsstände werden fortlaufend committed und gepusht; 99-%-Freigabe wird separat als Release/Tag markiert. Secrets sind immer verboten. | VERBINDLICH |
-| COL-002 | Das Repository ist öffentlich; fremder/proprietärer Pine-Source wird ohne nachgewiesene Rechte nicht veröffentlicht. Eine Open-Source-Lizenz wird ohne eigene `LICENSE` nicht unterstellt. | VERBINDLICH |
+| COL-002 | Das Repository ist öffentlich. Die am 01.09.2026 vom Eigentümer zur Projektverwendung bereitgestellte Pine-Datei darf versioniert veröffentlicht werden; fremde Quellen ohne Rechte und Secrets bleiben verboten. Eine Open-Source-Lizenz wird ohne eigene `LICENSE` nicht unterstellt. | VERBINDLICH |

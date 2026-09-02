@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+from decimal import Decimal
 from pathlib import Path
 from zoneinfo import ZoneInfo
 
@@ -70,6 +71,9 @@ def test_valid_v1_config_resolves_runtime_paths(tmp_path: Path) -> None:
     assert config.database_path == tmp_path / "data" / "hixton.sqlite3"
     assert config.ui_port == 8765
     assert config.paper_poll_seconds == 30
+    assert config.paper_starting_cash_usdt == Decimal("240.00")
+    assert config.paper_slot_count == 3
+    assert config.paper_target_notional_usdt == Decimal("80.00")
 
 
 def test_unknown_or_changed_paper_baseline_is_rejected(tmp_path: Path) -> None:
