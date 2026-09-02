@@ -11,6 +11,7 @@ from decimal import ROUND_DOWN, Decimal
 from hixton.backtest.models import BASELINE_COSTS, ONE, ZERO, ExecutionRules
 from hixton.constants import SYMBOLS
 from hixton.domain.models import IndicatorPoint, Signal
+from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy
 from hixton.paper.models import (
     PaperAccount,
@@ -115,27 +116,27 @@ def _risk_account(
     equity: Decimal,
     at: datetime,
 ) -> tuple[PaperAccount, bool, Decimal]:
-    date_text = at.astimezone(UTC).date().isoformat()
-    day_start = account.day_start_equity_usdt
-    if date_text != account.day_start_date_utc:
-        day_start = equity
-    high_water = max(account.high_water_equity_usdt, equity)
-    daily_paused = equity <= day_start * Decimal("0.95")
-    drawdown_pct = ZERO if high_water <= ZERO else (ONE - equity / high_water) * _HUNDRED
-    halted = account.halted or drawdown_pct >= Decimal("20")
-    halt_reason = account.halt_reason
-    if halted and halt_reason is None:
-        halt_reason = "MAX_DRAWDOWN_20_PERCENT"
+    decision = evaluate_portfolio_risk(
+        PortfolioRiskState(
+            high_water_equity_usdt=account.high_water_equity_usdt,
+            day_start_equity_usdt=account.day_start_equity_usdt,
+            day_start_date_utc=account.day_start_date_utc,
+            halted=account.halted,
+            halt_reason=account.halt_reason,
+        ),
+        equity=equity,
+        at=at,
+    )
     updated = replace(
         account,
-        high_water_equity_usdt=high_water,
-        day_start_equity_usdt=day_start,
-        day_start_date_utc=date_text,
-        halted=halted,
-        halt_reason=halt_reason,
+        high_water_equity_usdt=decision.state.high_water_equity_usdt,
+        day_start_equity_usdt=decision.state.day_start_equity_usdt,
+        day_start_date_utc=decision.state.day_start_date_utc,
+        halted=decision.state.halted,
+        halt_reason=decision.state.halt_reason,
         updated_at_utc=at.astimezone(UTC),
     )
-    return updated, daily_paused, drawdown_pct
+    return updated, decision.daily_paused, decision.drawdown_pct
 
 
 def process_new_closed_points(

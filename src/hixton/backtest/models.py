@@ -196,5 +196,8 @@ class PortfolioBacktestResult:
     open_symbols_at_end: tuple[str, ...]
     dust_quantity_by_symbol: dict[str, Decimal]
     max_concurrent_positions: int
+    risk_limits_applied: bool
+    risk_halted_at_utc: datetime | None
+    daily_paused_bars: int
     metrics: BacktestMetrics
     data_snapshot_sha256_by_symbol: dict[str, str]

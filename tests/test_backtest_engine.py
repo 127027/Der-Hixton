@@ -174,6 +174,7 @@ def test_shared_portfolio_uses_one_240_cash_ledger_and_three_fixed_slots() -> No
     entries = [fill for fill in result.fills if fill.action is SignalAction.ENTER_LONG]
     assert result.metrics.starting_equity == Decimal("240.00")
     assert result.slot_count == 3
+    assert result.risk_limits_applied is True
     assert result.max_concurrent_positions <= 3
     assert entries
     assert all(fill.quote_value <= Decimal("80.00") for fill in entries)

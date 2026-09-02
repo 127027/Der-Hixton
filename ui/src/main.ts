@@ -377,13 +377,17 @@ async function refreshBacktests(): Promise<void> {
         ? `${formatNumber(summary.ending_equity as string)} USDT · ${formatNumber(summary.return_pct as string)} %`
         : "Kennzahlen nicht verfügbar";
       const version = (manifest.strategy as Record<string, unknown> | undefined)?.version ?? strategy.toUpperCase();
-      return `<article class="run-card"><div><strong>Run ${String(manifest.run_id ?? "—")}</strong><small>${String(version)} · ${String(manifest.created_at_utc ?? "")} · ${String(manifest.status ?? "")}</small></div><span>${result}<br>${Array.isArray(manifest.scenarios) ? manifest.scenarios.join(" + ") : ""}</span></article>`;
+      const runMode = String(manifest.run_mode ?? (baseline?.portfolio ? "portfolio" : baseline?.batch ? "batch" : "single")).toUpperCase();
+      const riskHalt = baseline?.portfolio?.risk_halted_at_utc;
+      const riskLabel = riskHalt ? `<br><strong class="negative">RISIKOHALT · ${formatDate(String(riskHalt), true)}</strong>` : "";
+      return `<article class="run-card"><div><strong>${runMode} · Run ${String(manifest.run_id ?? "—")}</strong><small>${String(version)} · ${String(manifest.created_at_utc ?? "")} · ${String(manifest.status ?? "")}</small></div><span>${result}${riskLabel}<br>${Array.isArray(manifest.scenarios) ? manifest.scenarios.join(" + ") : ""}</span></article>`;
     }).join("") : `<article class="run-card"><div><strong>Noch kein realer Backtestlauf</strong><small>Nach vollständiger Synchronisation hier starten.</small></div></article>`;
-    const batchRun = response.runs.find((run) => Object.keys(run.metrics.baseline?.per_symbol ?? {}).length === 10) ?? response.runs[0];
-    const perSymbol = batchRun?.metrics.baseline?.per_symbol ?? {};
-    const portfolioMetric = batchRun?.metrics.baseline?.portfolio?.metrics;
+    const latestRun = response.runs[0];
+    const perSymbol = latestRun?.metrics.baseline?.per_symbol ?? {};
+    const portfolioMetric = latestRun?.metrics.baseline?.portfolio?.metrics;
+    text("#backtest-detail-title", portfolioMetric ? "Letzter Run · Portfolio-Baseline" : Object.keys(perSymbol).length === 1 ? "Letzter Run · Einzeltest-Baseline" : "Letzter Run · Baseline je Coin");
     required("#backtest-detail-body").innerHTML = portfolioMetric
-      ? `<tr><td class="mono">PORTFOLIO 3×80</td><td>${formatNumber(portfolioMetric.starting_equity as string)}</td><td>${formatNumber(portfolioMetric.ending_equity as string)}</td><td class="${Number(portfolioMetric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(portfolioMetric.return_pct as string)} %</td><td>${String(portfolioMetric.completed_trades ?? "—")}</td><td>${formatNumber(portfolioMetric.max_drawdown_pct as string)} %</td><td>${formatNumber(portfolioMetric.buy_and_hold_ending_equity as string)}</td></tr>`
+      ? `<tr><td class="mono">PORTFOLIO 3×80${latestRun?.metrics.baseline?.portfolio?.risk_halted_at_utc ? " · HALTED" : ""}</td><td>${formatNumber(portfolioMetric.starting_equity as string)}</td><td>${formatNumber(portfolioMetric.ending_equity as string)}</td><td class="${Number(portfolioMetric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(portfolioMetric.return_pct as string)} %</td><td>${String(portfolioMetric.completed_trades ?? "—")}</td><td>${formatNumber(portfolioMetric.max_drawdown_pct as string)} %</td><td>${formatNumber(portfolioMetric.buy_and_hold_ending_equity as string)}</td></tr>`
       : Object.keys(perSymbol).length
       ? Object.entries(perSymbol).map(([symbol, metric]) => `<tr><td class="mono">${symbol}</td><td>${formatNumber(metric.starting_equity as string)}</td><td>${formatNumber(metric.ending_equity as string)}</td><td class="${Number(metric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(metric.return_pct as string)} %</td><td>${String(metric.completed_trades ?? "—")}</td><td>${formatNumber(metric.max_drawdown_pct as string)} %</td><td>${formatNumber(metric.buy_and_hold_ending_equity as string)}</td></tr>`).join("")
       : `<tr><td colspan="7">Noch kein auswertbarer Run vorhanden.</td></tr>`;

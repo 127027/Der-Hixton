@@ -22,6 +22,7 @@ from hixton.backtest.models import (
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.quality import audit_candles
 from hixton.domain.models import Candle, Signal, SignalAction, StrategyParameters, StrategySemantics
+from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy, rank_strength
 
 _HUNDRED = Decimal("100")
@@ -73,6 +74,7 @@ def run_shared_portfolio_backtest(
     strategy_parameters: StrategyParameters | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
+    apply_risk_limits: bool = True,
 ) -> PortfolioBacktestResult:
     """Replay ten aligned markets against one non-compounding shared ledger."""
 
@@ -129,6 +131,13 @@ def run_shared_portfolio_backtest(
     equity_curve: list[EquityPoint] = []
     blocked: list[str] = []
     max_concurrent = 0
+    risk_state = PortfolioRiskState(
+        high_water_equity_usdt=starting_cash,
+        day_start_equity_usdt=starting_cash,
+        day_start_date_utc=report_start_utc.date().isoformat(),
+    )
+    risk_halted_at: datetime | None = None
+    daily_paused_bars = 0
     order = {symbol: index for index, symbol in enumerate(SYMBOLS)}
 
     for row in rows:
@@ -244,17 +253,10 @@ def run_shared_portfolio_backtest(
                 fills.append(fill)
             pending = []
 
-        new_pending: list[Signal] = []
+        points = {}
         for symbol in SYMBOLS:
-            point = strategies[symbol].update(candles[symbol])
-            if not in_report:
-                continue
-            new_signal = strategies[symbol].signal_for(point, is_long=symbol in positions)
-            if new_signal is not None:
-                signals.append(new_signal)
-                new_pending.append(new_signal)
+            points[symbol] = strategies[symbol].update(candles[symbol])
         if in_report:
-            pending = new_pending
             max_concurrent = max(max_concurrent, len(positions))
             position_value = sum(
                 (
@@ -267,12 +269,46 @@ def run_shared_portfolio_backtest(
                 ),
                 ZERO,
             )
+            equity = cash + position_value
+            daily_paused = False
+            if apply_risk_limits:
+                decision = evaluate_portfolio_risk(
+                    risk_state,
+                    equity=equity,
+                    at=max(candle.close_time_utc for candle in row),
+                )
+                if not risk_state.halted and decision.state.halted:
+                    risk_halted_at = max(candle.close_time_utc for candle in row)
+                risk_state = decision.state
+                daily_paused = decision.daily_paused
+                daily_paused_bars += int(daily_paused)
+
+            new_pending: list[Signal] = []
+            for symbol in SYMBOLS:
+                new_signal = strategies[symbol].signal_for(
+                    points[symbol], is_long=symbol in positions
+                )
+                if new_signal is None:
+                    continue
+                signals.append(new_signal)
+                if new_signal.action is SignalAction.ENTER_LONG and apply_risk_limits:
+                    if risk_state.halted:
+                        blocked.append(
+                            f"{new_signal.signal_id}:"
+                            f"{risk_state.halt_reason or 'HALTED'}"
+                        )
+                        continue
+                    if daily_paused:
+                        blocked.append(f"{new_signal.signal_id}:DAILY_LOSS_5_PERCENT")
+                        continue
+                new_pending.append(new_signal)
+            pending = new_pending
             equity_curve.append(
                 EquityPoint(
                     time_utc=max(candle.close_time_utc for candle in row),
                     cash=cash,
                     position_value=position_value,
-                    equity=cash + position_value,
+                    equity=equity,
                     active_position=bool(positions),
                 )
             )
@@ -309,6 +345,9 @@ def run_shared_portfolio_backtest(
         open_symbols_at_end=tuple(symbol for symbol in SYMBOLS if symbol in positions),
         dust_quantity_by_symbol=dust,
         max_concurrent_positions=max_concurrent,
+        risk_limits_applied=apply_risk_limits,
+        risk_halted_at_utc=risk_halted_at,
+        daily_paused_bars=daily_paused_bars,
         metrics=metrics,
         data_snapshot_sha256_by_symbol={
             symbol: candle_snapshot_sha256(selected_by_symbol[symbol]) for symbol in SYMBOLS
