@@ -1,6 +1,6 @@
-# HIXTON V2 – Forschungsstand vom 02.09.2026
+# HIXTON V2 – aktive Paperstrategie seit 02.09.2026
 
-Status: `RESEARCH_ONLY`. Die laufende Paperstrategie bleibt `HIXTON-SPEC-1.0`. Dieser Ordner überschreibt weder V1 noch alte Runs.
+Status: `PAPER_ACTIVE`, `LIVE_BLOCKED`. Der Eigentümer hat V2 mit `DEC-037` ausdrücklich als bislang besten Paperstand freigegeben. Die unveränderliche Versionskennung enthält weiterhin `RESEARCH-CANDIDATE`; sie wird für historische Nachvollziehbarkeit nicht umbenannt. Dieser Ordner überschreibt weder V1 noch alte Runs.
 
 ## Ausgangspunkt und Fehlerbild von V1
 
@@ -107,7 +107,9 @@ Vor einer Livefreigabe wurde die fehlende Risikoparität geschlossen. Der Modus 
 | Baseline | 542,49 USDT | +126,04 % | 108 | 2,04 | 22,77 % | 06.02.2025 |
 | Stress | 406,29 USDT | +69,29 % | 30 | 3,52 | 20,13 % | 05.02.2024 |
 
-Das Ergebnis ist positiv, aber der Bot hätte nicht drei Jahre durchgehend weitergehandelt. Der Baseline-Halt blockierte danach 307 Einstiege, der Stress-Halt 487. Die älteren Risikospiegel endeten mit Verlust: 227,42/223,32 USDT im ersten und 207,24/201,90 USDT im zweiten Segment. V2 bleibt daher ohne Diskussion `RESEARCH_ONLY`.
+Das Ergebnis ist positiv, aber der Bot hätte nicht drei Jahre durchgehend weitergehandelt. Der Baseline-Halt blockierte danach 307 Einstiege, der Stress-Halt 487. Die älteren Risikospiegel endeten mit Verlust: 227,42/223,32 USDT im ersten und 207,24/201,90 USDT im zweiten Segment. Deshalb ist V2 als Paper-Forward-Test vertretbar, aber weiterhin nicht live-reif.
+
+Der mit exakt gleichem Fenster und Risikomodell nachgerechnete V1-Run `70089491-f5b6-4388-a420-b2c7f4641225` endete bei 383,89 USDT Baseline und 343,47 USDT Stress. V2 lag im direkten Vergleich um 158,60 beziehungsweise 62,82 USDT höher und ist deshalb nach Eigentümerentscheidung der aktive Paperstand.
 
 | Artefakt | SHA-256 in beiden korrigierten Runs |
 |---|---|
@@ -130,7 +132,7 @@ Wegen echter Binance-Wartungslücken wurden keine Kerzen erfunden. Statt eines k
 | 10.04.2023 06:00 – 01.09.2024 12:00 UTC | Baseline | +77,69 % | 238 | 18,50 % |
 | gleiches Segment | Stress | +64,32 % | 238 | 20,12 % |
 
-Über alle drei Fenster waren 24 von 30 Coin-Fenstern in der Baseline und 21 von 30 im Stress positiv. Das schwächere ältere Segment enthält deutliche Einzelverluste, unter anderem bei SOL und XRP. Genau deshalb wird V2 noch nicht automatisch für Paper oder Live aktiviert.
+Über alle drei Fenster waren 24 von 30 Coin-Fenstern in der Baseline und 21 von 30 im Stress positiv. Das schwächere ältere Segment enthält deutliche Einzelverluste, unter anderem bei SOL und XRP. Diese Grenzen bleiben sichtbar und verhindern eine Livefreigabe; die Paperaktivierung ist ein kontrollierter Forward-/Soak-Test, keine Renditezusage.
 
 ## Abgelehnte Richtungen
 
@@ -141,8 +143,8 @@ Wegen echter Binance-Wartungslücken wurden keine Kerzen erfunden. Statt eines k
 ## Nächster Freigabeschritt
 
 1. Pine-Golden-Tests und bytegleichen V2-Reproduktionslauf dauerhaft grün halten.
-2. Die vorhandene V1/V2-Auswahl der Backtest-UI gegen reale neue Runs weiter prüfen; Charts und Paper bleiben V1.
-3. V2 mindestens 30 Tage nur als Shadow-/Papervergleich beobachten.
-4. Erst nach Vergleich von Nettoperformance, Drawdown, Fehlerfreiheit und tatsächlicher Tradezahl entscheidet der Eigentümer über eine Paper-Umschaltung.
+2. Den neu gestarteten V2-Paper-Soak mindestens 30 Tage, 720 Bars je Coin und 20 abgeschlossene Trades beobachten; bei zu wenigen Trades höchstens bis 90 Tage verlängern.
+3. Nettoperformance, Drawdown, Fehlerfreiheit, blockierte Signale und tatsächliche Tradezahl gegen den historischen V1-Abschnitt auswerten.
+4. Live erst nach sämtlichen Gate-D-Nachweisen und einer neuen ausdrücklichen Eigentümerentscheidung erwägen.
 
 Das Ziel „250 USDT möglichst in drei Jahren auf 500 USDT je Coin“ bleibt eine Optimierungsrichtung, keine Zusage und kein Grund, Verlustfenster zu verstecken.

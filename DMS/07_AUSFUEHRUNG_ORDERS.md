@@ -30,7 +30,7 @@ Pflichtfelder:
 
 ## Verbindliche Orderarten
 
-V1 verwendet verbindlich Market-Orders nach bestätigtem Signal. Kauforders verwenden, sofern von Binance für das Symbol erlaubt, `quoteOrderQty` mit 80 USDT Zielnotional; Verkaufsorders schließen höchstens die tatsächlich verfügbare Basisassetmenge. Vor Submit darf der aktuelle ausführbare Referenzpreis höchstens 25 bps vom Intent-Referenzpreis abweichen. Limit-/Marketable-Limit-Orders gehören nicht zu V1.
+Eine später freigegebene Liveversion verwendet verbindlich Market-Orders nach bestätigtem Signal. Kauforders verwenden, sofern von Binance für das Symbol erlaubt, `quoteOrderQty` mit 80 USDT Zielnotional; Verkaufsorders schließen höchstens die tatsächlich verfügbare Basisassetmenge. Vor Submit darf der aktuelle ausführbare Referenzpreis höchstens 25 bps vom Intent-Referenzpreis abweichen. Limit-/Marketable-Limit-Orders gehören nicht zum beschlossenen Erst-Liveumfang.
 
 Nach Submit gelten feste Zeiten:
 

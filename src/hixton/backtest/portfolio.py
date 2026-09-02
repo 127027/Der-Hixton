@@ -21,6 +21,7 @@ from hixton.backtest.models import (
 )
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.quality import audit_candles
+from hixton.domain.allocation import ONE_PER_SYMBOL, allocate_entry_slots
 from hixton.domain.models import Candle, Signal, SignalAction, StrategyParameters, StrategySemantics
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy, rank_strength
@@ -34,6 +35,7 @@ class _OpenTrade:
     fill: Fill
     quantity: Decimal
     cost_basis: Decimal
+    slots: int
 
 
 def _d(value: float) -> Decimal:
@@ -74,6 +76,7 @@ def run_shared_portfolio_backtest(
     strategy_parameters: StrategyParameters | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
+    slot_allocation: str = ONE_PER_SYMBOL,
     apply_risk_limits: bool = True,
 ) -> PortfolioBacktestResult:
     """Replay ten aligned markets against one non-compounding shared ledger."""
@@ -214,15 +217,22 @@ def run_shared_portfolio_backtest(
                     order[signal.symbol],
                 )
             )
+            used_slots = sum(position.slots for position in positions.values())
+            allocations = allocate_entry_slots(
+                [signal.symbol for signal in entries if signal.symbol not in positions],
+                free_slots=max(0, slot_count - used_slots),
+                policy=slot_allocation,
+            )
             for signal in entries:
                 if signal.symbol in positions:
                     blocked.append(f"{signal.signal_id}:POSITION_ALREADY_OPEN")
                     continue
-                if len(positions) >= slot_count:
+                allocated_slots = allocations.get(signal.symbol, 0)
+                if allocated_slots == 0:
                     blocked.append(f"{signal.signal_id}:NO_FREE_SLOT")
                     continue
                 rule = rules.get(signal.symbol, ExecutionRules())
-                budget = min(target_notional, cash)
+                budget = min(target_notional * Decimal(allocated_slots), cash)
                 reference = _d(candles[signal.symbol].open)
                 fill_price = reference * (ONE + costs.adverse_price_rate)
                 gross_quantity = _round_down(budget / fill_price, rule.step_size)
@@ -249,7 +259,13 @@ def run_shared_portfolio_backtest(
                     modeled_spread_slippage=modeled_adverse,
                 )
                 cash -= quote_spend
-                positions[signal.symbol] = _OpenTrade(signal, fill, net_quantity, quote_spend)
+                positions[signal.symbol] = _OpenTrade(
+                    signal,
+                    fill,
+                    net_quantity,
+                    quote_spend,
+                    allocated_slots,
+                )
                 fills.append(fill)
             pending = []
 
@@ -257,7 +273,10 @@ def run_shared_portfolio_backtest(
         for symbol in SYMBOLS:
             points[symbol] = strategies[symbol].update(candles[symbol])
         if in_report:
-            max_concurrent = max(max_concurrent, len(positions))
+            max_concurrent = max(
+                max_concurrent,
+                sum(position.slots for position in positions.values()),
+            )
             position_value = sum(
                 (
                     (
@@ -336,6 +355,7 @@ def run_shared_portfolio_backtest(
         starting_cash=starting_cash,
         target_notional=target_notional,
         slot_count=slot_count,
+        slot_allocation=slot_allocation,
         signals=tuple(signals),
         fills=tuple(fills),
         trades=tuple(trades),

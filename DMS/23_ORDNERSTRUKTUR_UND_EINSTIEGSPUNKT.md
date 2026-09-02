@@ -26,8 +26,8 @@ Der-Hixton/
 │   │   ├── reports/                  # freigegebene Berichte
 │   │   ├── trades/                   # kleine/sanitisierte Tradeexports
 │   │   └── data_quality/             # Qualitätsnachweise
-│   ├── v2/                           # V2-Forschung: eine README, Candidate-Snapshot, Runs
-│   └── v3/                           # erst bei Bedarf anlegen
+│   ├── v2/                           # aktive Paper-V2: README, Snapshot, lokale Runs
+│   └── v3/                           # verworfener Mehrfachslot-Versuch, lokale Runs
 ├── config/
 │   └── examples/                     # secretfreie Beispiele
 ├── ui/                               # TypeScript-Quelle und reproduzierbarer UI-Build
@@ -50,6 +50,7 @@ py -3 src/main.py backtest single --symbol ETHUSDT
 py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
 py -3 src/main.py backtest portfolio --strategy v2
+py -3 src/main.py backtest portfolio --strategy v3
 py -3 src/main.py paper
 py -3 src/main.py live
 py -3 src/main.py ui
@@ -60,8 +61,8 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 ## Backtestversionierung
 
 - `backtests/v1`: erste freigegebene Backtestmethodik.
-- `backtests/v2`: aktuelle Pine-v6-Strategieforschung; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält spätere unveränderliche Läufe.
-- `backtests/v3`: nächste fachliche Änderung.
+- `backtests/v2`: aktive Pine-v6-Paperstrategie; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält lokale unveränderliche Läufe.
+- `backtests/v3`: verworfener Mehrfachslot-Versuch mit eigener README und eigenem Snapshot; lokale Runs werden nicht eingecheckt.
 - Reine Wiederholung mit gleichen Regeln erhält innerhalb derselben Version eine neue unveränderliche Run-ID unter `runs/`.
 - Ein gültiger Run wird nicht überschrieben oder nachträglich „verbessert“.
 - Jede Version referenziert Code-, Strategie-, Config- und Datenhash; V2 referenziert zusätzlich verpflichtend den Eigentümer-Pine-Hash.

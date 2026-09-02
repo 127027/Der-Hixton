@@ -7,11 +7,11 @@ Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eig
 | Phase | Technischer Stand | Freigabestatus |
 |---|---|---|
 | 0 – Spezifikation | DMS V1/`HIXTON-SPEC-1.0` eingefroren | **BESTANDEN** |
-| 1 – Strategie-Domain | eine Engine, V1- und Eigentümer-Pine-v6-Golden-/Replay-/Zustandstests | **BESTANDEN**; V2 bleibt getrennt `RESEARCH_ONLY` |
+| 1 – Strategie-Domain | eine Engine, V1- und Eigentümer-Pine-v6-Golden-/Replay-/Zustandstests | **BESTANDEN**; V2 ist aktives Paper, V1 bleibt Historie |
 | 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
-| 3 – Backtest | 10×250, Einzeltest und gemeinsames 3×80-Portfolio einschließlich Paper-Risikogates, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; V2 bleibt wegen früher Risikohalts `RESEARCH_ONLY`, Ergebnisstand in DMS 18 |
+| 3 – Backtest | 10×250, Einzeltest und gemeinsames 3×80-Portfolio einschließlich Paper-Risikogates, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; V2 als bisher bestbelegter Paperstand gewählt, V3-Mehrfachslot verworfen |
 | 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs und sichtbarer Risikohalt | **BESTANDEN** in lokaler Browser-Abnahme mit 50/50 Chartkombinationen |
-| 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Recovery und Soak-Zähler | **IMPLEMENTIERT**, Gate C/realer Soak noch nicht bestanden |
+| 5 – Paper Execution | persistenter versionierter 240-USDT-/3×80-Ledger, atomarer Strategiewechsel, Slotpriorität, Kosten, Guards, Restart-Recovery und Soak-Zähler | **IMPLEMENTIERT**, V2-Soak/Gate C noch nicht bestanden |
 | 6 – Live-Adapter | kein privater Orderversand; UI und CLI zeigen `LIVE_DISABLED` | **ABSICHTLICH GESPERRT** |
 | 7 – Live-Freigabe | nicht begonnen | **NICHT FREIGEGEBEN** |
 
@@ -58,9 +58,9 @@ Definition of Done: drei Jahre plus Warm-up pro Paar, Lücken/Fehler nachweislic
 
 Definition of Done: alle zehn Einzeltests und Aggregation exakt reproduzierbar; keine erfundenen Ergebnisse.
 
-V2-Zusatzstand: Parametersuche, Mehrfenstervergleich und Sensitivität sind unter `backtests/v2` dokumentiert. Eine Aktivierung gehört nicht zu dieser bestandenen historischen Phase, sondern benötigt den separaten Shadow-/Paper-Nachweis.
+V2-Zusatzstand: Parametersuche, Mehrfenstervergleich und Sensitivität sind unter `backtests/v2` dokumentiert. Nach ausdrücklicher Eigentümerentscheidung wurde V2 kontrolliert als Paperstandard übernommen. Dies ist ein Forward-/Soak-Test unter echten Marktdaten, keine Live-Freigabe.
 
-Nächster geordneter Forschungsstand ist bei einer fachlichen Strategieänderung `backtests/v3`. Er muss kurze Fehlausbrüche untersuchen, lange Gewinntrends erhalten und dieselben Kosten-, Altfenster-, Nachbar- und Risikogate-Prüfungen bestehen. V2 wird nicht überschrieben; eine Parameter- oder Risikolockerung allein zur Zielrendite ist ausgeschlossen.
+Der geordnete V3-Versuch einer Mehrfachbelegung desselben Coins ist unter `backtests/v3` dokumentiert und wegen sofortigem Konzentrations-/Risikohalt verworfen. Ein weiterer Challenger erhält die nächste freie Version und muss kurze Fehlausbrüche untersuchen, lange Gewinntrends erhalten sowie Kosten-, Altfenster-, Nachbar- und Risikogate-Prüfungen bestehen. V2 wird nicht überschrieben; eine Parameter- oder Risikolockerung allein zur Zielrendite ist ausgeschlossen.
 
 ## Phase 4 – UI-Lesemodus
 

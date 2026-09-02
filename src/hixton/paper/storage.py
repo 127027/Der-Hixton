@@ -11,7 +11,7 @@ from pathlib import Path
 from types import TracebackType
 from uuid import uuid4
 
-from hixton.constants import SYMBOLS
+from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
 from hixton.paper.models import (
     PaperAccount,
     PaperEvent,
@@ -19,6 +19,7 @@ from hixton.paper.models import (
     PaperPosition,
     PaperSettings,
     PaperSoakProgress,
+    PaperStrategySession,
 )
 
 _SOAK_MINIMUM_DAYS = 30
@@ -70,7 +71,13 @@ class PaperStore:
     def close(self) -> None:
         self._connection.close()
 
-    def initialize(self, *, at: datetime | None = None) -> bool:
+    def initialize(
+        self,
+        *,
+        at: datetime | None = None,
+        strategy_key: str = "v1",
+        strategy_version: str = HIXTON_SPEC_VERSION,
+    ) -> bool:
         moment = (at or _now()).astimezone(UTC)
         with self._connection:
             cursor = self._connection.execute(
@@ -91,7 +98,67 @@ class PaperStore:
                 """,
                 (_time(moment),),
             )
+            session = self._connection.execute(
+                "SELECT singleton FROM paper_strategy_state WHERE singleton=1"
+            ).fetchone()
+            if session is None:
+                legacy_rows = sum(
+                    int(
+                        self._connection.execute(
+                            f"SELECT COUNT(*) FROM {table}"
+                        ).fetchone()[0]
+                    )
+                    for table in ("paper_events", "paper_positions", "paper_checkpoints")
+                )
+                initial_key = "v1" if legacy_rows else strategy_key
+                initial_version = (
+                    HIXTON_SPEC_VERSION if legacy_rows else strategy_version
+                )
+                account_row = self._connection.execute(
+                    "SELECT created_at_utc, starting_cash_text "
+                    "FROM paper_account WHERE singleton=1"
+                ).fetchone()
+                if account_row is None:
+                    raise RuntimeError("paper account disappeared during initialization")
+                activated_at = (
+                    str(account_row["created_at_utc"]) if legacy_rows else _time(moment)
+                )
+                starting_equity = str(account_row["starting_cash_text"])
+                self._connection.execute(
+                    """
+                    INSERT INTO paper_strategy_state (
+                        singleton, strategy_key, strategy_version,
+                        activated_at_utc, starting_equity_text
+                    ) VALUES (1, ?, ?, ?, ?)
+                    """,
+                    (initial_key, initial_version, activated_at, starting_equity),
+                )
         return cursor.rowcount == 1
+
+    def load_strategy_session(self) -> PaperStrategySession:
+        row = self._connection.execute(
+            "SELECT * FROM paper_strategy_state WHERE singleton=1"
+        ).fetchone()
+        if row is None:
+            raise RuntimeError("paper strategy session is not initialized")
+        return PaperStrategySession(
+            strategy_key=str(row["strategy_key"]),
+            strategy_version=str(row["strategy_version"]),
+            activated_at_utc=_parse_time(row["activated_at_utc"]),
+            starting_equity_usdt=Decimal(str(row["starting_equity_text"])),
+        )
+
+    def require_strategy(self, strategy_key: str, strategy_version: str) -> None:
+        session = self.load_strategy_session()
+        if (
+            session.strategy_key != strategy_key
+            or session.strategy_version != strategy_version
+        ):
+            raise RuntimeError(
+                "paper strategy mismatch: ledger uses "
+                f"{session.strategy_key}/{session.strategy_version}, configuration uses "
+                f"{strategy_key}/{strategy_version}; explicit activation required"
+            )
 
     def load_account(self) -> PaperAccount:
         row = self._connection.execute(
@@ -204,6 +271,8 @@ class PaperStore:
                 entry_signal_id=str(row["entry_signal_id"]),
                 entry_fee_usdt=Decimal(str(row["entry_fee_text"])),
                 updated_at_utc=_parse_time(row["updated_at_utc"]),
+                strategy_version=str(row["strategy_version"]),
+                slot_count=int(row["slot_count"]),
             )
             for row in rows
         )
@@ -214,8 +283,9 @@ class PaperStore:
                 """
                 INSERT INTO paper_positions (
                     symbol, quantity_text, average_price_text, cost_basis_text,
-                    entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc,
+                    strategy_version, slot_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(symbol) DO UPDATE SET
                     quantity_text=excluded.quantity_text,
                     average_price_text=excluded.average_price_text,
@@ -223,7 +293,9 @@ class PaperStore:
                     entry_time_utc=excluded.entry_time_utc,
                     entry_signal_id=excluded.entry_signal_id,
                     entry_fee_text=excluded.entry_fee_text,
-                    updated_at_utc=excluded.updated_at_utc
+                    updated_at_utc=excluded.updated_at_utc,
+                    strategy_version=excluded.strategy_version,
+                    slot_count=excluded.slot_count
                 """,
                 (
                     position.symbol,
@@ -234,6 +306,8 @@ class PaperStore:
                     position.entry_signal_id,
                     str(position.entry_fee_usdt),
                     _time(position.updated_at_utc),
+                    position.strategy_version,
+                    position.slot_count,
                 ),
             )
 
@@ -252,8 +326,8 @@ class PaperStore:
                     event_id, signal_id, occurred_at_utc, symbol, action, status,
                     reason, reference_price_text, execution_price_text,
                     base_quantity_text, quote_amount_text, fee_text,
-                    realized_pnl_text, breakout_strength_text
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    realized_pnl_text, breakout_strength_text, strategy_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     event.event_id,
@@ -278,6 +352,7 @@ class PaperStore:
                         if event.breakout_strength is not None
                         else None
                     ),
+                    event.strategy_version,
                 ),
             )
         return cursor.rowcount == 1
@@ -322,8 +397,9 @@ class PaperStore:
                 """
                 INSERT INTO paper_positions (
                     symbol, quantity_text, average_price_text, cost_basis_text,
-                    entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                    entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc,
+                    strategy_version, slot_count
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -335,6 +411,8 @@ class PaperStore:
                         position.entry_signal_id,
                         str(position.entry_fee_usdt),
                         _time(position.updated_at_utc),
+                        position.strategy_version,
+                        position.slot_count,
                     )
                     for position in positions.values()
                 ],
@@ -345,8 +423,8 @@ class PaperStore:
                     event_id, signal_id, occurred_at_utc, symbol, action, status,
                     reason, reference_price_text, execution_price_text,
                     base_quantity_text, quote_amount_text, fee_text,
-                    realized_pnl_text, breakout_strength_text
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    realized_pnl_text, breakout_strength_text, strategy_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -380,6 +458,7 @@ class PaperStore:
                             if event.breakout_strength is not None
                             else None
                         ),
+                        event.strategy_version,
                     )
                     for event in events
                 ],
@@ -447,6 +526,140 @@ class PaperStore:
                 ],
             )
 
+    def apply_strategy_activation(
+        self,
+        *,
+        account: PaperAccount,
+        events: tuple[PaperEvent, ...],
+        checkpoints: Mapping[str, datetime],
+        strategy_key: str,
+        strategy_version: str,
+        starting_equity_usdt: Decimal,
+        at: datetime,
+    ) -> None:
+        """Close the old paper session and atomically start a clean strategy soak."""
+
+        if set(checkpoints) != set(SYMBOLS):
+            raise ValueError("strategy activation requires all ten checkpoints")
+        previous = self.load_strategy_session()
+        if (
+            previous.strategy_key == strategy_key
+            and previous.strategy_version == strategy_version
+        ):
+            return
+        with self._connection:
+            self._connection.execute(
+                """
+                UPDATE paper_account SET cash_text=?, starting_cash_text=?,
+                    high_water_text=?, day_start_equity_text=?, day_start_date_utc=?,
+                    halted=?, halt_reason=?, updated_at_utc=? WHERE singleton=1
+                """,
+                (
+                    str(account.cash_usdt),
+                    str(account.starting_cash_usdt),
+                    str(account.high_water_equity_usdt),
+                    str(account.day_start_equity_usdt),
+                    account.day_start_date_utc,
+                    int(account.halted),
+                    account.halt_reason,
+                    _time(account.updated_at_utc),
+                ),
+            )
+            self._connection.execute("DELETE FROM paper_positions")
+            self._connection.executemany(
+                """
+                INSERT INTO paper_events (
+                    event_id, signal_id, occurred_at_utc, symbol, action, status,
+                    reason, reference_price_text, execution_price_text,
+                    base_quantity_text, quote_amount_text, fee_text,
+                    realized_pnl_text, breakout_strength_text, strategy_version
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                """,
+                [
+                    (
+                        event.event_id,
+                        event.signal_id,
+                        _time(event.occurred_at_utc),
+                        event.symbol,
+                        event.action,
+                        event.status.value,
+                        event.reason,
+                        str(event.reference_price),
+                        str(event.execution_price),
+                        str(event.base_quantity),
+                        str(event.quote_amount_usdt),
+                        str(event.fee_usdt),
+                        str(event.realized_pnl_usdt),
+                        None,
+                        event.strategy_version,
+                    )
+                    for event in events
+                ],
+            )
+            self._connection.executemany(
+                """
+                INSERT INTO paper_checkpoints(symbol, last_close_utc) VALUES (?, ?)
+                ON CONFLICT(symbol) DO UPDATE SET last_close_utc=excluded.last_close_utc
+                """,
+                [(symbol, _time(value)) for symbol, value in checkpoints.items()],
+            )
+            self._connection.execute("DELETE FROM paper_soak_symbols")
+            self._connection.execute("DELETE FROM paper_soak")
+            self._connection.execute(
+                """
+                INSERT INTO paper_soak(singleton, started_at_utc, updated_at_utc)
+                VALUES (1, ?, ?)
+                """,
+                (_time(at), _time(at)),
+            )
+            self._connection.executemany(
+                """
+                INSERT INTO paper_soak_symbols(
+                    symbol, baseline_close_utc, processed_closed_bars
+                ) VALUES (?, ?, 0)
+                """,
+                [(symbol, _time(checkpoints[symbol])) for symbol in SYMBOLS],
+            )
+            self._connection.execute(
+                """
+                UPDATE paper_strategy_state SET strategy_key=?, strategy_version=?,
+                    activated_at_utc=?, starting_equity_text=? WHERE singleton=1
+                """,
+                (
+                    strategy_key,
+                    strategy_version,
+                    _time(at),
+                    str(starting_equity_usdt),
+                ),
+            )
+            self._connection.execute(
+                """
+                INSERT INTO paper_audit(
+                    audit_id, occurred_at_utc, actor, action, details_json
+                ) VALUES (?, ?, 'OWNER_DECISION', 'PAPER_STRATEGY_ACTIVATED', ?)
+                """,
+                (
+                    str(uuid4()),
+                    _time(at),
+                    json.dumps(
+                        {
+                            "before": {
+                                "key": previous.strategy_key,
+                                "version": previous.strategy_version,
+                            },
+                            "after": {
+                                "key": strategy_key,
+                                "version": strategy_version,
+                            },
+                            "starting_equity_usdt": str(starting_equity_usdt),
+                            "forced_paper_exits": len(events),
+                            "decision": "DEC-037",
+                        },
+                        separators=(",", ":"),
+                    ),
+                ),
+            )
+
     def all_checkpoints(self) -> dict[str, datetime]:
         rows = self._connection.execute(
             "SELECT symbol, last_close_utc FROM paper_checkpoints"
@@ -498,13 +711,15 @@ class PaperStore:
         bars = {str(row["symbol"]): int(row["processed_closed_bars"]) for row in rows}
         if set(bars) != set(SYMBOLS):
             raise RuntimeError("paper soak counters are incomplete")
+        session = self.load_strategy_session()
         completed_row = self._connection.execute(
             """
             SELECT COUNT(*) AS count
             FROM paper_events
             WHERE action='EXIT_LONG' AND status='FILLED' AND occurred_at_utc>=?
+                AND strategy_version=?
             """,
-            (_time(started_at),),
+            (_time(started_at), session.strategy_version),
         ).fetchone()
         completed_trades = int(completed_row["count"] if completed_row is not None else 0)
         calendar_days = max(0, (moment.date() - started_at.date()).days)
@@ -576,7 +791,9 @@ class PaperStore:
                     entry_time_utc TEXT NOT NULL,
                     entry_signal_id TEXT NOT NULL,
                     entry_fee_text TEXT NOT NULL,
-                    updated_at_utc TEXT NOT NULL
+                    updated_at_utc TEXT NOT NULL,
+                    strategy_version TEXT NOT NULL DEFAULT 'HIXTON-SPEC-1.0',
+                    slot_count INTEGER NOT NULL DEFAULT 1 CHECK (slot_count > 0)
                 );
                 CREATE TABLE IF NOT EXISTS paper_events (
                     event_id TEXT PRIMARY KEY,
@@ -592,7 +809,8 @@ class PaperStore:
                     quote_amount_text TEXT,
                     fee_text TEXT,
                     realized_pnl_text TEXT,
-                    breakout_strength_text TEXT
+                    breakout_strength_text TEXT,
+                    strategy_version TEXT NOT NULL DEFAULT 'HIXTON-SPEC-1.0'
                 );
                 CREATE INDEX IF NOT EXISTS idx_paper_events_symbol_time
                 ON paper_events(symbol, occurred_at_utc);
@@ -622,15 +840,43 @@ class PaperStore:
                 );
                 CREATE INDEX IF NOT EXISTS idx_paper_audit_time
                 ON paper_audit(occurred_at_utc);
+                CREATE TABLE IF NOT EXISTS paper_strategy_state (
+                    singleton INTEGER PRIMARY KEY CHECK (singleton=1),
+                    strategy_key TEXT NOT NULL,
+                    strategy_version TEXT NOT NULL,
+                    activated_at_utc TEXT NOT NULL,
+                    starting_equity_text TEXT NOT NULL
+                );
                 """
             )
-            columns = {
+            event_columns = {
                 str(row["name"])
                 for row in self._connection.execute("PRAGMA table_info(paper_events)").fetchall()
             }
-            if "realized_pnl_text" not in columns:
+            if "realized_pnl_text" not in event_columns:
                 self._connection.execute(
                     "ALTER TABLE paper_events ADD COLUMN realized_pnl_text TEXT"
+                )
+            if "strategy_version" not in event_columns:
+                self._connection.execute(
+                    "ALTER TABLE paper_events ADD COLUMN strategy_version TEXT "
+                    f"NOT NULL DEFAULT '{HIXTON_SPEC_VERSION}'"
+                )
+            position_columns = {
+                str(row["name"])
+                for row in self._connection.execute(
+                    "PRAGMA table_info(paper_positions)"
+                ).fetchall()
+            }
+            if "strategy_version" not in position_columns:
+                self._connection.execute(
+                    "ALTER TABLE paper_positions ADD COLUMN strategy_version TEXT "
+                    f"NOT NULL DEFAULT '{HIXTON_SPEC_VERSION}'"
+                )
+            if "slot_count" not in position_columns:
+                self._connection.execute(
+                    "ALTER TABLE paper_positions ADD COLUMN slot_count INTEGER "
+                    "NOT NULL DEFAULT 1"
                 )
             self._connection.execute("PRAGMA optimize")
 
@@ -655,6 +901,7 @@ class PaperStore:
             fee_usdt=decimal_or_none("fee_text"),
             realized_pnl_usdt=decimal_or_none("realized_pnl_text"),
             breakout_strength=decimal_or_none("breakout_strength_text"),
+            strategy_version=str(row["strategy_version"]),
         )
 
     def missing_checkpoint_symbols(self) -> tuple[str, ...]:

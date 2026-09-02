@@ -43,7 +43,7 @@ Die Engine verwendet eine feste Reihenfolge:
 
 Damit kann der Schlusskurs einer Bar nicht gleichzeitig rückwirkend als Fillpreis derselben Entscheidung dienen.
 
-## Verbindliches Kostenmodell V1
+## Verbindliches Kostenmodell
 
 Alle Werte gelten je ausgeführter Orderseite und wirken immer zu Ungunsten der Strategie.
 
@@ -108,7 +108,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Sensitivität prüft Nachbarparameter; ein nur an einem exakten Punkt gutes Ergebnis gilt als fragil.
 - Monte-Carlo/Trade-Reordering kann als Robustheitsanalyse dienen, ersetzt aber keine Marktzeitsimulation.
 - Die Strategie wird nicht so lange verändert, bis ein gewünschter Gewinnwert erscheint.
-- Jede Verbesserung erhält `backtests/v2`, `v3` usw.; der aktive Paperstand wird nie still überschrieben.
+- Jede Verbesserung erhält `backtests/v2`, `v3` usw.; der aktive Paperstand wird nur nach explizitem, auditierbarem Wechsel vorwärtsgerichtet ersetzt.
 - Ein gemeinsamer Parametersatz für alle zehn Coins wird vor Coin-spezifischen Sonderwerten bevorzugt, solange kein sauberer Out-of-sample-Nachweis die zusätzliche Komplexität rechtfertigt.
 - Höhere Tradezahl ist nur ein Sekundärkriterium, wenn Baseline, Kosten-Stress, ältere Marktphasen und Nachbarparameter mindestens gleich robust bleiben.
 
@@ -129,6 +129,14 @@ Ein Backtest ist nur `VALID`, wenn:
 
 Korrekte Botreaktion und Profitabilität sind zwei verschiedene Ergebnisse. Korrekte Software kann Verlust ausweisen. Dann wird die Strategie nicht still verändert; der Eigentümer entscheidet separat über eine neue Strategieversion. Hohe Tradezahl wird nur positiv bewertet, wenn die Nettoperformance nach Binance-Gebühren und Slippage nicht dadurch verschlechtert wird.
 
-## V2-Forschungszyklus
+## Auswahl- und Übernahmeprinzip
 
-Der Stand vom 02.09.2026 ist vollständig in `backtests/v2/README.md` und maschinenlesbar in `backtests/v2/candidate.json` dokumentiert. Der Zyklus umfasste ein breites Raster von 1.280 gemeinsamen Parametersätzen, eine Mehrfensterprüfung von 75 Finalisten, 48 Nachbarvarianten, Baseline-/Stresskosten und erneute Rechnung der Finalisten in der Produktionsengine. Der Kandidat bleibt `RESEARCH_ONLY`, weil ältere Coin-Fenster weiterhin Verluste enthalten, der risikogleiche 3×80-Spiegel in allen geprüften Segmenten vorzeitig hielt und eine historische Optimierung keinen 24/7-Forward-Test ersetzt.
+Der Zweck der Backtests ist nicht nur Archivierung: Eine nach dem vollständigen Prüfprogramm besser belegte, zulässige Version soll nach ausdrücklicher Eigentümerentscheidung als Paperstandard übernommen werden. Bewertet werden gemeinsam Nettoperformance, Stresskosten, ältere Zeitfenster, Nachbarstabilität, 3×80-Risikospiegel und Reproduzierbarkeit. Maximale Rendite in nur einem Fenster, mehr Trades allein oder gelockerte Risikogrenzen begründen keine Übernahme. Live-Freigabe bleibt davon strikt getrennt.
+
+## V2-Zyklus und Paperfreigabe
+
+Der Stand vom 02.09.2026 ist vollständig in `backtests/v2/README.md` und maschinenlesbar in `backtests/v2/candidate.json` dokumentiert. Der Zyklus umfasste ein breites Raster von 1.280 gemeinsamen Parametersätzen, eine Mehrfensterprüfung von 75 Finalisten, 48 Nachbarvarianten, Baseline-/Stresskosten und erneute Rechnung der Finalisten in der Produktionsengine. Im exakt gleichen aktuellen 3×80-Risikospiegel übertraf V2 V1: 542,49 statt 383,89 USDT Baseline und 406,29 statt 343,47 USDT Stress. Der Eigentümer gab V2 deshalb als bestbelegten bisherigen Stand für Paper frei. Ältere Verlustfenster und vorzeitige Risikohalts bleiben offen ausgewiesen und sperren weiterhin Live.
+
+## V3-Mehrfachslot-Versuch
+
+`HIXTON-V3-SLOT-CANDIDATE-1` ließ bei unveränderten V2-Signalen freie Slots auf demselben Coin wiederholen. Im aktuellen Dreijahres-Risikospiegel endete der Lauf `76a78440-405a-4624-bc0b-7765558b801c` bereits am 12.10.2023: 287,85 USDT Baseline beziehungsweise 282,16 USDT Stress, jeweils nur vier abgeschlossene Positionen. Weil diese Variante V2 deutlich untertraf und das Konzentrationsrisiko sofort auslöste, wurde sie am ersten Gate verworfen; weitere Altfensterrechnungen wären keine sinnvolle Nutzung von Rechenzeit. Der vollständige kuratierte Nachweis liegt unter `backtests/v3`.

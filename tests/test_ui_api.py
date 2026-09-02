@@ -15,8 +15,9 @@ from hixton.ui.api import create_app
 
 def _config(tmp_path: Path) -> ProjectConfig:
     return ProjectConfig(
+        strategy_key="v2",
         database_path=tmp_path / "hixton.sqlite3",
-        run_output_root=tmp_path / "backtests" / "v1" / "runs",
+        run_output_root=tmp_path / "backtests" / "v2" / "runs",
         binance_base_url="https://api.binance.com",
         starting_usdt_per_symbol=Decimal("250.00"),
         target_notional_usdt=Decimal("250.00"),
@@ -84,7 +85,11 @@ def test_status_exposes_restart_persistent_paper_soak_gate(tmp_path: Path) -> No
     started = datetime.now(UTC)
     checkpoints = dict.fromkeys(SYMBOLS, started)
     with PaperStore(config.database_path) as store:
-        store.initialize(at=started)
+        store.initialize(
+            at=started,
+            strategy_key="v2",
+            strategy_version="HIXTON-V2-RESEARCH-CANDIDATE-1",
+        )
         store.save_checkpoints(checkpoints)
         store.ensure_soak_started(checkpoints, at=started)
     client = TestClient(
@@ -111,8 +116,8 @@ def test_backtest_api_keeps_v1_and_v2_run_views_separate(tmp_path: Path) -> None
 
     assert v1.status_code == 200
     assert v1.json()["strategy"]["version"] == "HIXTON-SPEC-1.0"
-    assert v1.json()["strategy"]["paper_approved"] is True
+    assert v1.json()["strategy"]["paper_approved"] is False
     assert v2.status_code == 200
     assert v2.json()["strategy"]["version"] == "HIXTON-V2-RESEARCH-CANDIDATE-1"
-    assert v2.json()["strategy"]["paper_approved"] is False
+    assert v2.json()["strategy"]["paper_approved"] is True
     assert invalid.status_code == 400

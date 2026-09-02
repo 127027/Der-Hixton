@@ -20,15 +20,17 @@ def _payload() -> dict[str, object]:
     return {
         "schema_version": 1,
         "strategy": {
-            "version": "HIXTON-SPEC-1.0",
+            "key": "v2",
+            "version": "HIXTON-V2-RESEARCH-CANDIDATE-1",
             "timeframe": "1h",
             "source": "close",
-            "vidya_length": 10,
+            "vidya_length": 6,
             "momentum_length": 20,
-            "smoothing_length": 15,
-            "atr_length": 200,
-            "band_multiplier": 2.0,
+            "smoothing_length": 8,
+            "atr_length": 60,
+            "band_multiplier": 3.8,
             "warmup_bars": 400,
+            "slot_allocation": "one_per_symbol",
             "long_only": True,
             "compounding": False,
         },
@@ -54,7 +56,7 @@ def _payload() -> dict[str, object]:
         },
         "runtime": {
             "database_path": "data/hixton.sqlite3",
-            "run_output_root": "backtests/v1/runs",
+            "run_output_root": "backtests/v2/runs",
             "binance_base_url": "https://api.binance.com",
         },
     }
@@ -64,11 +66,12 @@ def _write(path: Path, payload: dict[str, object]) -> None:
     path.write_text(json.dumps(payload), encoding="utf-8")
 
 
-def test_valid_v1_config_resolves_runtime_paths(tmp_path: Path) -> None:
+def test_valid_active_v2_config_resolves_runtime_paths(tmp_path: Path) -> None:
     path = tmp_path / "config.json"
     _write(path, _payload())
     config = load_project_config(path, project_root=tmp_path)
     assert config.database_path == tmp_path / "data" / "hixton.sqlite3"
+    assert config.strategy_key == "v2"
     assert config.ui_port == 8765
     assert config.paper_poll_seconds == 30
     assert config.paper_starting_cash_usdt == Decimal("240.00")

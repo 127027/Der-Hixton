@@ -9,6 +9,7 @@ import sys
 from datetime import UTC, datetime, timedelta
 from pathlib import Path
 
+from hixton import __version__
 from hixton.backtest.engine import run_isolated_batch, run_single_backtest
 from hixton.backtest.models import (
     BASELINE_COSTS,
@@ -20,13 +21,15 @@ from hixton.backtest.models import (
 from hixton.backtest.portfolio import run_shared_portfolio_backtest
 from hixton.backtest.reporting import RunResult, write_report_bundle
 from hixton.config import ProjectConfig, load_project_config
-from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS, TIMEFRAME_DELTA
+from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.binance import BinanceApiError, BinancePublicClient
 from hixton.data.quality import audit_candles
 from hixton.data.storage import CandleStore
 from hixton.data.sync import synchronize_symbol
 from hixton.domain.models import Candle
 from hixton.domain.versions import StrategyDefinition, strategy_definition
+from hixton.paper.engine import activate_paper_strategy
+from hixton.runtime.analysis import rebuild_analysis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_CONFIG = PROJECT_ROOT / "config" / "examples" / "config.example.json"
@@ -115,16 +118,20 @@ def _code_commit() -> str:
 
 
 def command_status(config: ProjectConfig) -> int:
+    strategy = strategy_definition(config.strategy_key)
     payload = {
-        "application_version": "0.1.0",
-        "strategy_version": HIXTON_SPEC_VERSION,
+        "application_version": __version__,
+        "strategy_key": strategy.key,
+        "strategy_version": strategy.version,
+        "slot_allocation": strategy.slot_allocation,
         "implemented": [
             "strategy",
             "binance_public_data",
             "sqlite_quality",
             "backtest_v1",
-            "backtest_v2_research",
-            "paper_v1",
+            "backtest_v2",
+            "backtest_v3_research",
+            "paper_versioned",
             "local_ui",
         ],
         "not_yet_implemented": ["live_execution"],
@@ -217,7 +224,7 @@ def _run_single_scenarios(
 def command_backtest_single(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
     symbol = _symbols(args.symbol)[0]
-    strategy = strategy_definition(args.strategy)
+    strategy = strategy_definition(args.strategy or config.strategy_key)
     with CandleStore(config.database_path) as store:
         candles = store.load_candles(symbol, start=warmup_start, end_exclusive=report_end)
         rules = _execution_rules(store, symbol)
@@ -246,7 +253,7 @@ def command_backtest_single(args: argparse.Namespace, config: ProjectConfig) -> 
 
 def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
-    strategy = strategy_definition(args.strategy)
+    strategy = strategy_definition(args.strategy or config.strategy_key)
     candles_by_symbol = {}
     rules_by_symbol = {}
     with CandleStore(config.database_path) as store:
@@ -285,7 +292,7 @@ def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int
 
 def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
-    strategy = strategy_definition(args.strategy)
+    strategy = strategy_definition(args.strategy or config.strategy_key)
     candles_by_symbol = {}
     rules_by_symbol = {}
     with CandleStore(config.database_path) as store:
@@ -310,6 +317,7 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
             strategy_parameters=strategy.parameters,
             strategy_semantics=strategy.semantics,
             strategy_version=strategy.version,
+            slot_allocation=strategy.slot_allocation,
         )
     output = write_report_bundle(
         scenarios=scenarios,
@@ -324,10 +332,42 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
     return 0
 
 
+def command_paper_activate(args: argparse.Namespace, config: ProjectConfig) -> int:
+    if args.confirmation != "AKTIVIEREN":
+        raise ValueError("paper strategy activation requires --confirmation AKTIVIEREN")
+    strategy = strategy_definition(args.strategy)
+    if strategy.key != config.strategy_key:
+        raise ValueError(
+            "activation target must equal the strategy selected in configuration"
+        )
+    warmup_start, _, report_end = _window(None)
+    points, _ = rebuild_analysis(
+        config.database_path,
+        start=warmup_start,
+        end_exclusive=report_end,
+        strategy=strategy,
+    )
+    rules_by_symbol: dict[str, ExecutionRules] = {}
+    with CandleStore(config.database_path) as store:
+        for symbol in SYMBOLS:
+            rules_by_symbol[symbol] = _execution_rules(store, symbol)
+    events = activate_paper_strategy(
+        str(config.database_path),
+        points,
+        rules_by_symbol,
+        strategy,
+    )
+    print(
+        f"Paperstrategie aktiv: {strategy.version}; "
+        f"kontrollierte Positionsschliessungen: {len(events)}"
+    )
+    return 0
+
+
 def _not_ready(mode: str) -> int:
     print(
-        f"{mode} ist sicher gesperrt: Diese Bauphase enthält Strategie, Daten und Backtest, "
-        "aber noch keine Paper-/Live-/UI-Implementierung.",
+        f"{mode} ist sicher gesperrt: Paper und UI sind implementiert, "
+        "echte Binance-Orders benoetigen jedoch das dokumentierte Live-Gate.",
         file=sys.stderr,
     )
     return 2
@@ -366,20 +406,26 @@ def build_parser() -> argparse.ArgumentParser:
     single.add_argument("--symbol", required=True)
     single.add_argument("--end", type=parse_utc)
     single.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    single.add_argument("--strategy", choices=("v1", "v2"), default="v1")
+    single.add_argument("--strategy", choices=("v1", "v2", "v3"))
     all_ten = backtest_commands.add_parser("all", help="10x250-USDT-Batch testen")
     all_ten.add_argument("--end", type=parse_utc)
     all_ten.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    all_ten.add_argument("--strategy", choices=("v1", "v2"), default="v1")
+    all_ten.add_argument("--strategy", choices=("v1", "v2", "v3"))
     portfolio = backtest_commands.add_parser(
         "portfolio", help="gemeinsames 240-USDT-Konto mit 3x80-USDT-Slots testen"
     )
     portfolio.add_argument("--end", type=parse_utc)
     portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    portfolio.add_argument("--strategy", choices=("v1", "v2"), default="v1")
+    portfolio.add_argument("--strategy", choices=("v1", "v2", "v3"))
 
     paper = commands.add_parser("paper", help="24/7-Paper-Bot mit lokaler UI starten")
     paper.add_argument("--no-browser", action="store_true")
+    activate = commands.add_parser(
+        "paper-activate",
+        help="versionierten Paper-Strategiewechsel kontrolliert ausfuehren",
+    )
+    activate.add_argument("--strategy", choices=("v2",), required=True)
+    activate.add_argument("--confirmation", required=True)
     commands.add_parser("live", help="sicher gesperrter späterer Live-Modus")
     ui = commands.add_parser("ui", help="lokale UI mit Paper-Laufzeit starten")
     ui.add_argument("--no-browser", action="store_true")
@@ -395,6 +441,8 @@ def main(argv: list[str] | None = None) -> int:
             return command_status(config)
         if args.command in {"start", "paper", "ui"}:
             return command_start(args, config)
+        if args.command == "paper-activate":
+            return command_paper_activate(args, config)
         if args.command == "data" and args.data_command == "sync":
             return command_data_sync(args, config)
         if args.command == "data" and args.data_command == "audit":

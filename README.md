@@ -1,6 +1,6 @@
 # Der Hixton Trading Bot
 
-Der Hixton ist ein lokales Binance-Spot-System mit einer gemeinsamen, deterministischen Strategieengine für Backtest und 24/7-Paperbetrieb. Die aktive Paperstrategie bleibt `HIXTON-SPEC-1.0`; ein Pine-v6-basierter V2-Kandidat wird getrennt unter `backtests/v2` erforscht. Echte Live-Orders bleiben bis zum dokumentierten Live-Gate technisch deaktiviert.
+Der Hixton ist ein lokales Binance-Spot-System mit einer gemeinsamen, deterministischen Strategieengine für Backtest und 24/7-Paperbetrieb. Aktive Paperstrategie ist seit der ausdrücklichen Eigentümerentscheidung `DEC-037` die V2 `HIXTON-V2-RESEARCH-CANDIDATE-1`; der Name bleibt aus Gründen unveränderlicher Historie bestehen. V1 bleibt vollständig reproduzierbar. Echte Live-Orders bleiben bis zum dokumentierten Live-Gate technisch deaktiviert.
 
 Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
@@ -19,15 +19,16 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 ## Was die Anwendung enthält
 
 - Binance Spot für BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT.
-- `HIXTON-SPEC-1.0`: VIDYA/CMO, SMA-Nachglättung, Wilder-ATR, Bänder und geschlossene `1h`-Bars.
-- Vom Eigentümer bereitgestellte Pine-v6-Referenz mit eigenem Hash, Golden-Test und getrenntem V2-Kandidaten; keine stille Umschaltung des Paperbots.
+- Versionierte V1- und V2-Strategien: VIDYA/CMO, SMA-Nachglättung, Wilder-ATR, Bänder und ausschließlich geschlossene `1h`-Bars.
+- Vom Eigentümer bereitgestellte Pine-v6-Referenz mit eigenem Hash und Golden-Test; der kontrollierte V1→V2-Wechsel bewahrt das alte Ledger und startet einen neuen V2-Soak.
 - 24/7-Paper-Ledger mit gemeinsamem Startcash 240 USDT, drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
 - WebSocket-Livestream mit REST-Gap-Recovery, Startup-Prüfung und täglichem Audit um 00:05 UTC.
 - Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
 - Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
-- Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung. Kandidat 1 bleibt `RESEARCH_ONLY`.
+- Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung; V2 ist für Paper freigegeben, wegen früher Risikohalts aber ausdrücklich nicht für Live.
+- Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V2 verteilt höchstens einen Slot je Coin.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
 ## Sichere Grenzen
@@ -51,13 +52,16 @@ py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
 py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDT
 py -3 src/main.py backtest portfolio --strategy v2
+py -3 src/main.py backtest portfolio --strategy v3
 py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
 
+Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Paperstrategie V2. V1 und V3 müssen für historische beziehungsweise verworfene Vergleichsläufe ausdrücklich gewählt werden.
+
 `live` beendet sich absichtlich mit einer Sperrmeldung.
 
-Die Backtestseite besitzt dieselbe eindeutige Auswahl `V1 · aktives Paper` oder `V2 · Forschung` sowie `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
+Die Backtestseite besitzt die eindeutige Auswahl `V2 · aktives Paper`, `V1 · Historie` oder `V3 · verworfener Mehrfachslot-Test` sowie `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
 
 ## Entwicklung und Prüfung
 

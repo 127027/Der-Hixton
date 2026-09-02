@@ -9,7 +9,7 @@
 - Aktivierte Konfiguration hat Hash, Freigabezeit und Owner.
 - Strategieänderung und Betriebsänderung sind getrennte Versionen.
 
-## Verbindliche V1-Baseline
+## Aktive Paper-Baseline V2
 
 ```yaml
 schema_version: 1
@@ -25,25 +25,27 @@ exchange:
 
 strategy:
   id: hixton_vidya_atr
-  version: HIXTON-SPEC-1.0
+  key: v2
+  version: HIXTON-V2-RESEARCH-CANDIDATE-1
   normative_spec: DMS/03_STRATEGIE_HIXTON.md
   normative_spec_git_commit: REQUIRED_AT_BUILD
-  owner_pine_reference_sha256: 8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd  # V2-Referenz, nicht aktive V1-Formel
-  semantics: dms_v1
+  owner_pine_reference_sha256: 8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd
+  semantics: pine_v6
   timeframe: 1h
   source: close
-  vidya_length: 10
+  vidya_length: 6
   momentum_length: 20
   post_smoothing_type: sma
-  post_smoothing_length: 15
+  post_smoothing_length: 8
   atr_type: wilder_rma
-  atr_length: 200
-  band_multiplier: 2.0
+  atr_length: 60
+  band_multiplier: 3.8
   warmup_bars: 400
   initial_trend: down_without_order
   evaluate_on_closed_bar_only: true
   position_mode: long_only
   pyramiding: 0
+  slot_allocation: one_per_symbol
 
 markets:
   - BTC/USDT
@@ -137,7 +139,7 @@ ui:
 
 In `chart_ranges` und `default_range` steht `1m` für **einen Monat**. Es bezeichnet niemals einen 1-Minuten-Timeframe. Der native Daten- und Signaltimeframe bleibt `1h`; nur lange UI-Ansichten werden wie angegeben deterministisch aggregiert.
 
-Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die fachlichen V1-Defaults oben sind verbindlich und dürfen nicht durch Frameworkdefaults ersetzt werden. Telegram ist nicht erforderlich.
+Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die aktive V2-Konfiguration oben ist verbindlich und darf nicht durch Frameworkdefaults ersetzt werden. V1 bleibt als historische, reproduzierbare Konfiguration in ihrer Strategieversion erhalten. Telegram ist nicht erforderlich.
 
 ## Strategie-Snapshot
 
@@ -160,9 +162,9 @@ run_id: UUID
 created_at_utc: ISO-8601
 status: valid|invalid|failed|stale
 code_version: COMMIT_OR_BUILD_HASH
-strategy_version: HIXTON-SPEC-1.0
+strategy_version: HIXTON-V2-RESEARCH-CANDIDATE-1
 normative_spec_git_commit: VALUE
-owner_pine_reference_sha256: null  # historische V1; für V2 verpflichtend der dokumentierte Hash
+owner_pine_reference_sha256: 8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd
 config_sha256: VALUE
 data_snapshot_sha256: VALUE
 exchange: VALUE
@@ -176,6 +178,7 @@ run_mode: all_ten_isolated|single_symbol|paper_live_mirror
 paper_live_mirror_total_usdt: 240.00
 paper_live_mirror_slot_count: 3
 paper_live_mirror_target_notional_usdt: 80.00
+slot_allocation: one_per_symbol
 fee_model: baseline_10bps_per_side
 spread_model: baseline_2bps_per_side
 slippage_model: baseline_3bps_per_side
@@ -209,4 +212,4 @@ Start muss fehlschlagen bzw. Live deaktiviert bleiben bei:
 
 ## Freigabestatus
 
-Binance Spot, Coinliste, 10×250-USDT-Batch, 250-USDT-Einzeltest, 3×80-USDT-Paperbetrieb, 1h-Strategie, Long-only, kein Compounding, Slotpriorisierung, Kostenbaseline, Market-Order und 00:05-UTC-Audit sind fachlich beschlossen. Live bleibt dennoch bis zu Tests, Secrets, Accountabgleich und Gate D deaktiviert.
+Binance Spot, Coinliste, 10×250-USDT-Batch, 250-USDT-Einzeltest, 3×80-USDT-Paperbetrieb, aktive V2 auf 1h, Long-only, kein Compounding, höchstens ein Slot je Coin, Slotpriorisierung, Kostenbaseline und 00:05-UTC-Audit sind fachlich beschlossen. Ein Strategiewechsel benötigt eine explizite Bestätigung und persistiert Strategieversion, Aktivierungszeit, Start-Equity und Audit. Live bleibt bis zu Tests, Secrets, Accountabgleich und Gate D deaktiviert.

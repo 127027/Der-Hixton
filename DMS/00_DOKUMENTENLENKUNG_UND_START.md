@@ -22,9 +22,9 @@ Die Dokumentation deckt ab:
 Bei einem Widerspruch gilt diese Reihenfolge:
 
 1. schriftlich vom Eigentümer freigegebene Entscheidung im Entscheidungslog;
-2. für den aktiven Paperbetrieb die normative Strategie `HIXTON-SPEC-1.0` in Dokument 03;
+2. für den aktiven Paperbetrieb die in `DEC-037` freigegebene V2 samt unveränderlichem Snapshot in Dokument 03 und `backtests/v2/candidate.json`;
 3. diese DMS-Dokumente mit Status `VERBINDLICH`;
-4. für V2 die am 01.09.2026 vom Eigentümer bereitgestellte Pine-v6-Quelle samt Hash und versioniertem Parameter-Snapshot; sie überschreibt V1 nicht;
+4. die am 01.09.2026 vom Eigentümer bereitgestellte Pine-v6-Quelle samt Hash; sie überschreibt historische V1-Nachweise nicht;
 5. vorhandene Analyse `Der Hixton Indikator.md`;
 6. Kommentare, Beispiele, UI-Mockups und sonstige Hinweise.
 
@@ -40,15 +40,16 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1.2 ist fachlich entscheidungsvollständig; Backtest-/Paper-V1 läuft, V2 bleibt ein getrennter Forschungskandidat.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. Der 30- bis 90-tägige Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
+Aktueller Paketstatus: **DMS V1.3 ist fachlich entscheidungsvollständig; V2 ist die aktive Paperstrategie, V1 bleibt Historie und V3 ist ein verworfener Mehrfachslot-Versuch.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
 
 ## Arbeitsübergabe vom 02.09.2026
 
-- Aktiver Laufzeitstand bleibt **V1 `HIXTON-SPEC-1.0` im Paperbetrieb**. V2 ist ausschließlich `RESEARCH_ONLY`; weder Paper noch Live dürfen still auf V2 umgestellt werden.
+- Der Eigentümer hat V2 ausdrücklich für Paper freigegeben. Aktiver Laufzeitstand ist **V2 `HIXTON-V2-RESEARCH-CANDIDATE-1`**; die unveränderliche Kennung wird trotz neuem Status nicht umbenannt. V1-Ledger und V1-Runs bleiben erhalten. Live ist nicht freigegeben.
 - Der V2-10×250-Test war im aktuellen Dreijahresfenster stark. Der echte 3×80-Paper-/Live-Risikospiegel hielt jedoch im aktuellen Fenster und in beiden älteren Prüfsegmenten wegen der verbindlichen Risikogrenzen vorzeitig an. Er belegt deshalb keinen kontinuierlichen Dreijahresbetrieb und keine tägliche Gewinnerwartung.
 - Band 4,0 wurde trotz besserem aktuellen Fenster wegen schwacher älterer Segmente verworfen. Der nächste Bearbeiter darf diesen Challenger nicht ohne neue robuste Nachweise reaktivieren und die 5-%-Tagesverlustpause oder den 20-%-Drawdown-Halt nicht zur Ergebnisverbesserung lockern.
-- Nächster fachlicher Arbeitspunkt ist eine klar versionierte V3-/Challenger-Untersuchung gegen kurze Fehlausbrüche, während lange Gewinntrends erhalten bleiben. Jede Änderung benötigt ältere Segmente, Baseline/Stress, Nachbarprüfung und anschließenden Forward-/Shadow-Nachweis; bloß mehr Trades oder ein schöneres aktuelles Fenster reichen nicht.
-- Prüfstand: 61 grüne Python-Tests, Ruff, mypy und TypeScript bestanden; alle 50 Kombinationen aus zehn Coins und fünf Chartzeiträumen lieferten Daten. Startup-Sync, Binance-WebSocket und lokale UI wurden geprüft. Der dafür gestartete separate Testprozess wurde beendet; der reguläre V1-Paperbot blieb unberührt.
+- Der erste V3-Versuch erlaubte die vom Eigentümer gewünschte Mehrfachbelegung eines Coins: zuerst je gleichzeitigem Kandidaten ein Slot, danach alle freien Slots an den stärksten Kandidaten. Er endete schon am 12.10.2023 im Risikohalt bei 287,85 USDT Baseline bzw. 282,16 USDT Stress und ist verworfen. Aktive V2 bleibt bei höchstens einem Slot je Coin.
+- Grundprinzip: Die bestbelegte zulässige Version wird nach explizitem, protokolliertem Wechsel für Paper übernommen. Ein einzelner Spitzenwert genügt nicht; Kosten-Stress, Altfenster, Risikospiegel und Reproduzierbarkeit bleiben Pflicht. Live benötigt immer eine eigene Freigabe.
+- Prüfstand vor dem Betriebswechsel: 67 grüne Python-Tests, Ruff, mypy, TypeScript und Produktionsbuild bestanden; die Browserprüfung wird nach dem lokalen V2-Neustart erneut ausgeführt. Alle früher geprüften 50 Kombinationen aus zehn Coins und fünf Chartzeiträumen lieferten Daten.
 - Marktdaten sind lokale, automatisch nachgeladene `1h`-Kerzen. UI-Kürzel `1m` bedeutet einen Monat. Datenbank, Marktdaten, Logs und große reproduzierbare Run-Artefakte bleiben durch `.gitignore` lokal.
 - Gemeinsamer Übergabestand liegt im Branch `codex/build-foundation-v1` und Pull Request 2. Dokument 18 und `backtests/v2/README.md` enthalten die belastbaren Run-IDs, Hashes, Ergebnisse und Grenzen.
 
@@ -57,7 +58,7 @@ Aktueller Paketstatus: **DMS V1.2 ist fachlich entscheidungsvollständig; Backte
 | Datei | Umfang | SHA-256 | Bewertung |
 |---|---:|---|---|
 | `Der Hixton Indikator.md` | 7.226 Bytes / 27 Zeilen | `3577700EAFA4738D8941769F8275024BEDE86B6D8CB344C7B1EA8E60E7E4E117` | Analyse/Beschreibung, kein Pine-Quellcode |
-| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Pine-Referenz für V2-Forschung, nicht rückwirkend für V1 |
+| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Formelreferenz der aktiven Paper-V2, nicht rückwirkend für V1 |
 
 Die ursprüngliche Markdown-Analyse bleibt als unverändertes Eingangsmaterial erhalten. Der später vom Eigentümer vollständig übermittelte Pine-v6-Code liegt einmalig unter `strategy/pine/` und ist die Referenz für V2. Die selbstständige V1-Projektdefinition in Dokument 03 und sämtliche V1-Runs bleiben unverändert erhalten.
 

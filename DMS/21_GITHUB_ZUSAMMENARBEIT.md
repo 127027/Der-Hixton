@@ -63,8 +63,9 @@ Commits sollen klein, nachvollziehbar und thematisch geschlossen sein. Ein DMS-U
 ## Quellen der Wahrheit in Git
 
 - `DMS/` beschreibt den freigegebenen Sollzustand.
-- `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die V1-Signallogik.
-- Die Eigentümer-Pine-Datei und ihr Hash definieren die V2-Formelreferenz, ohne V1 still zu überschreiben.
+- `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die historische V1-Signallogik weiterhin reproduzierbar.
+- Die Eigentümer-Pine-Datei, ihr Hash und der V2-Snapshot definieren die aktive Paper-V2, ohne V1-Artefakte oder alte Ledgerereignisse umzudeuten.
+- Neue Varianten liegen geordnet unter `backtests/v3`, `v4` usw.; eine verworfene Version bleibt als kleiner kuratierter Nachweis erhalten, große Runs bleiben lokal ignoriert.
 - Konfigurationsbeispiele enthalten keine echten Schlüssel.
 - Dependency-Lock und Codecommit definieren einen Build.
 - Backtest-Manifest referenziert Code-, Config- und Datenhash.

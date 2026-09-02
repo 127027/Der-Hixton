@@ -11,7 +11,7 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | STR-005 Parameter/Warm-up | DMS 03; DEC-001/002/003/011 | Config/Engine | Config-Schema + Golden-Test |
 | STR-006 1.000 Golden-Bars je Testmarkt | DMS 03 | CI/Testartefakt | Abweichungsbericht = 0 Signale |
 | STR-007 Signal-Audit | DMS 02/09 | Signal Store/UI | Persistenz-/Drill-down-Test |
-| STR-008 getrennte V1-/V2-Versionen | DMS 03; DEC-034/036 | Strategy/Config/Backtest/UI | Pine-Golden-Test + keine stille Paperumschaltung |
+| STR-008 getrennte Strategieversionen | DMS 03; DEC-034/036/037 | Strategy/Config/Backtest/Paper/UI | Pine-Golden-Test + explizite atomare Umschaltung + Fail-closed-Konflikttest |
 | MKT-001 genau zehn Paare | Nutzerauftrag | Config/Dashboard | Schema- und UI-Test |
 | MKT-002 Coinliste | DMS 04; DEC-005 | Config/Data | Symbolmetadatenprüfung |
 | MKT-003 keine automatische Coinrotation | DMS 04/22; DEC-005 | Config/Data/Release | Delisting pausiert statt Ersatz zu wählen |
@@ -21,6 +21,8 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | CAP-004 250→500 als Wunsch, nicht Garantie | Nutzerklärung | Backtestreport | Zielerreichung und -verfehlung je Coin sichtbar |
 | CAP-005 Slotpriorisierung | DMS 03/04; DEC-029 | Strategy/Portfolio | simultane Signale/volle Slots |
 | CAP-006 Nettogewinn vor Tradezahl | Nutzerwunsch + Kostenrealität | Optimierung/Report | Gebühren-/Tradezahlvergleich |
+| CAP-007 bestbelegte Verbesserung übernehmen | DMS 06; DEC-037/038 | Backtest/Config/Paper/Audit | V1/V2-Risikospiegel + expliziter Migrationstest |
+| CAP-008 Mehrfachslots nur nach Nachweis | DMS 03/04/06; DEC-039 | Allocation/Backtest/Paper | Allokations-Unit-Test + negativer V3-Risikospiegel |
 | RSK-003 Tagesverlust/Drawdown | DMS 04; DEC-015 | Risk/UI | UTC-Tagesgrenze und High-Water-Mark-Test |
 | RSK-004 kein Auto-Compounding | DMS 04; DEC-030 | Backtest/Portfolio/Config/UI | Gewinn verändert weder 250- noch 80-USDT-Zielnotional |
 | BKT-008 10×250 USDT | Nutzerauftrag | Backtest Batch | zehn isolierte Ledger-Fixtures |
@@ -75,4 +77,4 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 
 ## Pflege
 
-Neue kritische Anforderungen erhalten mindestens einen positiven und einen negativen Test. Ein `OFFEN` in der Fachquelle darf nicht durch einen grünen Implementierungstest kaschiert werden. Die Matrix enthält für DMS V1 keine kritische Fachquelle mit ausstehender Entscheidung; Test- und Implementierungsnachweise entstehen erst in den dafür vorgesehenen Phasen.
+Neue kritische Anforderungen erhalten mindestens einen positiven und einen negativen Test. Ein `OFFEN` in der Fachquelle darf nicht durch einen grünen Implementierungstest kaschiert werden. Die Matrix enthält für DMS V1.3 keine kritische Fachquelle mit ausstehender Entscheidung; noch fehlende Betriebs- und Live-Nachweise entstehen erst in den dafür vorgesehenen Phasen.

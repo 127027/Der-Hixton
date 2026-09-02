@@ -9,10 +9,11 @@ from datetime import UTC, datetime, timedelta
 from decimal import ROUND_DOWN, Decimal
 
 from hixton.backtest.models import BASELINE_COSTS, ONE, ZERO, ExecutionRules
-from hixton.constants import SYMBOLS
+from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
 from hixton.domain.models import IndicatorPoint, Signal
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy
+from hixton.domain.versions import StrategyDefinition
 from hixton.paper.models import (
     PaperAccount,
     PaperEvent,
@@ -45,6 +46,8 @@ def initialize_paper_at_latest(
     points_by_symbol: Mapping[str, tuple[IndicatorPoint, ...]],
     *,
     at: datetime | None = None,
+    strategy_key: str = "v1",
+    strategy_version: str = HIXTON_SPEC_VERSION,
 ) -> bool:
     """Arm a new account at latest; preserve checkpoints on every later restart."""
 
@@ -57,7 +60,12 @@ def initialize_paper_at_latest(
             raise ValueError(f"cannot initialize paper without candles for {symbol}")
         checkpoints[symbol] = points[-1].candle.close_time_utc
     with PaperStore(database_path) as store:
-        store.initialize(at=at)
+        store.initialize(
+            at=at,
+            strategy_key=strategy_key,
+            strategy_version=strategy_version,
+        )
+        store.require_strategy(strategy_key, strategy_version)
         existing = store.all_checkpoints()
         if existing and set(existing) != set(SYMBOLS):
             raise RuntimeError("paper checkpoints are incomplete; recovery must fail closed")
@@ -91,6 +99,7 @@ def _blocked_event(signal: Signal, reason: str) -> PaperEvent:
         breakout_strength=(
             _d(signal.breakout_strength) if signal.breakout_strength is not None else None
         ),
+        strategy_version=signal.strategy_version,
     )
 
 
@@ -143,6 +152,9 @@ def process_new_closed_points(
     database_path: str,
     points_by_symbol: Mapping[str, tuple[IndicatorPoint, ...]],
     rules_by_symbol: Mapping[str, ExecutionRules],
+    *,
+    strategy_key: str = "v1",
+    strategy_version: str = HIXTON_SPEC_VERSION,
 ) -> tuple[PaperEvent, ...]:
     """Process every not-yet-checkpointed bar atomically and exactly once."""
 
@@ -152,7 +164,11 @@ def process_new_closed_points(
         raise ValueError("paper processing requires exchange rules for all symbols")
 
     with PaperStore(database_path) as store:
-        store.initialize()
+        store.initialize(
+            strategy_key=strategy_key,
+            strategy_version=strategy_version,
+        )
+        store.require_strategy(strategy_key, strategy_version)
         account = store.load_account()
         settings = store.load_settings()
         positions = {position.symbol: position for position in store.load_positions()}
@@ -216,6 +232,7 @@ def process_new_closed_points(
                         fee_usdt=fee,
                         realized_pnl_usdt=realized,
                         breakout_strength=None,
+                        strategy_version=signal.strategy_version,
                     )
                 )
                 del positions[point.symbol]
@@ -273,6 +290,8 @@ def process_new_closed_points(
                     entry_signal_id=signal.signal_id,
                     entry_fee_usdt=fee_quote,
                     updated_at_utc=close_time + _ENTRY_LATENCY,
+                    strategy_version=signal.strategy_version,
+                    slot_count=1,
                 )
                 positions[signal.symbol] = position
                 emitted.append(
@@ -295,6 +314,7 @@ def process_new_closed_points(
                             if point.breakout_strength is not None
                             else None
                         ),
+                        strategy_version=signal.strategy_version,
                     )
                 )
 
@@ -316,15 +336,116 @@ def process_new_closed_points(
         return tuple(emitted)
 
 
+def activate_paper_strategy(
+    database_path: str,
+    points_by_symbol: Mapping[str, tuple[IndicatorPoint, ...]],
+    rules_by_symbol: Mapping[str, ExecutionRules],
+    strategy: StrategyDefinition,
+    *,
+    at: datetime | None = None,
+) -> tuple[PaperEvent, ...]:
+    """Explicitly cut over paper at latest closed prices without deleting history."""
+
+    if not strategy.paper_approved:
+        raise ValueError(f"strategy {strategy.version} is not approved for paper")
+    if set(points_by_symbol) != set(SYMBOLS) or set(rules_by_symbol) != set(SYMBOLS):
+        raise ValueError("paper strategy activation requires all ten symbols")
+    moment = (at or datetime.now(UTC)).astimezone(UTC)
+    checkpoints = {
+        symbol: points_by_symbol[symbol][-1].candle.close_time_utc for symbol in SYMBOLS
+    }
+    latest_prices = {
+        symbol: _d(points_by_symbol[symbol][-1].candle.close) for symbol in SYMBOLS
+    }
+    with PaperStore(database_path) as store:
+        store.initialize(at=moment)
+        previous = store.load_strategy_session()
+        if (
+            previous.strategy_key == strategy.key
+            and previous.strategy_version == strategy.version
+        ):
+            return ()
+        account = store.load_account()
+        positions = store.load_positions()
+        events: list[PaperEvent] = []
+        cash = account.cash_usdt
+        for position in positions:
+            rule = rules_by_symbol[position.symbol]
+            reference = latest_prices[position.symbol]
+            fill_price = reference * (ONE - BASELINE_COSTS.adverse_price_rate)
+            quantity = _round_down(position.quantity, rule.step_size)
+            gross_quote = quantity * fill_price
+            if quantity < rule.min_qty or gross_quote < rule.min_notional:
+                raise RuntimeError(
+                    f"cannot activate strategy while {position.symbol} is exchange dust"
+                )
+            fee = gross_quote * BASELINE_COSTS.fee_rate
+            net_quote = gross_quote - fee
+            realized = net_quote - position.cost_basis_usdt
+            signal_id = hashlib.sha256(
+                (
+                    f"PAPER_STRATEGY_SWITCH|{previous.strategy_version}|"
+                    f"{strategy.version}|{position.symbol}|{moment.isoformat()}"
+                ).encode()
+            ).hexdigest()
+            events.append(
+                PaperEvent(
+                    event_id=hashlib.sha256(f"PAPER|{signal_id}".encode()).hexdigest(),
+                    signal_id=signal_id,
+                    occurred_at_utc=moment,
+                    symbol=position.symbol,
+                    action="EXIT_LONG",
+                    status=PaperEventStatus.FILLED,
+                    reason=f"STRATEGY_SWITCH_TO_{strategy.version}",
+                    reference_price=reference,
+                    execution_price=fill_price,
+                    base_quantity=quantity,
+                    quote_amount_usdt=net_quote,
+                    fee_usdt=fee,
+                    realized_pnl_usdt=realized,
+                    breakout_strength=None,
+                    strategy_version=position.strategy_version,
+                )
+            )
+            cash += net_quote
+        activated_account = replace(
+            account,
+            cash_usdt=cash,
+            high_water_equity_usdt=cash,
+            day_start_equity_usdt=cash,
+            day_start_date_utc=moment.date().isoformat(),
+            halted=False,
+            halt_reason=None,
+            updated_at_utc=moment,
+        )
+        store.apply_strategy_activation(
+            account=activated_account,
+            events=tuple(events),
+            checkpoints=checkpoints,
+            strategy_key=strategy.key,
+            strategy_version=strategy.version,
+            starting_equity_usdt=cash,
+            at=moment,
+        )
+    return tuple(events)
+
+
 def load_paper_portfolio(
     database_path: str,
     latest_prices: Mapping[str, Decimal],
     *,
     at: datetime | None = None,
+    strategy_key: str = "v1",
+    strategy_version: str = HIXTON_SPEC_VERSION,
 ) -> PaperPortfolio:
     moment = (at or datetime.now(UTC)).astimezone(UTC)
     with PaperStore(database_path) as store:
-        store.initialize(at=moment)
+        store.initialize(
+            at=moment,
+            strategy_key=strategy_key,
+            strategy_version=strategy_version,
+        )
+        store.require_strategy(strategy_key, strategy_version)
         account = store.load_account()
         settings = store.load_settings()
         positions = store.load_positions()

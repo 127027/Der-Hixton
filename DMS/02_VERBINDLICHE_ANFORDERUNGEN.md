@@ -13,14 +13,14 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | STR-005 | Verbindliche V1-Referenz ist `HIXTON-SPEC-1.0` aus DMS 03: 1h, Close, VIDYA 10, CMO 20, SMA 15, Wilder-ATR 200, Band 2.0, Warm-up 400, Startzustand DOWN ohne Initialorder. | VERBINDLICH |
 | STR-006 | Spezifikationsparität wird über Golden-Testvektoren für mindestens 1.000 aufeinanderfolgende Bars je Testmarkt belegt. | VERBINDLICH |
 | STR-007 | Ein Signal wird mit Symbol, Kerzenzeit, Strategieversion, Parametern, Eingabewerten und Grund gespeichert. | VERBINDLICH |
-| STR-008 | Die Eigentümer-Pine-Quelle ist die Formelreferenz für V2. V1 und V2 besitzen getrennte Versionen, Backtestordner und Freigabestatus; ein Forschungskandidat darf die aktive Paperstrategie nicht still ersetzen. | VERBINDLICH |
+| STR-008 | Die Eigentümer-Pine-Quelle ist die Formelreferenz für V2. V1, V2 und spätere Challenger besitzen getrennte Versionen, Backtestordner und Freigabestatus; ein Wechsel der aktiven Paperstrategie erfolgt nur explizit, atomar und auditierbar. | VERBINDLICH |
 
 ## Märkte und Kapital
 
 | ID | Anforderung | Status |
 |---|---|---|
 | MKT-001 | Genau zehn aktive USDT-Spot-Paare bilden das initiale Universum. | VERBINDLICH |
-| MKT-002 | Initiales Universum: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT. Alle zehn waren beim DMS-Abgleich auf Binance Spot im Status `TRADING` und besitzen mindestens drei Jahre Binance-Historie. | VERBINDLICH FÜR V1 |
+| MKT-002 | Initiales Universum: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT. Alle zehn waren beim DMS-Abgleich auf Binance Spot im Status `TRADING` und besitzen mindestens drei Jahre Binance-Historie. | VERBINDLICH |
 | MKT-003 | Die Coinliste wird nicht automatisch nach Performance ausgetauscht. Eine spätere Überprüfung ist versioniert, vorwärtsgerichtet und benötigt neue Backtests. | VERBINDLICH |
 | CAP-001 | Paper-/späteres Live-Portfolio startet mit 240,00 USDT aus einem gemeinsamen Cashbestand. | VERBINDLICH |
 | CAP-002 | Paper-/Live-Anfangskonfiguration: höchstens drei gleichzeitig belegte Positionsslots mit 80,00 USDT Zielnotional je Einstieg. | VERBINDLICH |
@@ -28,10 +28,12 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | CAP-004 | 250 auf mindestens 500 USDT je Coin innerhalb von drei Jahren ist ein gewünschtes Optimierungsziel, aber keine Garantie und kein Freigabegrund allein. Jeder Backtest prüft zuerst korrekte Reaktion und berichtet danach die vollständige Nettoperformance. | VERBINDLICH |
 | CAP-005 | Bei mehr Kaufkandidaten als freien Slots gewinnt der auf 12 Dezimalstellen Half-Even gerundete größte Wert `(close-upper)/ATR`; Gleichstand folgt der festen Coinreihenfolge aus DMS 03. | VERBINDLICH |
 | CAP-006 | Primärziel der Portfolioauswahl ist maximaler Nettogewinn nach Kosten; hohe Tradezahl ist nur Sekundärziel. | VERBINDLICH |
+| CAP-007 | Die bestbelegte zulässige Strategieverbesserung wird nach bestandenem Vergleich und ausdrücklicher Entscheidung vorwärtsgerichtet als Paperstandard übernommen. „Bestbelegt“ verlangt Reproduzierbarkeit, Kosten-Stress, Altfenster und den risikogleichen 3×80-Spiegel; ein höchster Einzelwert genügt nicht. Live bleibt ein separates Gate. | VERBINDLICH |
+| CAP-008 | Mehrere Slots im selben Coin sind als versionierter Challenger erlaubt, aber nicht automatisch aktiv. Der V3-Test `ranked_repeat` ist wegen früher Konzentrationsverluste verworfen; aktive V2 nutzt weiterhin höchstens einen Slot je Coin. | VERBINDLICH |
 | RSK-001 | Kein Leverage, keine Margin, keine Futures und keine API-Auszahlungsrechte. | VERBINDLICH |
 | RSK-002 | Börsenfilter wie Mindestnotional, Schrittweite und Präzision werden vor jeder Order geprüft. | VERBINDLICH |
 | RSK-003 | Tagesverlust ab 5 % der Start-of-Day-Equity pausiert neue Entries bis zum nächsten UTC-Tag; Drawdown ab 20 % vom Live-High-Water-Mark setzt global `HALTED`. | VERBINDLICH |
-| RSK-004 | V1 nutzt kein automatisches Compounding; Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten Backtest 250 USDT bzw. wird bei unzureichendem Cash abwärts begrenzt. | VERBINDLICH |
+| RSK-004 | Es gibt kein automatisches Compounding; Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten Backtest 250 USDT bzw. wird bei unzureichendem Cash abwärts begrenzt. | VERBINDLICH |
 
 ## Daten
 
@@ -71,7 +73,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | EXE-003 | Beim Neustart wird zuerst mit Börsenorders, Fills und Kontostand abgeglichen; vorher keine neue Live-Order. | VERBINDLICH |
 | EXE-004 | Teilfills, Ablehnung, Timeout, Rate-Limit und Netzwerkverlust besitzen dokumentierte Zustandsübergänge. | VERBINDLICH |
 | EXE-005 | Not-Aus verhindert neue Einstiege. Ob vorhandene Positionen gehalten oder liquidiert werden, ist eine getrennte, bestätigungspflichtige Aktion. | VERBINDLICH |
-| EXE-006 | Live-V1 verwendet Market-Orders mit 25-bps-Vorab-Preisabweichungsgrenze; nach 10 Sekunden ohne eindeutige Bestätigung wird `UNKNOWN` gesetzt und reconciled, nicht neu gesendet. | VERBINDLICH |
+| EXE-006 | Eine später freigegebene Liveversion verwendet Market-Orders mit 25-bps-Vorab-Preisabweichungsgrenze; nach 10 Sekunden ohne eindeutige Bestätigung wird `UNKNOWN` gesetzt und reconciled, nicht neu gesendet. | VERBINDLICH |
 
 ## UI
 
@@ -94,10 +96,10 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | OPS-002 | Strukturierte Logs haben UTC-Zeit, Korrelations-ID, Schweregrad und redigieren Geheimnisse. | VERBINDLICH |
 | OPS-003 | Backups und Restore werden automatisiert erstellt bzw. regelmäßig getestet. | VERBINDLICH |
 | OPS-004 | Paper-Soak dauert mindestens 30 Tage und 720 geschlossene 1h-Bars je aktivem Symbol; bei weniger als 20 abgeschlossenen Trades wird bis 20 Trades, höchstens 90 Tage, verlängert. | VERBINDLICH |
-| OPS-005 | Manuelles Trading auf demselben Binance-Konto ist verboten; V1 nutzt einen eigenen Bot-Subaccount bzw. ein ausschließlich dem Bot zugeordnetes Spot-Konto. | VERBINDLICH |
+| OPS-005 | Manuelles Trading auf demselben Binance-Konto ist verboten; Live nutzt einen eigenen Bot-Subaccount bzw. ein ausschließlich dem Bot zugeordnetes Spot-Konto. | VERBINDLICH |
 | OPS-006 | P1/P2-Ereignisse müssen dauerhaft und auffällig in lokaler UI sowie strukturierten Logs erscheinen. Der Eigentümer überwacht den Bot regelmäßig manuell; Telegram ist kein Pflichtkanal und kein Live-Gate. | VERBINDLICH |
 | OPS-007 | Verschlüsselte Backups außerhalb Git/aktiver DB: 7 täglich, 4 wöchentlich, 12 monatlich; Restore vor Live und vierteljährlich. | VERBINDLICH |
-| OPS-008 | V1-UI bindet nur an localhost; nach Paperfreigabe läuft der Bot als Windows-Service mit Reconciliation bei jedem Start. | VERBINDLICH |
+| OPS-008 | Die UI bindet nur an localhost; nach Paperfreigabe läuft der Bot als Windows-Service mit Reconciliation bei jedem Start. | VERBINDLICH |
 | SEC-001 | Secrets stehen nie in Quellcode, DMS, Logs oder UI-Exporten. | VERBINDLICH |
 | SEC-002 | API-Key erhält nur Lesen und Spot-Handel; Auszahlung ist verboten. | VERBINDLICH |
 | SEC-003 | Live wird nur nach Strategieparität, Backtest, Paper-Soak-Test und Restore-Test freigeschaltet. | VERBINDLICH |

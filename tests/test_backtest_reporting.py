@@ -42,7 +42,8 @@ def test_v2_report_is_written_only_to_v2_with_full_strategy_snapshot(
     assert manifest["strategy"]["version"] == V2_RESEARCH_STRATEGY.version
     assert manifest["strategy"]["semantics"] == "PINE_V6"
     assert manifest["strategy"]["parameters"]["band_multiplier"] == 3.8
-    assert manifest["strategy"]["paper_approved"] is False
+    assert manifest["strategy"]["paper_approved"] is True
+    assert manifest["strategy"]["slot_allocation"] == "one_per_symbol"
     assert manifest["run_mode"] == "single"
 
 

@@ -13,7 +13,7 @@ Pro aktivem Symbol und Trading-Timeframe werden gespeichert:
 - Kennzeichen `closed`/`provisional`;
 - Datenquelle, Abrufzeit und Import-Batch-ID.
 
-Preise und Mengen werden decimal-sicher gespeichert, nicht als unkontrollierte binäre Gleitkommazahl. Der verbindliche V1-Signaltimeframe ist **1 Stunde (`1h`)**. Die UI-Zeiträume sind **keine** Trading-Timeframes.
+Preise und Mengen werden decimal-sicher gespeichert, nicht als unkontrollierte binäre Gleitkommazahl. Der verbindliche Signaltimeframe aller aktuellen Strategieversionen ist **1 Stunde (`1h`)**. Die UI-Zeiträume sind **keine** Trading-Timeframes.
 
 ## Historienanforderung
 

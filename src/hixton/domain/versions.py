@@ -4,7 +4,12 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 
-from hixton.constants import HIXTON_SPEC_VERSION, HIXTON_V2_RESEARCH_VERSION
+from hixton.constants import (
+    HIXTON_SPEC_VERSION,
+    HIXTON_V2_RESEARCH_VERSION,
+    HIXTON_V3_SLOT_VERSION,
+)
+from hixton.domain.allocation import ONE_PER_SYMBOL, RANKED_REPEAT
 from hixton.domain.models import StrategyParameters, StrategySemantics
 
 
@@ -17,6 +22,7 @@ class StrategyDefinition:
     semantics: StrategySemantics
     parameters: StrategyParameters
     paper_approved: bool
+    slot_allocation: str
 
 
 V1_STRATEGY = StrategyDefinition(
@@ -26,7 +32,8 @@ V1_STRATEGY = StrategyDefinition(
     reference="DMS/03_STRATEGIE_HIXTON.md",
     semantics=StrategySemantics.DMS_V1,
     parameters=StrategyParameters(),
-    paper_approved=True,
+    paper_approved=False,
+    slot_allocation=ONE_PER_SYMBOL,
 )
 
 V2_RESEARCH_STRATEGY = StrategyDefinition(
@@ -43,12 +50,25 @@ V2_RESEARCH_STRATEGY = StrategyDefinition(
         band_multiplier=3.8,
         warmup_bars=400,
     ),
+    paper_approved=True,
+    slot_allocation=ONE_PER_SYMBOL,
+)
+
+V3_SLOT_STRATEGY = StrategyDefinition(
+    key="v3",
+    backtest_version="v3",
+    version=HIXTON_V3_SLOT_VERSION,
+    reference="DMS/03_STRATEGIE_HIXTON.md",
+    semantics=StrategySemantics.PINE_V6,
+    parameters=V2_RESEARCH_STRATEGY.parameters,
     paper_approved=False,
+    slot_allocation=RANKED_REPEAT,
 )
 
 STRATEGY_DEFINITIONS = {
     V1_STRATEGY.key: V1_STRATEGY,
     V2_RESEARCH_STRATEGY.key: V2_RESEARCH_STRATEGY,
+    V3_SLOT_STRATEGY.key: V3_SLOT_STRATEGY,
 }
 
 

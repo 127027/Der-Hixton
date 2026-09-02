@@ -187,6 +187,7 @@ class PortfolioBacktestResult:
     starting_cash: Decimal
     target_notional: Decimal
     slot_count: int
+    slot_allocation: str
     signals: tuple[Signal, ...]
     fills: tuple[Fill, ...]
     trades: tuple[Trade, ...]

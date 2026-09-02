@@ -8,6 +8,8 @@ from datetime import datetime
 from decimal import Decimal
 from enum import StrEnum
 
+from hixton.constants import HIXTON_SPEC_VERSION
+
 
 class PaperEventStatus(StrEnum):
     FILLED = "FILLED"
@@ -53,6 +55,8 @@ class PaperPosition:
     entry_signal_id: str
     entry_fee_usdt: Decimal
     updated_at_utc: datetime
+    strategy_version: str = HIXTON_SPEC_VERSION
+    slot_count: int = 1
 
 
 @dataclass(frozen=True, slots=True)
@@ -71,6 +75,15 @@ class PaperEvent:
     fee_usdt: Decimal | None
     realized_pnl_usdt: Decimal | None
     breakout_strength: Decimal | None
+    strategy_version: str = HIXTON_SPEC_VERSION
+
+
+@dataclass(frozen=True, slots=True)
+class PaperStrategySession:
+    strategy_key: str
+    strategy_version: str
+    activated_at_utc: datetime
+    starting_equity_usdt: Decimal
 
 
 @dataclass(frozen=True, slots=True)

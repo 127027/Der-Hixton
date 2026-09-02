@@ -40,7 +40,7 @@ Kapital, Slotanzahl und Zielnotional müssen wegen Gebühren und verfügbarem Ca
 - Ziel-Quote-Budget je Einstieg ist in diesen isolierten Läufen fest 250,00 USDT oder, nach Verlusten, der kleinere verfügbare Cashbetrag; Gewinne erhöhen die nächste Zielgröße nicht automatisch.
 - Jeder Test startet ohne Position und Altorder.
 - Einzeltests beeinflussen einander nicht; Ergebnisse werden je Coin und zusätzlich als Vergleichstabelle gezeigt.
-- Optionaler Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT nach.
+- Der verpflichtende Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT samt Risikogates nach.
 - 250→500 USDT je Coin in drei Jahren ist das angestrebte Optimierungsziel, aber keine Garantie. Zuerst wird korrekte Indikatorreaktion bewiesen; danach wird die vollständige Performance einschließlich Zielverfehlungen berichtet.
 
 ## Positionsgröße
@@ -58,13 +58,15 @@ Initiale Regel:
 - keine Kreditaufnahme, kein negativer Cash-Bestand;
 - eine UI-Änderung von Slotanzahl oder Positionsgröße wirkt nur auf neue Einstiege.
 
-Automatisches Compounding ist deaktiviert. Das Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten V1-Backtest 250 USDT, auch wenn Gewinne entstehen. Nach Verlusten wird höchstens der verfügbare Cashbetrag eingesetzt. Nur eine bewusst bestätigte und auditierte UI-Änderung verändert die Größe künftiger Paper-/Live-Einstiege; bestehende Positionen bleiben unberührt.
+Automatisches Compounding ist deaktiviert. Das Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten Backtest 250 USDT, auch wenn Gewinne entstehen. Nach Verlusten wird höchstens der verfügbare Cashbetrag eingesetzt. Nur eine bewusst bestätigte und auditierte UI-Änderung verändert die Größe künftiger Paper-/Live-Einstiege; bestehende Positionen bleiben unberührt.
 
 ## Slotvergabe
 
-Freie Slots gehen verbindlich an den größten auf 12 Dezimalstellen mit Round-Half-Even gerundeten Wert `(close-upper)/ATR` der jeweiligen Flip-Up-Kerze. Gleichstand wird über diese feste Reihenfolge gebrochen: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. Die Regel verwendet ausschließlich V1-Indikatorwerte und wird im Backtest mit simultanen Signalen geprüft.
+Freie Slots gehen verbindlich an den größten auf 12 Dezimalstellen mit Round-Half-Even gerundeten Wert `(close-upper)/ATR` der jeweiligen Flip-Up-Kerze. Gleichstand wird über diese feste Reihenfolge gebrochen: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. Die Regel verwendet ausschließlich Werte der jeweils ausgewählten Strategieversion und wird im Backtest mit simultanen Signalen geprüft.
 
 Ein Kauf-Flip, der wegen voller Slots nicht ausgeführt wird, wird protokolliert. Er wird nicht später mitten im bestehenden Uptrend nachgeholt, außer die Strategie definiert ausdrücklich eine weiterhin gültige Entry-Bedingung.
+
+Aktive V2 belegt höchstens einen Slot je Coin. Mehrfachslots im selben Coin sind nicht grundsätzlich verboten, benötigen aber eine eigene Strategieversion und denselben vollständigen Vergleich. `HIXTON-V3-SLOT-CANDIDATE-1` testete bis zu drei Slots auf dem stärksten gleichzeitigen Signal und wurde wegen des frühen 20-%-Risikohalts verworfen. Drei Slots im selben Coin erzeugen nur dreifaches Notional auf demselben Signal, nicht drei unabhängige Trades.
 
 ## Optimierungsziel
 

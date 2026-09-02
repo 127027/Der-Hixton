@@ -13,6 +13,8 @@
 
 Die am 01.09.2026 abgenommene Desktop- und Mobiloptik ist gemäß `DEC-033` eingefroren. Funktionale Ergänzungen dürfen Inhalte in den bestehenden Ansichten präzisieren, aber keine neue Designsprache, parallele Navigation, zusätzlichen Starter oder unverbundene Sonderseite einführen. Neue Statuswerte nutzen die vorhandenen Karten-, Tabellen-, Badge- und Typografieregeln.
 
+Der Header und die Systemkarte zeigen immer die tatsächlich konfigurierte Paperstrategie samt Aktivierungszeit und PnL seit diesem Strategiewechsel. Seit `DEC-037` lautet sie `V2 · aktives Paper`. Die Backtestauswahl kennzeichnet V1 als Historie und V3 als verworfenen Versuch; eine Backtestauswahl schaltet Paper niemals um.
+
 ## Hauptnavigation
 
 1. Übersicht
@@ -83,7 +85,7 @@ Die laufende Kerze erhält z. B. gestrichelte Kontur und Label „vorläufig“.
 | 1 Jahr | rollierende letzte 365 Tage |
 | 3 Jahre | rollierende letzte 3 Kalenderjahre bis jetzt |
 
-Standardauswahl ist **1 Monat**. Heute/1W/1M verwenden native `1h`-Bars; 1J wird standardmäßig zu `4h`, 3J zu `1d` aggregiert. Eine verfügbare Auflösung darf manuell gewählt werden. Indikatorwerte und Signalmarker stammen stets aus der nativen `1h`-Strategie; die UI berechnet aus aggregierten Bars keine neuen Signale. Kalenderwoche/-monat sind für V1 ausdrücklich nicht die Semantik.
+Standardauswahl ist **1 Monat**. Heute/1W/1M verwenden native `1h`-Bars; 1J wird standardmäßig zu `4h`, 3J zu `1d` aggregiert. Eine verfügbare Auflösung darf manuell gewählt werden. Indikatorwerte und Signalmarker stammen stets aus der nativen `1h`-Strategie; die UI berechnet aus aggregierten Bars keine neuen Signale. Kalenderwoche/-monat sind ausdrücklich keine Signal- oder Datenaggregationssemantik.
 
 ## Positionen & Orders
 
@@ -161,7 +163,7 @@ Pro Coin:
 - Paper-/Live-Positionsgröße startet bei 80 USDT, Slotanzahl bei drei; beide sind später änderbar.
 - UI validiert `Slotanzahl × Zielnotional` gegen verfügbares/konfiguriertes Gesamtkapital und aktuelle Binance-Mindestwerte.
 - Änderungen wirken nur auf künftige Entries; bestehende Positionen werden nicht automatisch angepasst.
-- Einstellungen zeigen die unveränderlichen V1-Baselines: 5 % Tagesverlustpause, 20 % Max-Drawdown-Halt, 25 bp maximale Preisabweichung, 10 Sekunden bis `UNKNOWN` und 30 Sekunden Teilfill-Restfrist.
+- Einstellungen zeigen die unveränderlichen Risikobaselines: 5 % Tagesverlustpause, 20 % Max-Drawdown-Halt, 25 bp maximale Preisabweichung, 10 Sekunden bis `UNKNOWN` und 30 Sekunden Teilfill-Restfrist.
 
 ## Zustände ohne Daten
 

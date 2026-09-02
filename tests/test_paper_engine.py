@@ -9,7 +9,12 @@ import pytest
 from hixton.backtest.models import ExecutionRules
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
 from hixton.domain.models import Candle, IndicatorPoint, TrendState
-from hixton.paper.engine import initialize_paper_at_latest, process_new_closed_points
+from hixton.domain.versions import V2_RESEARCH_STRATEGY, V3_SLOT_STRATEGY
+from hixton.paper.engine import (
+    activate_paper_strategy,
+    initialize_paper_at_latest,
+    process_new_closed_points,
+)
 from hixton.paper.models import PaperEvent, PaperEventStatus, PaperSettings
 from hixton.paper.storage import PaperStore
 
@@ -204,3 +209,85 @@ def test_exit_frees_slot_before_same_bar_entry(tmp_path: Path) -> None:
 def test_paper_settings_enforce_shared_capital() -> None:
     with pytest.raises(ValueError, match="240"):
         PaperSettings(slot_count=4, target_notional_usdt=Decimal("80"))
+
+
+def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    entry_at = start + timedelta(hours=1)
+    entry_points = _mapping(entry_at)
+    entry_points[SYMBOLS[0]] = (
+        _point(SYMBOLS[0], entry_at, flip_up=True, strength=2.0),
+    )
+    process_new_closed_points(str(path), entry_points, _rules())
+
+    switch_at = entry_at + timedelta(minutes=30)
+    exit_points = _mapping(entry_at)
+    exits = activate_paper_strategy(
+        str(path),
+        exit_points,
+        _rules(),
+        V2_RESEARCH_STRATEGY,
+        at=switch_at,
+    )
+
+    assert len(exits) == 1
+    assert exits[0].action == "EXIT_LONG"
+    assert exits[0].reason == (
+        "STRATEGY_SWITCH_TO_HIXTON-V2-RESEARCH-CANDIDATE-1"
+    )
+    assert exits[0].strategy_version == HIXTON_SPEC_VERSION
+    with PaperStore(path) as store:
+        assert store.load_positions() == ()
+        session = store.load_strategy_session()
+        progress = store.load_soak_progress(at=switch_at)
+        all_events = store.load_events()
+    assert session.strategy_key == "v2"
+    assert session.strategy_version == V2_RESEARCH_STRATEGY.version
+    assert session.starting_equity_usdt > Decimal("0")
+    assert progress.minimum_processed_closed_bars == 0
+    assert progress.completed_trades == 0
+    assert len(all_events) == 2
+    assert (
+        activate_paper_strategy(
+            str(path),
+            exit_points,
+            _rules(),
+            V2_RESEARCH_STRATEGY,
+            at=switch_at + timedelta(minutes=1),
+        )
+        == ()
+    )
+
+
+def test_rejected_multi_slot_strategy_cannot_activate_paper(tmp_path: Path) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    with pytest.raises(ValueError, match="not approved for paper"):
+        activate_paper_strategy(
+            str(path),
+            _mapping(start),
+            _rules(),
+            V3_SLOT_STRATEGY,
+            at=start + timedelta(minutes=1),
+        )
+
+
+def test_paper_fails_closed_when_configuration_and_ledger_strategy_differ(
+    tmp_path: Path,
+) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    with pytest.raises(RuntimeError, match="explicit activation required"):
+        initialize_paper_at_latest(
+            str(path),
+            _mapping(start),
+            at=start,
+            strategy_key="v2",
+            strategy_version=V2_RESEARCH_STRATEGY.version,
+        )

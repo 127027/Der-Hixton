@@ -10,6 +10,7 @@ from hixton.data.quality import DataQualityReport, audit_candles
 from hixton.data.storage import CandleStore
 from hixton.domain.models import IndicatorPoint
 from hixton.domain.strategy import evaluate_batch
+from hixton.domain.versions import V1_STRATEGY, StrategyDefinition
 
 
 def rebuild_analysis(
@@ -17,6 +18,7 @@ def rebuild_analysis(
     *,
     start: datetime,
     end_exclusive: datetime,
+    strategy: StrategyDefinition = V1_STRATEGY,
 ) -> tuple[
     dict[str, tuple[IndicatorPoint, ...]],
     dict[str, DataQualityReport],
@@ -39,7 +41,14 @@ def rebuild_analysis(
                 expected_end_exclusive=end_exclusive,
             )
             quality.require_valid()
-            points_by_symbol[symbol] = tuple(evaluate_batch(symbol, candles))
+            points_by_symbol[symbol] = tuple(
+                evaluate_batch(
+                    symbol,
+                    candles,
+                    parameters=strategy.parameters,
+                    semantics=strategy.semantics,
+                    strategy_version=strategy.version,
+                )
+            )
             quality_by_symbol[symbol] = quality
     return points_by_symbol, quality_by_symbol
-

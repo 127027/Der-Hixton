@@ -25,12 +25,21 @@ interface PaperPosition {
   cost_basis_usdt: string;
   entry_time_utc: string;
   market_value_usdt: string;
+  strategy_version: string;
+  slot_count: number;
 }
 interface PaperPayload {
   cash_usdt: string;
   equity_usdt: string;
   unrealized_pnl_usdt: string;
   drawdown_pct: string;
+  strategy_session: {
+    key: string;
+    version: string;
+    activated_at_utc: string;
+    starting_equity_usdt: string;
+    pnl_usdt: string;
+  };
   settings: { slot_count: number; target_notional_usdt: string; emergency_stop: boolean };
   soak: {
     started_at_utc: string;
@@ -195,11 +204,13 @@ function renderStatus(status: StatusResponse): void {
   const dot = required("#connection-dot");
   dot.className = `status-dot ${status.runtime.health === "HEALTHY" ? "online" : status.runtime.health === "HALTED" ? "error" : ""}`;
   text("#connection-label", status.runtime.stream_connected ? "Binance Stream" : status.runtime.feed_mode);
+  text("#active-strategy-label", `BINANCE SPOT · 1H · ${status.strategy_version}`);
   text("#doc-app-version", status.application_version);
   if (!status.paper) return;
   text("#metric-equity", formatNumber(status.paper.equity_usdt));
   text("#metric-cash", formatNumber(status.paper.cash_usdt));
-  text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - status.paper.positions.length)));
+  const usedSlots = status.paper.positions.reduce((sum, position) => sum + position.slot_count, 0);
+  text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - usedSlots)));
   required("#metric-slots").nextElementSibling!.textContent = `von ${status.paper.settings.slot_count}`;
   text("#metric-drawdown", `${formatNumber(status.paper.drawdown_pct)} %`);
   required<HTMLInputElement>("#slot-input").value = String(status.paper.settings.slot_count);
@@ -238,7 +249,7 @@ function renderMarkets(markets: Market[]): void {
 
 function renderPositions(positions: PaperPosition[]): void {
   const container = required("#position-cards");
-  container.innerHTML = positions.length ? positions.map((position) => `<article class="position-card"><strong>${position.symbol.replace("USDT", "/USDT")}</strong><span>Menge ${formatNumber(position.quantity, 6)}</span><br><span>Einstieg ${formatPrice(Number(position.average_price))}</span><br><span>Marktwert ${formatNumber(position.market_value_usdt)} USDT</span></article>`).join("") : `<article class="position-card"><strong>Keine offene Position</strong><span>Paper startet in Cash. Alte Signale werden nicht nachgehandelt.</span></article>`;
+  container.innerHTML = positions.length ? positions.map((position) => `<article class="position-card"><strong>${position.symbol.replace("USDT", "/USDT")} · ${position.slot_count} Slot${position.slot_count === 1 ? "" : "s"}</strong><span>Menge ${formatNumber(position.quantity, 6)}</span><br><span>Einstieg ${formatPrice(Number(position.average_price))}</span><br><span>Marktwert ${formatNumber(position.market_value_usdt)} USDT</span><br><span>${position.strategy_version}</span></article>`).join("") : `<article class="position-card"><strong>Keine offene Position</strong><span>Paper startet in Cash. Alte Signale werden nicht nachgehandelt.</span></article>`;
 }
 
 function renderQuality(markets: Market[]): void {
@@ -251,6 +262,8 @@ function renderSystem(status: StatusResponse): void {
     ? `${soak.calendar_days}/${soak.minimum_days} Tage · ${soak.minimum_processed_closed_bars}/${soak.minimum_closed_bars_per_symbol} Bars je Coin · ${soak.completed_trades}/${soak.minimum_completed_trades} Trades · ${soak.status}`
     : "Noch nicht gestartet";
   const items: Array<[string, string]> = [
+    ["Aktive Paperstrategie", `${status.strategy_version} · seit ${formatDate(status.paper?.strategy_session.activated_at_utc ?? null, true)}`],
+    ["Ergebnis dieser Strategie", status.paper ? `${formatNumber(status.paper.strategy_session.pnl_usdt)} USDT seit ${formatNumber(status.paper.strategy_session.starting_equity_usdt)} USDT Start` : "—"],
     ["Datenfeed", `${status.runtime.feed_mode} · ${status.runtime.stream_connected ? "verbunden" : "Fallback"}`],
     ["Letzte Synchronisation", formatDate(status.runtime.last_sync_utc, true)],
     ["Nächster 00:05-UTC-Audit", `${formatUtc(status.runtime.next_daily_audit_utc)} / ${formatDate(status.runtime.next_daily_audit_utc, true)} Europe/Berlin`],
@@ -364,7 +377,7 @@ async function refreshBacktests(): Promise<void> {
     const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
     const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?strategy=${strategy}`);
     text("#backtest-eyebrow", `BACKTEST ${strategy.toUpperCase()}`);
-    text("#backtest-title", strategy === "v2" ? "3×80 oder 10×250 · Forschungskandidat" : "3×80, 10×250 oder Einzeltest");
+    text("#backtest-title", strategy === "v2" ? "3×80 oder 10×250 · aktives Paper" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
     const button = required<HTMLButtonElement>("#backtest-button");
     button.disabled = response.status === "RUNNING";
     button.textContent = response.status === "RUNNING" ? "Backtest läuft …" : "Backtest starten";

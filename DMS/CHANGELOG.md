@@ -1,5 +1,16 @@
 # DMS-Changelog
 
+## 1.3.0 – 02.09.2026
+
+- V2 nach ausdrücklicher Eigentümerentscheidung `DEC-037` vom Forschungskandidaten zur aktiven Paperstrategie erhoben; Live bleibt `LIVE_DISABLED`.
+- Exakten V1/V2-240-USDT-Vergleich mit identischem 3×80-Risikomodell dokumentiert: V2 übertraf V1 im aktuellen Fenster normal und unter Stress.
+- Persistente Paper-Strategie-Session, versionierte Positionen/Ereignisse, atomare V1→V2-Migration, Soak-Neustart und Fail-closed-Konfliktprüfung ergänzt.
+- Grundprinzip `DEC-038` festgelegt: bestbelegte zulässige Verbesserung nach vollständigem Vergleich und expliziter Entscheidung übernehmen; kein automatisches Umschalten und keine Live-Freigabe durch Backtest.
+- Gewünschte Mehrfachbelegung desselben Coins als V3 `ranked_repeat` getestet und wegen frühem Konzentrations-/Risikohalt verworfen; aktive V2 bleibt `one_per_symbol`.
+- UI ohne Redesign um aktive Strategie, Strategie-Session, PnL seit Wechsel sowie Positionsversion/Slotzahl ergänzt.
+- Konfiguration auf aktive V2 synchronisiert; Backtest-UI kennzeichnet V2 aktiv, V1 historisch und V3 verworfen.
+- Prüfstand auf 67 grüne Python-Tests sowie 34 mypy-geprüfte Source-Dateien angehoben; TypeScript und Produktionsbuild bestanden, Betriebsabnahme folgt nach lokalem V2-Neustart.
+
 ## 1.2.0 – 01.–02.09.2026
 
 - Vollständigen, vom Eigentümer übermittelten Pine-v6-Code einmalig unter `strategy/pine/` aufgenommen, gehasht und als V2-Referenz dokumentiert; V1 bleibt unverändert.

@@ -20,7 +20,7 @@ from starlette.middleware.trustedhost import TrustedHostMiddleware
 
 from hixton import __version__
 from hixton.config import ProjectConfig
-from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
+from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
 from hixton.paper.engine import load_paper_portfolio
 from hixton.paper.models import PaperSettings
@@ -71,9 +71,12 @@ def _paper_payload(
         portfolio = load_paper_portfolio(
             str(config.database_path),
             _latest_prices(supervisor),
+            strategy_key=supervisor.strategy.key,
+            strategy_version=supervisor.strategy.version,
         )
         with PaperStore(config.database_path) as store:
             soak = store.load_soak_progress()
+            session = store.load_strategy_session()
     except (OSError, RuntimeError, sqlite3.DatabaseError):
         return None
     return {
@@ -81,6 +84,13 @@ def _paper_payload(
         "starting_cash_usdt": str(portfolio.account.starting_cash_usdt),
         "equity_usdt": str(portfolio.equity_usdt),
         "unrealized_pnl_usdt": str(portfolio.unrealized_pnl_usdt),
+        "strategy_session": {
+            "key": session.strategy_key,
+            "version": session.strategy_version,
+            "activated_at_utc": _iso(session.activated_at_utc),
+            "starting_equity_usdt": str(session.starting_equity_usdt),
+            "pnl_usdt": str(portfolio.equity_usdt - session.starting_equity_usdt),
+        },
         "high_water_equity_usdt": str(portfolio.account.high_water_equity_usdt),
         "drawdown_pct": str(portfolio.drawdown_pct),
         "daily_loss_paused": portfolio.daily_loss_paused,
@@ -115,6 +125,8 @@ def _paper_payload(
                 "cost_basis_usdt": str(position.cost_basis_usdt),
                 "entry_time_utc": _iso(position.entry_time_utc),
                 "entry_signal_id": position.entry_signal_id,
+                "strategy_version": position.strategy_version,
+                "slot_count": position.slot_count,
                 "market_value_usdt": str(
                     position.quantity
                     * _latest_prices(supervisor).get(position.symbol, position.average_price)
@@ -246,7 +258,8 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         return {
             "application": "Der Hixton Trading Bot",
             "application_version": __version__,
-            "strategy_version": HIXTON_SPEC_VERSION,
+            "strategy_version": supervisor.strategy.version,
+            "strategy_key": supervisor.strategy.key,
             "runtime": _runtime_payload(supervisor.state.snapshot()),
             "paper": _paper_payload(supervisor, config),
             "server_time_utc": _iso(datetime.now(UTC)),
@@ -289,7 +302,11 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
     @app.get("/api/paper/events")
     def paper_events(symbol: str | None = None, limit: int = 250) -> dict[str, object]:
         with PaperStore(config.database_path) as store:
-            store.initialize()
+            store.initialize(
+                strategy_key=supervisor.strategy.key,
+                strategy_version=supervisor.strategy.version,
+            )
+            store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             events = store.load_events(symbol=symbol, limit=limit)
         return {
             "events": [
@@ -318,7 +335,11 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         except (KeyError, TypeError, ValueError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
         with PaperStore(config.database_path) as store:
-            store.initialize()
+            store.initialize(
+                strategy_key=supervisor.strategy.key,
+                strategy_version=supervisor.strategy.version,
+            )
+            store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             store.save_settings(settings)
         return {"saved": True, "settings": asdict(settings)}
 
@@ -349,7 +370,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         }
 
     @app.get("/api/backtests")
-    def backtests(strategy: str = Query(default="v1")) -> dict[str, object]:
+    def backtests(strategy: str = Query(default=config.strategy_key)) -> dict[str, object]:
         try:
             definition = strategy_definition(strategy)
         except ValueError as error:
@@ -396,7 +417,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             started = supervisor.start_backtest(
                 mode=str(payload.get("mode", "")),
                 symbol=str(payload.get("symbol")) if payload.get("symbol") else None,
-                strategy_key=str(payload.get("strategy", "v1")),
+                strategy_key=str(payload.get("strategy", config.strategy_key)),
             )
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error

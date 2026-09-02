@@ -78,7 +78,7 @@
 
 ## Nichtfunktionale Kriterien
 
-Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Märkten:
+Verbindliche Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Märkten:
 
 - UI-/Lese-API p95 höchstens 2 Sekunden; sie darf den Tradingloop nie synchron blockieren;
 - Verarbeitung eines 1h-Bar-Close für alle zehn Märkte einschließlich Persistenz höchstens 60 Sekunden;
@@ -89,9 +89,9 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 
 ## Automatisierter Nachweisstand vom 02.09.2026
 
-- `pytest`: 61 von 61 Tests bestanden;
+- `pytest`: 67 von 67 Tests bestanden, einschließlich versionierter Ledger-Migration, Fail-closed-Strategiekonflikt, Mehrfachslot-Allokation und Aktivierungssperre der verworfenen V3;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
-- mypy: keine Typfehler in 30 Source-Dateien;
+- mypy: keine Typfehler in 34 Source-Dateien;
 - TypeScript: `tsc --noEmit` bestanden;
 - npm Audit: 0 bekannte Schwachstellen in 67 Abhängigkeiten;
 - Datenqualität: zehn von zehn Märkten mit drei Jahren plus 400 Warm-up-Bars ohne Lücke;
@@ -100,7 +100,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
 - responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
 
-Diese Nachweise schließen Gate A und Gate B für V1. Restart-Checkpoint, Nachverarbeitung verpasster Bars und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen Gate-C-Nachweise für Backup/Restore, vollständige Failure-Injection und den real ablaufenden Paper-Soak. Der V2-Forschungskandidat besitzt ein eigenes, noch offenes Freigabegate.
+Diese Nachweise schließen Gate A und Gate B für V1 und V2. Restart-Checkpoint, Nachverarbeitung verpasster Bars, kontrollierter V1→V2-Wechsel, Strategiekonflikt-Sperre und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen Gate-C-Nachweise für Backup/Restore, vollständige Failure-Injection und den real ablaufenden V2-Paper-Soak. V3 ist nach dem negativen Mehrfachslot-Risikospiegel verworfen.
 
 ## Freigabegates
 
@@ -148,4 +148,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, reproduzierte Backtests und die lokale Browser-Abnahme aller 50 Coin-/Zeitraumkombinationen. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`. V2 bleibt wegen der dokumentierten frühen Risikohalts bis Shadow-/Papervergleich und Eigentümerfreigabe `RESEARCH_ONLY`.
+Dieser Dokumentationszustand ist mit DMS V1.3 erreicht: Die Strategien lassen sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen 67 automatisierte Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Migration-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit und reproduzierte Backtests. Die lokale UI wird nach der V2-Aktivierung erneut vollständig gegen alle 50 Coin-/Zeitraumkombinationen geprüft. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen V2-Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.

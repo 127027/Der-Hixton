@@ -2,12 +2,12 @@
 
 ## Wahrheitsgemäßer Ist-Stand
 
-Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-Märkte und ein ETH-Einzeltest erfolgreich ausgeführt. Die Strategie reagiert im Backtest deterministisch gemäß `HIXTON-SPEC-1.0`. Zusätzlich wurde ein getrennter V2-Forschungskandidat gegen die Eigentümer-Pine-Quelle geprüft. Kein Ergebnis ist eine Zusage zukünftiger Gewinne.
+Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-Märkte und ein ETH-Einzeltest erfolgreich ausgeführt. Die Strategie reagiert im Backtest deterministisch gemäß `HIXTON-SPEC-1.0`. Danach wurde V2 getrennt gegen die Eigentümer-Pine-Quelle entwickelt, reproduziert und am 02.09.2026 ausdrücklich für Paper freigegeben. Kein Ergebnis ist eine Zusage zukünftiger Gewinne oder eine Live-Freigabe.
 
 Der technische Nachweis ist vollständig genug für Gate B:
 
 - ausführbare Strategie- und Backtestengine vorhanden;
-- 61 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Portfolio-Risiko-, Restart-, API-, Reporting- und Charttests bestanden;
+- 67 automatisierte Tests einschließlich V1-/Pine-v6-Golden-, Daten-, Paper-, Strategiemigration/-sperre, Portfolio-Risiko-, Restart-, API-, Reporting- und Charttests bestanden;
 - je Markt 26.704 geschlossene 1h-Kerzen geprüft: 26.304 Auswertungsbars plus 400 Warm-up-Bars;
 - zehn isolierte Konten à 250 USDT, ohne automatisches Compounding;
 - Baseline- und Stresskosten auf Ein- und Ausstieg angewendet;
@@ -96,11 +96,11 @@ Große, reproduzierbare Run-Dateien und Marktdaten werden nicht in Git eingechec
 - Der 240-USDT-Paperbetrieb ist implementiert, muss Gate C und den vorgeschriebenen Soak-Test aber noch bestehen.
 - Echtes Binance-Trading bleibt technisch `LIVE_DISABLED` und ist nicht Bestandteil dieses Backtestnachweises.
 
-## Getrennter V2-Forschungsstand
+## V2-Nachweis und Paperstatus
 
 Der vollständige Stand liegt unter `backtests/v2/README.md`. Kandidat 1 verwendet 1h, VIDYA 6, Momentum 20, SMA 8, ATR 60 und Band 3,8. Im aktuellen Dreijahresfenster endeten die zehn isolierten 250-USDT-Konten zusammen bei 6.592,22 USDT (+163,69 %) in der Baseline und 5.843,73 USDT (+133,75 %) im Stress, jeweils mit 549 Trades. Alle zehn waren dort positiv; sieben überschritten 500 USDT.
 
-Der Primär-Run `8dbdeb5b-a4e8-4b56-b6dc-61c7f0d54e93` und Wiederholungs-Run `a7c96450-29f6-437d-af97-402d9d9c58cc` wurden über denselben technischen Einstieg ausgeführt. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich. UI und CLI können V1/V2 getrennt rechnen und auflisten; V2-Manifeste tragen `paper_approved: false`.
+Der Primär-Run `8dbdeb5b-a4e8-4b56-b6dc-61c7f0d54e93` und Wiederholungs-Run `a7c96450-29f6-437d-af97-402d9d9c58cc` wurden über denselben technischen Einstieg ausgeführt. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich. UI und CLI können V1/V2 getrennt rechnen und auflisten. Historische Manifeste behalten wahrheitsgemäß ihren damaligen Wert `paper_approved: false`; neue V2-Runs tragen seit `DEC-037` den aktuellen Freigabestatus.
 
 ## V2-Strategiereplay mit gemeinsam 3×80 USDT
 
@@ -142,4 +142,10 @@ Das höhere Baseline-Endkapital gegenüber `strategy-only` entstand nicht durch 
 
 Die Kernartefakte sind in beiden korrigierten Läufen bytegleich. Zwei ältere lückenlose Segmente bestätigen die fehlende Live-Reife: Im Segment 16.10.2021–24.03.2023 endete der Risikospiegel bei 227,42 USDT Baseline beziehungsweise 223,32 USDT Stress und hielt am 04.12.2021. Im Segment 10.04.2023–01.09.2024 endete er bei 207,24 beziehungsweise 201,90 USDT und hielt am 10.06.2023.
 
-Ältere Segmente zeigen jedoch Verlustfenster: Im Abschnitt 16.10.2021–24.03.2023 erreichte der Kandidat aggregiert nur +4,26 % Baseline und −7,82 % Stress. V2 bleibt deshalb `RESEARCH_ONLY`; der laufende Paperbot bleibt V1.
+Der nachträglich mit identischem Fenster, Kapital und Risikomodell erzeugte V1-Vergleichsrun `70089491-f5b6-4388-a420-b2c7f4641225` endete bei 383,89 USDT Baseline beziehungsweise 343,47 USDT Stress. V2 lag damit im unmittelbaren Papervergleich um 158,60 beziehungsweise 62,82 USDT höher. Der Eigentümer ordnete deshalb die kontrollierte V2-Paperaktivierung an. Die älteren Verlustfenster – im Abschnitt 16.10.2021–24.03.2023 aggregiert nur +4,26 % Baseline und −7,82 % Stress – bleiben ein klarer Live-Blocker.
+
+## V3-Mehrfachslot-Test verworfen
+
+Run `76a78440-405a-4624-bc0b-7765558b801c` verwendete exakt die V2-Signale, erlaubte aber bis zu drei 80-USDT-Slots auf demselben stärksten gleichzeitigen Kaufsignal. Baseline endete bei 287,85 USDT (+19,94 %), Stress bei 282,16 USDT (+17,57 %); beide Fälle hielten am 12.10.2023 nach nur vier abgeschlossenen Positionen. Das ist deutlich schlechter als V2 `one_per_symbol`. V3 ist daher verworfen und nicht im Paper aktiv. Weitere Details stehen unter `backtests/v3/README.md`.
+
+Paperfreigabe bedeutet ausschließlich, dass V2 jetzt mit echten Binance-Marktdaten und simulierten Fills vorwärts geprüft wird. Sie verspricht keinen täglichen Gewinn, hebt keinen Risikohalt auf und erteilt keine Live-Freigabe.

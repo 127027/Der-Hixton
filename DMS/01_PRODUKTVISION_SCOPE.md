@@ -1,6 +1,6 @@
 # 01 – Produktvision und Scope
 
-Status: `VERBINDLICH` für DMS V1.
+Status: `VERBINDLICH` für DMS V1.3.
 
 ## Produktziel
 

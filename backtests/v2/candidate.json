@@ -1,7 +1,8 @@
 {
   "strategy_version": "HIXTON-V2-RESEARCH-CANDIDATE-1",
-  "status": "RESEARCH_ONLY",
-  "paper_and_live_approved": false,
+  "status": "PAPER_ACTIVE_LIVE_BLOCKED",
+  "paper_approved": true,
+  "live_approved": false,
   "timeframe": "1h",
   "source": "strategy/pine/Der_Hixton_Indikator_v6.pine",
   "source_sha256": "8af8e9a1e6c73dc66307271b7fd1141eaae02bc1fe88e8ba97b96e7a861263dd",
@@ -22,6 +23,7 @@
     "shared_portfolio_target_notional_usdt": 80,
     "automatic_compounding": false
   },
+  "slot_allocation": "one_per_symbol",
   "cost_scenarios_bps_per_side": {
     "baseline": 15,
     "stress": 40
@@ -67,10 +69,15 @@
       "risk_halted_at_utc": "2024-02-05T21:59:59.999Z"
     }
   },
-  "promotion_requirements": [
-    "reproduzierbarer versionierter V2-Lauf",
-    "V2-UI-Auswahl ohne Überschreiben von V1",
-    "mindestens 30 Tage paralleler Shadow-/Papervergleich",
-    "ausdrückliche Eigentümerfreigabe"
+  "paper_activation": {
+    "decision": "DEC-037",
+    "decision_date": "2026-09-02",
+    "mode": "forward_only_controlled_ledger_migration",
+    "live_unchanged": "LIVE_DISABLED"
+  },
+  "remaining_live_requirements": [
+    "V2-Paper-Soak mindestens 30 Tage, 720 Bars je Coin und 20 abgeschlossene Trades",
+    "Backup/Restore, Failure-Injection, dedizierter Binance-Bot-Account und Reconciliation",
+    "ausdrückliche separate Eigentümerfreigabe für Live"
   ]
 }

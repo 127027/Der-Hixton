@@ -54,6 +54,11 @@ class RuntimeSupervisor:
 
     def __init__(self, config: ProjectConfig) -> None:
         self.config = config
+        self.strategy = strategy_definition(config.strategy_key)
+        if not self.strategy.paper_approved:
+            raise ValueError(
+                f"strategy {self.strategy.version} is not approved for paper"
+            )
         self.state = RuntimeState(next_daily_audit_utc=next_daily_audit())
         self._stop = asyncio.Event()
         self._closed_bar_event = asyncio.Event()
@@ -85,7 +90,7 @@ class RuntimeSupervisor:
         *,
         mode: str,
         symbol: str | None = None,
-        strategy_key: str = "v1",
+        strategy_key: str | None = None,
     ) -> bool:
         if self.state.snapshot().backtest_status == "RUNNING":
             return False
@@ -94,13 +99,14 @@ class RuntimeSupervisor:
         normalized = symbol.replace("/", "").upper() if symbol else None
         if mode == "single" and normalized not in SYMBOLS:
             raise ValueError("single backtest requires one DMS symbol")
-        strategy_definition(strategy_key)
+        selected_strategy_key = strategy_key or self.strategy.key
+        strategy_definition(selected_strategy_key)
         self.state.set_status(backtest_status="RUNNING")
         self._backtest_task_handle = asyncio.create_task(
             self._backtest_task(
                 mode=mode,
                 symbol=normalized,
-                strategy_key=strategy_key,
+                strategy_key=selected_strategy_key,
             ),
             name="hixton-backtest",
         )
@@ -174,6 +180,8 @@ class RuntimeSupervisor:
                         initialize_paper_at_latest,
                         str(self.config.database_path),
                         points,
+                        strategy_key=self.strategy.key,
+                        strategy_version=self.strategy.version,
                     )
                     if not first_start:
                         events = await asyncio.to_thread(
@@ -181,6 +189,8 @@ class RuntimeSupervisor:
                             str(self.config.database_path),
                             points,
                             rules,
+                            strategy_key=self.strategy.key,
+                            strategy_version=self.strategy.version,
                         )
                         self.state.log(
                             level="INFO",
@@ -197,6 +207,8 @@ class RuntimeSupervisor:
                         str(self.config.database_path),
                         points,
                         rules,
+                        strategy_key=self.strategy.key,
+                        strategy_version=self.strategy.version,
                     )
                     if events:
                         self.state.log(
@@ -208,7 +220,10 @@ class RuntimeSupervisor:
                 now = datetime.now(UTC)
                 update: dict[str, object] = {
                     "health": "HEALTHY",
-                    "message": "Paper-Betrieb aktiv; alle zehn Maerkte sind geprueft",
+                    "message": (
+                        f"Paper-Betrieb {self.strategy.version} aktiv; "
+                        "alle zehn Maerkte sind geprueft"
+                    ),
                     "last_sync_utc": now,
                     "last_error": None,
                     "sync_in_progress": False,
@@ -248,6 +263,7 @@ class RuntimeSupervisor:
             self.config.database_path,
             start=warmup_start,
             end_exclusive=report_end,
+            strategy=self.strategy,
         )
         rules: dict[str, ExecutionRules] = {}
         with CandleStore(self.config.database_path) as store:
@@ -316,6 +332,7 @@ class RuntimeSupervisor:
                     strategy_parameters=strategy.parameters,
                     strategy_semantics=strategy.semantics,
                     strategy_version=strategy.version,
+                    slot_allocation=strategy.slot_allocation,
                 )
             else:
                 if symbol is None:
@@ -372,7 +389,10 @@ class RuntimeSupervisor:
                     self.state.set_status(
                         stream_connected=True,
                         feed_mode="WEBSOCKET",
-                        message="Paper-Betrieb aktiv; Binance-Livestream verbunden",
+                        message=(
+                            f"Paper-Betrieb {self.strategy.version} aktiv; "
+                            "Binance-Livestream verbunden"
+                        ),
                         last_stream_update_utc=datetime.now(UTC),
                     )
                     delay = 1

@@ -35,6 +35,22 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 7. Versionen/Config-Diff kontrollieren;
 8. erst danach vorherigen Modus explizit wieder freigeben.
 
+## Kontrollierter Paper-Strategiewechsel
+
+Ein Strategiewechsel ist kein normaler Neustart und erfolgt nie über die Backtestauswahl.
+
+1. ausdrückliche Eigentümerentscheidung und Zielversion im Entscheidungslog prüfen;
+2. laufenden Paperprozess geordnet stoppen und lokale SQLite-Datei sichern;
+3. Code, Konfiguration, DMS, Golden-Tests und Ziel-Backtests auf denselben Commit bringen;
+4. Daten für alle zehn Märkte vollständig synchronisieren und auditieren;
+5. einmalig über den einzigen Einstieg `py -3 src/main.py paper-activate --strategy v2 --confirmation AKTIVIEREN` migrieren;
+6. kontrollierte Schließungen alter Paperpositionen, Auditdatensatz, neue Strategie-Session, Start-Equity und zurückgesetzten Soak prüfen;
+7. Bot ausschließlich in Paper starten; ein Versionskonflikt muss den Start blockieren;
+8. Header, Systemkarte, Ledger, zehn Märkte und alle Chartzeiträume prüfen;
+9. `LIVE_DISABLED` muss unverändert sichtbar und technisch erzwungen sein.
+
+Die Migration löscht keine alten Ereignisse. Eine Wiederholung auf dieselbe aktive Version ist idempotent. Ein Wechsel zurück benötigt eine neue ausdrückliche Entscheidung; keine Datenbankdatei wird manuell umgeschrieben.
+
 ## Stream oder Datenfeed stale
 
 Auslöser: 90 Sekunden ohne Streamupdate oder finale 1h-Bar mehr als 120 Sekunden nach geplantem Schluss nicht verfügbar.
