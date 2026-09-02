@@ -31,7 +31,9 @@ config/
 LICENSE              # in DMS V1 bewusst nicht vorhanden; siehe Lizenzregel
 ```
 
-Historische Marktdaten, Datenbanken, große Logs, Backups, API-Schlüssel und lokale Secret-Dateien gehören nicht ins Git-Repository. Lose oder durchnummerierte Startskripte im Hauptordner sind verboten.
+Historische Marktdaten, Datenbanken, große Logs, Backups, API-Schlüssel und lokale Secret-Dateien gehören nicht ins Git-Repository. Das gilt insbesondere für die beim Start und beim täglichen Audit automatisch geladenen `1h`-Kerzen und die SQLite-Datenbank. Lose oder durchnummerierte Startskripte im Hauptordner sind verboten.
+
+Aktuelle Übergabe vom 02.09.2026: Gemeinsamer Arbeitsstand ist Branch `codex/build-foundation-v1` in Pull Request 2. Vor Weiterarbeit zuerst diesen Branch beziehungsweise nach Merge den neuesten `main`-Stand holen; DMS 00 beschreibt den fachlichen Übergabepunkt. Große lokale Daten- und Run-Artefakte werden anhand der gespeicherten Kommandos und Hashes reproduziert, nicht per Git verteilt.
 
 ## Branch- und Reviewregel
 

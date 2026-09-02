@@ -87,7 +87,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - Retention hält normale Betriebslogs bei höchstens 90 Tagen, ohne Audit-/Trade-/Backtestnachweise zu löschen;
 - Restore ist in einer sauberen Umgebung reproduzierbar und wird vor Live sowie vierteljährlich nachgewiesen.
 
-## Automatisierter Nachweisstand vom 01.09.2026
+## Automatisierter Nachweisstand vom 02.09.2026
 
 - `pytest`: 61 von 61 Tests bestanden;
 - Ruff: keine Lint-/Sauberkeitsabweichung;
@@ -95,7 +95,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - TypeScript: `tsc --noEmit` bestanden;
 - npm Audit: 0 bekannte Schwachstellen in 67 Abhängigkeiten;
 - Datenqualität: zehn von zehn Märkten mit drei Jahren plus 400 Warm-up-Bars ohne Lücke;
-- Backtest: 10×250-USDT-Batch, ETH-Einzelmodus und gemeinsames 3×80-USDT-Portfolio ausgeführt;
+- Backtest: 10×250-USDT-Batch, ETH-Einzelmodus und gemeinsames 3×80-USDT-Portfolio einschließlich risikogleichem Paper-/Live-Spiegel ausgeführt;
 - Reproduktion: Metrik-, Trade- und Equity-Dateien bytegleich;
 - Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
 - responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
@@ -148,4 +148,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 01.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, ein reproduzierter 10er-Backtest und die lokale Browser-Abnahme. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`. V2 bleibt bis Shadow-/Papervergleich und Eigentümerfreigabe `RESEARCH_ONLY`.
+Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie ließ sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen die automatisierten Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Restart-/API-/Charttests, der echte Drei-Jahres-Datenaudit, reproduzierte Backtests und die lokale Browser-Abnahme aller 50 Coin-/Zeitraumkombinationen. Gate C bleibt bis zu Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`. V2 bleibt wegen der dokumentierten frühen Risikohalts bis Shadow-/Papervergleich und Eigentümerfreigabe `RESEARCH_ONLY`.

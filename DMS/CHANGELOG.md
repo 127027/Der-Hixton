@@ -1,6 +1,6 @@
 # DMS-Changelog
 
-## 1.2.0 – 01.09.2026
+## 1.2.0 – 01.–02.09.2026
 
 - Vollständigen, vom Eigentümer übermittelten Pine-v6-Code einmalig unter `strategy/pine/` aufgenommen, gehasht und als V2-Referenz dokumentiert; V1 bleibt unverändert.
 - Pine-v6-Semantik in der Strategieengine getrennt ergänzt und mit einer unabhängigen Golden-Implementierung getestet.
@@ -12,10 +12,11 @@
 - Kombinierte Backtest-Drawdown-Aggregation gegen abweichende Provider-Close-Millisekunden korrigiert und per Regressionstest gesichert.
 - V1/V2 über denselben CLI-Einstieg und in der bestehenden Backtest-UI getrennt auswählbar gemacht; V2-Manifeste enthalten Parameter, Pine-Referenz, Semantik und `paper_approved: false`.
 - Vollständigen V2-10er-Batch bytegleich wiederholt und Kernartefakt-Hashes im V2-Bericht fixiert; damaliger Prüfstand 56 grüne Python-Tests.
-- Gemeinsamen 240-USDT-Spiegellauf mit drei festen 80-USDT-Slots als eigenen CLI-/UI-Modus implementiert, zweimal bytegleich reproduziert und ehrlich gegen das gleichgewichtete Buy-and-Hold-Portfolio ausgewiesen; aktueller Prüfstand 59 grüne Python-Tests.
+- Gemeinsamen 240-USDT-Spiegellauf mit drei festen 80-USDT-Slots als eigenen CLI-/UI-Modus implementiert, zweimal bytegleich reproduziert und ehrlich gegen das gleichgewichtete Buy-and-Hold-Portfolio ausgewiesen; damaliger Prüfstand 59 grüne Python-Tests.
 - Vor-Live-Prüfung fand und schloss die fehlende 5-%-Tagesverlust-/20-%-Drawdown-Parität zwischen Paperledger und Portfolio-Backtest; korrigierte Risikospiegel und frühe Halts in älteren Segmenten dokumentiert.
 - Backtest-UI bindet Detailtabelle nun an denselben neuesten Run wie die Karte, kennzeichnet Portfolio/Batch/Einzeltest sowie `RISIKOHALT` sichtbar und behält die abgenommene Optik bei.
 - Band-4,0-Challenger trotz starkem aktuellem Fenster wegen klarer älterer Verluste verworfen; aktueller Prüfstand 61 grüne Python-Tests.
+- Zentrale Arbeitsübergabe für Codex/GPT ergänzt, den 3×80-Risikospiegel verbindlich statt optional benannt und `1m = ein Monat` eindeutig von den lokal automatisch geladenen `1h`-Kerzen getrennt.
 
 ## 1.1.0 – 01.09.2026
 

@@ -42,6 +42,16 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 
 Aktueller Paketstatus: **DMS V1.2 ist fachlich entscheidungsvollständig; Backtest-/Paper-V1 läuft, V2 bleibt ein getrennter Forschungskandidat.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. Der 30- bis 90-tägige Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
 
+## Arbeitsübergabe vom 02.09.2026
+
+- Aktiver Laufzeitstand bleibt **V1 `HIXTON-SPEC-1.0` im Paperbetrieb**. V2 ist ausschließlich `RESEARCH_ONLY`; weder Paper noch Live dürfen still auf V2 umgestellt werden.
+- Der V2-10×250-Test war im aktuellen Dreijahresfenster stark. Der echte 3×80-Paper-/Live-Risikospiegel hielt jedoch im aktuellen Fenster und in beiden älteren Prüfsegmenten wegen der verbindlichen Risikogrenzen vorzeitig an. Er belegt deshalb keinen kontinuierlichen Dreijahresbetrieb und keine tägliche Gewinnerwartung.
+- Band 4,0 wurde trotz besserem aktuellen Fenster wegen schwacher älterer Segmente verworfen. Der nächste Bearbeiter darf diesen Challenger nicht ohne neue robuste Nachweise reaktivieren und die 5-%-Tagesverlustpause oder den 20-%-Drawdown-Halt nicht zur Ergebnisverbesserung lockern.
+- Nächster fachlicher Arbeitspunkt ist eine klar versionierte V3-/Challenger-Untersuchung gegen kurze Fehlausbrüche, während lange Gewinntrends erhalten bleiben. Jede Änderung benötigt ältere Segmente, Baseline/Stress, Nachbarprüfung und anschließenden Forward-/Shadow-Nachweis; bloß mehr Trades oder ein schöneres aktuelles Fenster reichen nicht.
+- Prüfstand: 61 grüne Python-Tests, Ruff, mypy und TypeScript bestanden; alle 50 Kombinationen aus zehn Coins und fünf Chartzeiträumen lieferten Daten. Startup-Sync, Binance-WebSocket und lokale UI wurden geprüft. Der dafür gestartete separate Testprozess wurde beendet; der reguläre V1-Paperbot blieb unberührt.
+- Marktdaten sind lokale, automatisch nachgeladene `1h`-Kerzen. UI-Kürzel `1m` bedeutet einen Monat. Datenbank, Marktdaten, Logs und große reproduzierbare Run-Artefakte bleiben durch `.gitignore` lokal.
+- Gemeinsamer Übergabestand liegt im Branch `codex/build-foundation-v1` und Pull Request 2. Dokument 18 und `backtests/v2/README.md` enthalten die belastbaren Run-IDs, Hashes, Ergebnisse und Grenzen.
+
 ## Eingangsbestand vom 31.08.2026
 
 | Datei | Umfang | SHA-256 | Bewertung |

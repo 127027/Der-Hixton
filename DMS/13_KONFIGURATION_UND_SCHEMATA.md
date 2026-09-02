@@ -135,6 +135,8 @@ ui:
   strategy_signal_resolution: 1h
 ```
 
+In `chart_ranges` und `default_range` steht `1m` für **einen Monat**. Es bezeichnet niemals einen 1-Minuten-Timeframe. Der native Daten- und Signaltimeframe bleibt `1h`; nur lange UI-Ansichten werden wie angegeben deterministisch aggregiert.
+
 Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die fachlichen V1-Defaults oben sind verbindlich und dürfen nicht durch Frameworkdefaults ersetzt werden. Telegram ist nicht erforderlich.
 
 ## Strategie-Snapshot

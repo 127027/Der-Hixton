@@ -37,7 +37,7 @@ Der-Hixton/
 └── tests/                            # Tests, Golden-Daten und Fixtures
 ```
 
-Nicht versionierte Laufzeitdaten liegen später in ignorierten Verzeichnissen wie `data/`, `runtime/`, `logs/` und `backups/`.
+Nicht versionierte Laufzeitdaten liegen in ignorierten Verzeichnissen wie `data/`, `runtime/`, `logs/` und `backups/`. Dazu gehören die beim Start und beim täglichen Audit automatisch ergänzten `1h`-Kerzen sowie die SQLite-Datenbank. `1m` in der UI bedeutet einen Monat und erzeugt keinen zweiten 1-Minuten-Datenbestand.
 
 ## Ein einziger Programmstart
 

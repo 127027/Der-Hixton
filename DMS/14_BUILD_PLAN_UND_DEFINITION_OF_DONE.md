@@ -2,15 +2,15 @@
 
 Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eigentümer hat nach dem DMS-Freeze die Implementierung ausdrücklich beauftragt.
 
-## Implementierungsstand am 01.09.2026
+## Implementierungsstand am 02.09.2026
 
 | Phase | Technischer Stand | Freigabestatus |
 |---|---|---|
 | 0 – Spezifikation | DMS V1/`HIXTON-SPEC-1.0` eingefroren | **BESTANDEN** |
 | 1 – Strategie-Domain | eine Engine, V1- und Eigentümer-Pine-v6-Golden-/Replay-/Zustandstests | **BESTANDEN**; V2 bleibt getrennt `RESEARCH_ONLY` |
 | 2 – Datenplattform | Binance REST/WebSocket, SQLite-WAL, Revisionen, 00:05-UTC-Scheduler, 10×3 Jahre + Warm-up geprüft | **TECHNISCH BESTANDEN**; echter nächster Mitternachtslauf bleibt Betriebsnachweis |
-| 3 – Backtest | 10×250, Einzeltest und gemeinsames 3×80-Portfolio, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; Ergebnisstand in DMS 18 |
-| 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs | **BESTANDEN** in lokaler Browser-Abnahme |
+| 3 – Backtest | 10×250, Einzeltest und gemeinsames 3×80-Portfolio einschließlich Paper-Risikogates, Baseline/Stress, immutable lokale Runs, Reproduktionsvergleich | **BESTANDEN**; V2 bleibt wegen früher Risikohalts `RESEARCH_ONLY`, Ergebnisstand in DMS 18 |
+| 4 – UI-Lesemodus | zehn Märkte, fünf Zeiträume, Overlays, Signal-/Fillmarker, Tabellen, Qualität, Logs und sichtbarer Risikohalt | **BESTANDEN** in lokaler Browser-Abnahme mit 50/50 Chartkombinationen |
 | 5 – Paper Execution | persistenter 240-USDT-/3×80-Ledger, Slotpriorität, Kosten, Guards, Restart-Recovery und Soak-Zähler | **IMPLEMENTIERT**, Gate C/realer Soak noch nicht bestanden |
 | 6 – Live-Adapter | kein privater Orderversand; UI und CLI zeigen `LIVE_DISABLED` | **ABSICHTLICH GESPERRT** |
 | 7 – Live-Freigabe | nicht begonnen | **NICHT FREIGEGEBEN** |
@@ -59,6 +59,8 @@ Definition of Done: drei Jahre plus Warm-up pro Paar, Lücken/Fehler nachweislic
 Definition of Done: alle zehn Einzeltests und Aggregation exakt reproduzierbar; keine erfundenen Ergebnisse.
 
 V2-Zusatzstand: Parametersuche, Mehrfenstervergleich und Sensitivität sind unter `backtests/v2` dokumentiert. Eine Aktivierung gehört nicht zu dieser bestandenen historischen Phase, sondern benötigt den separaten Shadow-/Paper-Nachweis.
+
+Nächster geordneter Forschungsstand ist bei einer fachlichen Strategieänderung `backtests/v3`. Er muss kurze Fehlausbrüche untersuchen, lange Gewinntrends erhalten und dieselben Kosten-, Altfenster-, Nachbar- und Risikogate-Prüfungen bestehen. V2 wird nicht überschrieben; eine Parameter- oder Risikolockerung allein zur Zielrendite ist ausgeschlossen.
 
 ## Phase 4 – UI-Lesemodus
 

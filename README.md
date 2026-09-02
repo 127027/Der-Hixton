@@ -14,7 +14,7 @@ Startbot.bat
 
 Ein Doppelklick erstellt bei Bedarf die lokale `.venv`, installiert ausschließlich die gepinnten Python-Laufzeitabhängigkeiten und startet Paper-Bot plus UI auf `http://127.0.0.1:8765/`. Die Anwendung besitzt intern weiterhin genau einen technischen Einstiegspunkt: `src/main.py`.
 
-Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten plus 400 Warm-up-Bars. Währenddessen bleibt die UI sichtbar und zeigt `STARTING` oder `DEGRADED`. Historische Signale werden beim Start niemals als neue Paper-Orders nachgehandelt.
+Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten plus 400 Warm-up-Bars. Währenddessen bleibt die UI sichtbar und zeigt `STARTING` oder `DEGRADED`. Historische Signale werden beim Start niemals als neue Paper-Orders nachgehandelt. `1m` in der Zeitraumwahl bedeutet **ein Monat**, nicht eine 1-Minuten-Kerze; Strategie und lokaler Rohdatenbestand arbeiten auf `1h`.
 
 ## Was die Anwendung enthält
 
@@ -26,7 +26,7 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
-- Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress.
+- Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung. Kandidat 1 bleibt `RESEARCH_ONLY`.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
@@ -35,7 +35,7 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - `LIVE_DISABLED` ist permanent sichtbar. Es existiert noch kein freigeschalteter privater Binance-Orderadapter.
 - Ein positiver Backtest ist keine Gewinngarantie.
 - Live benötigt unter anderem 30 bis höchstens 90 Tage Paper-Soak gemäß DMS, mindestens 720 neue Bars je Coin, 20 abgeschlossene Papertrades, sichtbare lokale P1/P2-Alarme, Backup/Restore, einen dedizierten Bot-Account und schriftliche Eigentümerfreigabe. Telegram ist nicht erforderlich.
-- Secrets, Datenbanken, Marktdaten, Logs, `.venv` und `node_modules` werden nicht in Git gespeichert.
+- Secrets, Datenbanken, automatisch geladene `1h`-Marktdaten, Logs, `.venv` und `node_modules` werden nicht in Git gespeichert.
 
 ## Kommandozeile
 

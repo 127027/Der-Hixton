@@ -58,7 +58,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | BKT-007 | Kapitalunabhängige Signalparität wird getrennt von PnL- und Portfoliosimulation ausgewiesen. | VERBINDLICH |
 | BKT-008 | Standard-Batchlauf: zehn isolierte Coin-Backtests mit jeweils 250,00 USDT Startkapital. | VERBINDLICH |
 | BKT-009 | Einzelmodus: ein frei wählbares Paar, zum Beispiel ETH/USDT, wird separat mit 250,00 USDT getestet. | VERBINDLICH |
-| BKT-010 | Optionaler Paper-/Live-Spiegellauf simuliert das gemeinsame 240-USDT-Portfolio mit drei 80-USDT-Slots. | VERBINDLICH |
+| BKT-010 | Der Paper-/Live-Spiegellauf simuliert verpflichtend das gemeinsame 240-USDT-Portfolio mit drei 80-USDT-Slots sowie derselben 5-%-Tagesverlustpause und demselben 20-%-Drawdown-Halt wie Paper. Varianten ohne Risikogates heißen `strategy-only`. | VERBINDLICH |
 | BKT-011 | Baseline je Orderseite: 10 bps Gebühr + 2 bps Spread + 3 bps Slippage; Stress: 10 + 10 + 20 bps. Kosten wirken advers auf Kauf und Verkauf. | VERBINDLICH |
 | BKT-012 | Strategieverbesserungen werden nur als neue Backtestversion angelegt. Suchraum, Auswahlregel, ältere Marktsegmente, Kosten-Stress, Nachbarparameter und verworfene Varianten werden dokumentiert; mehr Trades sind nur bei robuster Nettowirkung besser. | VERBINDLICH |
 

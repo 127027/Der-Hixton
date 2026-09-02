@@ -15,7 +15,7 @@ Beschlussstand: **01.09.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 | DEC-005 | BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE, jeweils `/USDT`; keine automatische Ersetzung. | **BESCHLOSSEN** |
 | DEC-006 | 250→500 USDT je Coin innerhalb von drei Jahren ist ein angestrebtes Optimierungsziel, kein Gewinnversprechen. Ergebnisse werden netto und vollständig berichtet; Primärziel ist robuste Nettowirkung, nicht maximale Tradezahl allein. | **BESCHLOSSEN, präzisiert 01.09.2026** |
 | DEC-007 | Spot long-only; Kauf öffnet Long, Verkauf schließt Long; kein Short, Margin, Futures, Leverage oder Pyramiding. | **BESCHLOSSEN** |
-| DEC-008 | Backtest: zehn isolierte Läufe à 250 USDT sowie Einzelmodus à 250 USDT; optionaler 240-USDT-Spiegellauf. Paper/Live: gemeinsamer Cashpool 240 USDT, drei Slots à 80 USDT. | **BESCHLOSSEN** |
+| DEC-008 | Backtest: zehn isolierte Läufe à 250 USDT sowie Einzelmodus à 250 USDT; verpflichtender 240-USDT-Spiegellauf mit denselben Risikogates wie Paper. Paper/Live: gemeinsamer Cashpool 240 USDT, drei Slots à 80 USDT. | **BESCHLOSSEN** |
 | DEC-009 | Live-V1 verwendet Market-Orders mit den Guards aus DMS 07. | **BESCHLOSSEN** |
 | DEC-010 | Kosten je Seite: Baseline 10 bp Gebühr + 2 bp Spread + 3 bp Slippage = 15 bp; Stress 10 + 10 + 20 = 40 bp. Kein BNB-/VIP-Rabatt. | **BESCHLOSSEN** |
 | DEC-011 | Nur geschlossene Bars; Warm-up 400 Bars; Initialzustand nach Bar 399 `DOWN`, ohne Startorder; Cross- und Fill-Regeln exakt nach DMS 03/06. | **BESCHLOSSEN** |
