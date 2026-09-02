@@ -113,10 +113,10 @@ Der für den Paperbetrieb relevante Kapitalschnitt wurde zusätzlich als eigener
 
 Im Baselinefall wurde das Konto historisch mehr als verdoppelt; im Stressfall blieb es deutlich positiv, erreichte 480 USDT aber nicht. Die Baseline übertraf im selben Fenster ein gleichgewichtet gekauftes und gehaltenes 10-Coin-Portfolio von 490,90 USDT; im Stress lag die Strategie mit 436,31 USDT unter dessen 489,68 USDT. Von 781 erzeugten Order-Signalen wurden 456 ausgeführt; 325 Einstiegssignale wurden ausschließlich mit `NO_FREE_SLOT` dokumentiert und nicht später nachgeholt. Am Fensterende waren BTC und SOL noch offen und deshalb zum letzten Schlusskurs bewertet.
 
-- Primär-Run: `a03df78c-409c-4e51-be0a-049de7c1e1f6`
-- Wiederholungs-Run: `d030497b-ed72-40bd-b519-2c2fe454b11b`
-- Code-Commit beider Manifeste: `9274f6b66e9381fc5303528688d91cb7f51b457b`
-- `metrics.json`: `35D4485152ACC15DFE30A4ED87E35072C20134679703CACE99D28EB46DF6E73D`
+- Primär-Run: `4aa4d135-b077-4c29-a839-fa141952113b`
+- Wiederholungs-Run: `060745da-5e9f-4445-a768-0b2c2da63851`
+- Code-Commit beider Manifeste: `30c8db4d494d5f4a394fc869d40bbc2e62d59896`
+- `metrics.json`: `62BE829B0B57354AB2EBD5F824C576ECEE86B6B9829ABA33382272C8820B0119`
 - `trades.csv`: `47D6063FE662E0223D0A4FB3E6C27613D765E6C0C98A606DB6A47D707BB74AA0`
 - `equity.csv`: `5B8994F48EC7B2756CC73B58839B7AF521F7D3A6E6FD2FAE34F3A5A15AE43E48`
 

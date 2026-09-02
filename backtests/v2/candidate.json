@@ -30,8 +30,8 @@
   "shared_portfolio_current_window": {
     "report_start_utc": "2023-09-01T12:00:00Z",
     "report_end_utc": "2026-09-01T12:00:00Z",
-    "primary_run_id": "a03df78c-409c-4e51-be0a-049de7c1e1f6",
-    "reproduction_run_id": "d030497b-ed72-40bd-b519-2c2fe454b11b",
+    "primary_run_id": "4aa4d135-b077-4c29-a839-fa141952113b",
+    "reproduction_run_id": "060745da-5e9f-4445-a768-0b2c2da63851",
     "baseline": {
       "ending_equity_usdt": 528.3759665477908,
       "return_pct": 120.15665272824617,
