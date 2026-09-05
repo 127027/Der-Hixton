@@ -42,7 +42,7 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1.3 ist fachlich entscheidungsvollständig; V2 ist die aktive Paperstrategie, V1 bleibt Historie und V3 ist ein verworfener Mehrfachslot-Versuch.** Kritische Produktentscheidungen stehen nicht auf `OFFEN`. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
+Aktueller Paketstatus: **DMS V1.5; V2 ist die aktive Paperstrategie, V1 bleibt Historie, V3 ist verworfen und V4/V5 sind abgeschlossene Forschung ohne Paperfreigabe.** Die bestehenden fachlichen Produktentscheidungen bleiben verbindlich, aber ihr Nachweis bedeutet keine zuverlässige Profitabilität. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und frühere Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
 
 ## Arbeitsübergabe vom 02.09.2026
 

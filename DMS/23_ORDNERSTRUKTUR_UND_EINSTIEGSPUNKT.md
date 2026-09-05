@@ -33,7 +33,7 @@ Der-Hixton/
 ├── config/
 │   └── examples/                     # secretfreie Beispiele
 ├── ui/                               # TypeScript-Quelle und reproduzierbarer UI-Build
-├── src/                              # spätere Anwendung
+├── src/                              # implementierte Anwendung
 │   ├── main.py                       # einziger technischer Einstieg
 │   └── hixton/                       # Domain, Daten, Backtest, Paper, Runtime und UI/API
 └── tests/                            # Tests, Golden-Daten und Fixtures
