@@ -8,6 +8,21 @@ Gefundene und korrigierte technische Defekte: permanent um eine Stunde verspäte
 
 Die V4-Prüfung hat die bisherigen V2-Dreijahreswerte exakt reproduziert, zusätzlich jeden Coin in einem neu gestarteten jüngsten Jahresfenster geprüft und 24 individuelle Kandidaten je Coin untersucht. Das jüngste Jahr verliert bei allen zehn V2-Einzelkonten auch unter Baselinekosten. Der neue Coin-Kandidat erhöht das Dreijahresportfolio, verschlechtert aber das jüngste Neustartjahr. Kein Wechsel. Alle Vergleichswerte und Grenzen stehen in `backtests/v4/README.md`; Quell-/Daten-/Kosten-/Filter-Nachweis unter `backtests/v4/reports/review-20260905.json`. Live bleibt deaktiviert.
 
+### Abnahme des Laptop-Updates
+
+Code `0e6c41d54642f1a42a7e3dce953fcfd9bc29810f`, Anwendung 0.2.1, am 05.09.2026 über die unveränderte `Startbot.bat` neu gestartet. SQLite-Backup vor dem Wechsel: `backups/hixton-before-execution-fix-20260905-151821.sqlite3`, SHA-256 `8F280DAB95078FE46F2A604677D00E79896EA2AFF4B0FAEA6974AB4EABBDDDAD`. Integrität `ok`; alle sechs alten Ledgerereignisse und alle drei Positionsdatensätze wurden gegen das Backup verglichen und sind identisch geblieben. Technische Soak-Epoche: 05.09.2026 13:19:05 UTC; kein Cash-/Positionsreset.
+
+Nach dem Start: `HEALTHY`, `PAPER`, `LIVE_DISABLED`, zehn frische Symbolpreise und zehn Datenaudits ohne Lücken. Um 15:20 Europe/Berlin war die letzte abgeschlossene Kerze korrekt 14:00–14:59, nicht mehr eine Stunde zurück. 50/50 Chart-API-Kombinationen liefern Daten und zeitlich passende Fill-Buckets. Sichtbar geprüft: ADA-Wochenchart mit Kauf, Verkauf und Paper-Fill, BTC-Dreijahreschart, Coin-/Zeitraumwechsel und fertige Backtestergebnisse. Browserkonsole ohne Warnung/Fehler. Zwischenstand rund 239,17 USDT Equity bzw. +1,72 USDT V2-Buch-PnL; weiterhin kein abgeschlossener V2-Trade. Die Änderung dieser Bewertung ist kein nachträglicher Ledgergewinn: Marktkurse werden jetzt frisch statt aus der verspäteten Schlusskerze angezeigt.
+
+Zwei weitere Läufe wurden direkt über die laufende UI gestartet und erfolgreich beendet. Gemeinsames Fenster: `[2023-09-05 13:00 UTC, 2026-09-05 13:00 UTC)`. Dies ist ein anderes Fenster als die fixierte V4-Forschung; Werte nicht still gegeneinander austauschen.
+
+| Lauf | Baseline Ende | Stress Ende | Trades je Szenario |
+|---|---:|---:|---:|
+| 3×80, Start 240 USDT | 543,83 USDT | 406,67 USDT | 108 / 30 |
+| 10×250, rechnerische Summe Start 2.500 USDT | 6.661,92 USDT | 5.910,45 USDT | 549 / 549 |
+
+Portfolio-Run `5db104a2-974d-496d-a8f8-05293407aa6c`, `metrics.json` SHA-256 `7C66613D3BE632AE3083A4AC237F53948FC1536F7012DC4B2B82421A6C275707`. Batch-Run `81851f17-e401-46d3-bc92-9ee0a605a436`, `metrics.json` SHA-256 `00F44073D2B2CDE0DD23A0C7D23050D16C6AD50AB6D8D65A6D0090CF3B4A7827`. Beide Manifeste nennen den obigen Code-Commit. Der Portfoliohalt liegt unverändert am 06.02.2025 (Baseline) bzw. 05.02.2024 (Stress). Der frische Batch ist bei allen zehn positiv, aber BTC, BNB und DOT bleiben unter 500 USDT. Die jüngste Verlustperiode und alle Live-Blocker bleiben bestehen.
+
 Die folgenden Abschnitte dokumentieren frühere Runs und damalige Abnahmen; sie ersetzen nicht die obige aktuelle Fehler- und Robustheitsbewertung.
 
 ## Wahrheitsgemäßer Ist-Stand

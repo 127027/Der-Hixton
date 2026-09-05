@@ -1,5 +1,13 @@
 # 20 – Betriebsrunbook
 
+## Aktueller Übergabestand 05.09.2026
+
+Anwendung 0.2.1 läuft auf dem Laptop über die einzige `Startbot.bat`; Strategie bleibt V2, drei Slots à 80 USDT, Live gesperrt. DMS 18 enthält Backup, Neustartnachweis und die beiden frisch aus der UI gestarteten Run-IDs. Der technische Soak startete wegen der Ausführungskorrektur einmalig neu. Alte Positionen und Trades dürfen dafür **nicht** gelöscht oder zu besseren Kursen umgebucht werden.
+
+Bei „handelt zu wenig“ zuerst freie Slots, offene Positionen, letzten **neuen** Trendwechsel und den Blockierungsgrund unter Positionen/Orders prüfen. Ein grüner Dauertrend ist kein erneuter Entry; mehrere Slots im selben Coin sind weiterhin nicht freigegeben. Zum Zeitpunkt des Updates waren ADA, DOGE und ETH gleichzeitig offen.
+
+Für eine Verzögerungsprüfung tatsächlichen Verarbeitungszeitpunkt (`/api/paper/events`: `processed_at_utc`) und modellierte Fillzeit (`occurred_at_utc`) getrennt lesen. `LEGACY_CLOSE_OR_MIGRATION` besitzt keinen neuen Latenznachweis. Datenqualität muss die gerade abgeschlossene Stunde zeigen; nach zwei Minuten fehlende Kerzen sind ein Recoveryfall. Modellexits alter Einstiege zählen nicht als vollständige neue Soak-Trades. Der private Orderadapter, Reconciliation und ein realistischer Ausführungs-/Restore-/Störungsnachweis bleiben vor Echtgeld offen.
+
 ## Vor jedem ersten Start
 
 1. Modus `BACKTEST` oder `PAPER`; `LIVE` aus.

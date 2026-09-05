@@ -8,6 +8,7 @@
 - Bestehende UI ohne Redesign verbessert: Freie Slots, verständlicher Wartezustand, frische offene Kerzen, korrekt gerasterte Paper-Fills und wiederverwendete Marker.
 - Begrenzte coinindividuelle V4-Untersuchung und echte sukzessive Nachkaufhypothese gerechnet; keine Aktivierung wegen schwacher jüngster Periode. Positive Dreijahreswerte bleiben von kontinuierlicher Profitabilität getrennt.
 - Prüfstand 74 Tests; Ruff, mypy, TypeScript und UI-Build bestanden. Live bleibt deaktiviert.
+- Laptop-Abnahme 0.2.1 abgeschlossen: Startbot.bat, geprüftes SQLite-Backup, unveränderte drei Positionen/sechs Ledgerereignisse, 50 Chart-API-Prüfungen, sichtbare Chart-/Fill-/Backtestabnahme und zwei neue UI-Backtests. Details und Hashes in DMS 18.
 
 ## 1.3.1 – 02.09.2026
 
