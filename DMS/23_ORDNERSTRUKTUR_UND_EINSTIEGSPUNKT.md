@@ -89,6 +89,8 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 
 ## Neue Datei oder neuer Ordner
 
+Ab 05.09.2026 ergänzt ausschließlich `backtests/v4/` die bestehende Versionsstruktur: ein README, ein kompakter kuratierter Ergebnisnachweis unter `reports/`, große reproduzierbare Läufe unter dem ignorierten `runs/`. Das Forschungsmodul liegt in `src/hixton/backtest/research.py` und wird nur über `src/main.py backtest research` aufgerufen. `Startbot.bat` bleibt der einzige Windows-Starter.
+
 Vor dem Anlegen wird geprüft:
 
 1. Hat die Datei eine eindeutige Verantwortung?

@@ -48,6 +48,11 @@ Beschlussstand: **02.09.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 
 ## P2 – Bedienung und Aufbewahrung
 
+Ergänzende technische Entscheidungen vom 05.09.2026 im Auftrag der Fehlerkorrektur:
+
+- **DEC-040 – VERBINDLICH:** Paper-Modell `NEXT_BAR_OPEN_V1`, tatsächliches Folge-Open, getrennte Modell-/Verarbeitungszeit, UTC-Zeitscheiben, Dust-Erhalt und einmaliger technischer Soak-Neustart. Kein Umschreiben alter Fills und keine Liquidation beim technischen Upgrade. Strategieparameter und Risikolimits unverändert.
+- **DEC-041 – FORSCHUNG ABGESCHLOSSEN, NICHT AKTIVIEREN:** V4 prüft 24 Parameterkombinationen je Coin mit chronologischer Auswahl und separat bestätigte Nachkäufe. Der coinindividuelle Kandidat verbessert das volle historische Portfolio, verschlechtert aber das jüngste Neustartfenster; Nachkäufe verschlechtern acht von zehn vereinfachten Einzeltests. Keine Paperübernahme und keine Livefreigabe. Der Forschungsbericht ist kein weiterer Programmstarter und keine aktivierbare V4-Strategie.
+
 | ID | Beschluss | Status/Auswirkung |
 |---|---|---|
 | DEC-024 | Exporte: CSV und JSON; druckbarer HTML-Bericht. PDF ist optional und darf aus HTML erzeugt werden. | **BESCHLOSSEN** |

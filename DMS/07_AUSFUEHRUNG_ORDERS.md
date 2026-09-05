@@ -91,7 +91,11 @@ Lokaler Zustand ist nicht automatisch wahr; bei Live-Fills ist die Börse die Au
 
 ## Paper-/Live-Parität
 
-Paper läuft 24/7 mit denselben Binance-Marktdaten, derselben Strategie-, Slot-, Risk- und Intentlogik wie später Live. Nur der Execution-Adapter unterscheidet sich. Startkonfiguration sind 240 USDT Modellkapital, drei Slots und 80 USDT Zielnotional. Paper-Fills bilden realistische Latenz, Binance-Gebühren und Slippage ab; ein perfekter Fill zum Signalkurs ist unzulässig.
+Ziel ist eine gemeinsame Strategie-, Slot-, Risk- und Intentlogik für Paper und später Live. Die private Live-Order-/Reconciliation-Schicht ist noch nicht implementiert. Startkonfiguration sind 240 USDT Modellkapital, drei Slots und 80 USDT Zielnotional.
+
+Implementierter Stand ab `DEC-040`: `NEXT_BAR_OPEN_V1` verwendet nach dem bestätigten 1h-Signal das tatsächliche Open der Folgekerze plus Baselinekosten (10 bp Gebühr, 2 bp Spread, 3 bp Slippage je Seite). Das ersetzt den falschen Signalkerzen-Schlusskurs mit künstlichem 250-ms-Zeitstempel. Fehlt ein Folge-Open, bleibt die gesamte Zeitscheibe für alle zehn Märkte unverbucht. Zeitscheiben werden nach UTC-Open gruppiert, nicht nach möglicherweise verschiedenen Provider-Close-Millisekunden. Ausstiege laufen vor neuen Einstiegen; nicht ausführbare Kandidaten verbrauchen keinen Slot. Mengenreste werden als Dust behalten und in der Equity bewertet.
+
+`occurred_at_utc` bezeichnet die **modellierte** Fillzeit, `processed_at_utc` den tatsächlichen Verarbeitungszeitpunkt. Alte Ereignisse ohne diese Metadaten heißen `LEGACY_CLOSE_OR_MIGRATION` und werden nicht umgeschrieben. Restart-Replay kann vergangene Modellfills buchen; diese sind keine damals ausführbaren Live-Orders und kein Latenznachweis. Gemessene Orderbuch-/Fill-/Teilfill-Simulation und echte Binance-Reconciliation bleiben Live-Blocker. Die automatische technische Soak-Neuepoche bewahrt Positionen, Cash und Ledger; Trades mit Einstieg vor dieser Epoche zählen nicht als vollständiger neuer Soak-Trade.
 
 Der Backtest ist davon getrennt: Standard sind zehn isolierte 250-USDT-Läufe oder ein einzelner gewählter 250-USDT-Lauf. Optional kann er das 240-USDT-Paperportfolio spiegeln.
 

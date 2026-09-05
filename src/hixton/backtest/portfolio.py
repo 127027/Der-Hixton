@@ -74,6 +74,7 @@ def run_shared_portfolio_backtest(
     costs: CostModel = BASELINE_COSTS,
     execution_rules: dict[str, ExecutionRules] | None = None,
     strategy_parameters: StrategyParameters | None = None,
+    strategy_parameters_by_symbol: dict[str, StrategyParameters] | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
     slot_allocation: str = ONE_PER_SYMBOL,
@@ -89,6 +90,13 @@ def run_shared_portfolio_backtest(
         raise ValueError("report_start_utc must be before report_end_utc")
 
     parameters = strategy_parameters or StrategyParameters()
+    if strategy_parameters_by_symbol is not None:
+        if set(strategy_parameters_by_symbol) != set(SYMBOLS):
+            raise ValueError("per-coin parameters require all ten symbols")
+        if any(
+            p.warmup_bars != parameters.warmup_bars for p in strategy_parameters_by_symbol.values()
+        ):
+            raise ValueError("per-coin parameters must share the same warmup")
     warmup_start = report_start_utc - parameters.warmup_bars * TIMEFRAME_DELTA
     selected_by_symbol: dict[str, list[Candle]] = {}
     report_by_symbol: dict[str, list[Candle]] = {}
@@ -118,7 +126,7 @@ def run_shared_portfolio_backtest(
     strategies = {
         symbol: HixtonStrategy(
             symbol,
-            parameters=parameters,
+            parameters=(strategy_parameters_by_symbol or {}).get(symbol, parameters),
             semantics=strategy_semantics,
             strategy_version=strategy_version,
         )
@@ -227,7 +235,11 @@ def run_shared_portfolio_backtest(
                 if signal.symbol in positions:
                     blocked.append(f"{signal.signal_id}:POSITION_ALREADY_OPEN")
                     continue
-                allocated_slots = allocations.get(signal.symbol, 0)
+                allocated_slots = (
+                    int(sum(position.slots for position in positions.values()) < slot_count)
+                    if slot_allocation == ONE_PER_SYMBOL
+                    else allocations.get(signal.symbol, 0)
+                )
                 if allocated_slots == 0:
                     blocked.append(f"{signal.signal_id}:NO_FREE_SLOT")
                     continue
@@ -279,10 +291,7 @@ def run_shared_portfolio_backtest(
             )
             position_value = sum(
                 (
-                    (
-                        (positions[symbol].quantity if symbol in positions else ZERO)
-                        + dust[symbol]
-                    )
+                    ((positions[symbol].quantity if symbol in positions else ZERO) + dust[symbol])
                     * _d(candles[symbol].close)
                     for symbol in SYMBOLS
                 ),
@@ -313,8 +322,7 @@ def run_shared_portfolio_backtest(
                 if new_signal.action is SignalAction.ENTER_LONG and apply_risk_limits:
                     if risk_state.halted:
                         blocked.append(
-                            f"{new_signal.signal_id}:"
-                            f"{risk_state.halt_reason or 'HALTED'}"
+                            f"{new_signal.signal_id}:{risk_state.halt_reason or 'HALTED'}"
                         )
                         continue
                     if daily_paused:

@@ -139,6 +139,8 @@ V1 bleibt durch seine eigene eingefrorene Spezifikation reproduzierbar. Die spä
 
 ## Definition „99 % dokumentiert“
 
+Ergänzung 05.09.2026: 74 Python-Tests sowie Ruff, mypy (35 Quelldateien), TypeScript und UI-Produktionsbuild bestanden. `tests/test_runtime_parity.py` vergleicht echte Produktionsengines einschließlich Kurslücken, Mengenrundung/Dust, verschiedener Close-Millisekunden und geteilter Restart-Verarbeitung. Zusätzlich geprüft: fehlendes Folge-Open schreibt keinen Checkpoint, die UTC-Grenze innerhalb der ersten zwei Minuten, Fill-/Chart-Zeitraster, vorläufige Kerze ohne neues Signal, Preisfrische und einmaliger Soak-Neustart ohne Positions-/Cash-/Ledgerverlust. Die frühere API-/Browserabnahme hatte die Ausführungslücke nicht erkannt; sie wird nicht als umfassender Paritätsnachweis weiterverwendet. Gate D bleibt offen.
+
 Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bedeutet er:
 
 - 100 % der kritischen Anforderungen haben Owner, Status und Test;

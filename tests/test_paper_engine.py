@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 from datetime import UTC, datetime, timedelta
 from decimal import Decimal
 from pathlib import Path
@@ -13,10 +14,44 @@ from hixton.domain.versions import V2_RESEARCH_STRATEGY, V3_SLOT_STRATEGY
 from hixton.paper.engine import (
     activate_paper_strategy,
     initialize_paper_at_latest,
-    process_new_closed_points,
+)
+from hixton.paper.engine import (
+    process_new_closed_points as process_points,
 )
 from hixton.paper.models import PaperEvent, PaperEventStatus, PaperSettings
 from hixton.paper.storage import PaperStore
+
+
+def process_new_closed_points(
+    path: str,
+    points: dict[str, tuple[IndicatorPoint, ...]],
+    rules: dict[str, ExecutionRules],
+    *,
+    strategy_key: str = "v1",
+    strategy_version: str = HIXTON_SPEC_VERSION,
+) -> tuple[PaperEvent, ...]:
+    # Explicit next bars: these fixtures formerly hid the close-vs-open discrepancy.
+    execution = {
+        symbol: [
+            replace(
+                point.candle,
+                open_time_utc=point.candle.open_time_utc + timedelta(hours=1),
+                close_time_utc=point.candle.close_time_utc + timedelta(hours=1),
+                open=101.0,
+                closed=False,
+            )
+            for point in values
+        ]
+        for symbol, values in points.items()
+    }
+    return process_points(
+        path,
+        points,
+        rules,
+        strategy_key=strategy_key,
+        strategy_version=strategy_version,
+        execution_candles_by_symbol=execution,
+    )
 
 
 def _point(
@@ -75,10 +110,7 @@ def _rules() -> dict[str, ExecutionRules]:
 def test_startup_arms_at_latest_without_historical_orders(tmp_path: Path) -> None:
     path = tmp_path / "paper.sqlite3"
     start = datetime(2026, 1, 1, 0, tzinfo=UTC)
-    points = {
-        symbol: (_point(symbol, start, flip_up=True, strength=1.0),)
-        for symbol in SYMBOLS
-    }
+    points = {symbol: (_point(symbol, start, flip_up=True, strength=1.0),) for symbol in SYMBOLS}
     assert initialize_paper_at_latest(str(path), points, at=start) is True
     emitted = process_new_closed_points(str(path), points, _rules())
     assert emitted == ()
@@ -94,17 +126,13 @@ def test_restart_preserves_checkpoint_and_recovers_closed_bars(tmp_path: Path) -
 
     recovered_at = start + timedelta(hours=1)
     recovered = _mapping(recovered_at)
-    recovered[SYMBOLS[0]] = (
-        _point(SYMBOLS[0], recovered_at, flip_up=True, strength=2.0),
-    )
+    recovered[SYMBOLS[0]] = (_point(SYMBOLS[0], recovered_at, flip_up=True, strength=2.0),)
     assert initialize_paper_at_latest(str(path), recovered, at=recovered_at) is False
     with PaperStore(path) as store:
         assert store.checkpoint(SYMBOLS[0]) == start
 
     emitted = process_new_closed_points(str(path), recovered, _rules())
-    assert [(event.symbol, event.action) for event in emitted] == [
-        (SYMBOLS[0], "ENTER_LONG")
-    ]
+    assert [(event.symbol, event.action) for event in emitted] == [(SYMBOLS[0], "ENTER_LONG")]
     with PaperStore(path) as store:
         assert store.checkpoint(SYMBOLS[0]) == recovered_at
         progress = store.load_soak_progress(at=recovered_at)
@@ -138,11 +166,21 @@ def test_paper_soak_gate_is_persistent_and_requires_all_three_thresholds(
         for index in range(20)
     )
     end = start + timedelta(hours=720)
+    entries = tuple(
+        replace(
+            event,
+            event_id=f"entry-{index}",
+            signal_id=f"entry-signal-{index}",
+            action="ENTER_LONG",
+            occurred_at_utc=event.occurred_at_utc - timedelta(minutes=30),
+        )
+        for index, event in enumerate(events)
+    )
     with PaperStore(path) as store:
         store.apply_cycle(
             account=store.load_account(),
             positions={},
-            events=events,
+            events=entries + events,
             checkpoints=dict.fromkeys(SYMBOLS, end),
             processed_bars=dict.fromkeys(SYMBOLS, 720),
         )
@@ -219,9 +257,7 @@ def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
     initialize_paper_at_latest(str(path), _mapping(start), at=start)
     entry_at = start + timedelta(hours=1)
     entry_points = _mapping(entry_at)
-    entry_points[SYMBOLS[0]] = (
-        _point(SYMBOLS[0], entry_at, flip_up=True, strength=2.0),
-    )
+    entry_points[SYMBOLS[0]] = (_point(SYMBOLS[0], entry_at, flip_up=True, strength=2.0),)
     process_new_closed_points(str(path), entry_points, _rules())
 
     switch_at = entry_at + timedelta(minutes=30)
@@ -236,9 +272,7 @@ def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
 
     assert len(exits) == 1
     assert exits[0].action == "EXIT_LONG"
-    assert exits[0].reason == (
-        "STRATEGY_SWITCH_TO_HIXTON-V2-RESEARCH-CANDIDATE-1"
-    )
+    assert exits[0].reason == ("STRATEGY_SWITCH_TO_HIXTON-V2-RESEARCH-CANDIDATE-1")
     assert exits[0].strategy_version == HIXTON_SPEC_VERSION
     with PaperStore(path) as store:
         assert store.load_positions() == ()

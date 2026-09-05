@@ -6,6 +6,8 @@ Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
+Prüfstand 05.09.2026 (DMS 1.4): Paper-Ausführung und Charts wurden korrigiert, die aktive V2-Strategie bleibt unverändert. Der neue [V4-Prüfbericht](backtests/v4/README.md) trennt das gute historische Dreijahresergebnis von Verlusten bei einem Neustart im jüngsten Testjahr. **Noch nicht live-reif.**
+
 Im Repository existiert genau ein menschlicher Programmstarter:
 
 ```text
@@ -53,6 +55,7 @@ py -3 src/main.py backtest all --strategy v2
 py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDT
 py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py backtest portfolio --strategy v3
+py -3 src/main.py backtest research --output backtests/v4/runs/mein-neuer-review/research.json
 py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
@@ -60,6 +63,10 @@ py -3 src/main.py live
 Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Paperstrategie V2. V1 und V3 müssen für historische beziehungsweise verworfene Vergleichsläufe ausdrücklich gewählt werden.
 
 `live` beendet sich absichtlich mit einer Sperrmeldung.
+
+`backtest research` prüft ein festes Raster von 24 Parametervarianten je Coin, wählt ausschließlich anhand der ersten zwei Jahre und prüft anschließend das dritte Jahr. Es ändert weder Paperstrategie noch Kontostand. Ein vorhandener Ausgabeordner wird nicht überschrieben. Das dritte Jahr war bereits in älteren Untersuchungen enthalten und ist deshalb kein unangetasteter Holdout.
+
+Paper verwendet seit der Ausführungskorrektur `NEXT_BAR_OPEN_V1`: Signal ausschließlich auf geschlossener Kerze, modellierter Fill mit dem tatsächlichen nächsten Kerzen-Open plus Kosten. Der echte Verarbeitungszeitpunkt wird zusätzlich gespeichert. Das ist ein deterministischer Ausführungssimulator, noch kein Nachweis realer Binance-Fills oder realistisch gemessener Orderlatenz. Alte Ereignisse bleiben als Legacy erhalten; der technische Soak startet einmalig neu, Cash und Positionen bleiben bestehen.
 
 Die Backtestseite besitzt die eindeutige Auswahl `V2 · aktives Paper`, `V1 · Historie` oder `V3 · verworfener Mehrfachslot-Test` sowie `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
 

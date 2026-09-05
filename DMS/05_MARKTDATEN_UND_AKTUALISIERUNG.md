@@ -50,6 +50,8 @@ Ein Startup darf keine historischen Signale als nachträgliche Live-Orders abspi
 - Bei Streamabbruch startet exponentieller Reconnect mit Jitter.
 - Nach Reconnect wird die Lücke per REST geschlossen, bevor neue Signale freigegeben werden.
 - Ein Watchdog vergleicht erwartete und letzte Barzeit.
+- Die aktuelle UTC-Stundengrenze ist das exklusive Ende der abgeschlossenen Daten. In den ersten zwei Minuten wird **keine zusätzliche Stunde abgezogen**. Der Watchdog prüft die erwartete letzte Kerze unabhängig vom Websocket-Close-Event; fehlende finale Daten oder das nächste Open führen zu Retry, nicht zu einer vorgerückten Paper-Checkpointzeit.
+- Die neu begonnene Kerze wird separat geladen. Nur ihr unveränderliches Open dient als Paper-Ausführungsreferenz; High/Low/Close der offenen Kerze dürfen keine Strategieentscheidung beeinflussen.
 - Mehr als 90 Sekunden ohne Streamupdate setzt den Feed auf `DEGRADED`.
 - Fehlt die finale 1h-Kerze zwei Minuten nach ihrem planmäßigen UTC-Schluss, wird das Symbol pausiert und per REST repariert.
 

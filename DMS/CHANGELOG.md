@@ -1,5 +1,14 @@
 # DMS-Changelog
 
+## 1.4.0 – 05.09.2026
+
+- Permanente Stundenverzögerung der Closed-Bar-Synchronisierung beseitigt; Watchdog repariert fehlende Stunden unabhängig vom Close-Event.
+- Paper auf tatsächliches Folge-Open umgestellt, Modellzeit und Verarbeitungszeit getrennt, UTC-Zeitscheiben synchronisiert, Dust dauerhaft bewertet. Alte Paperereignisse bleiben unverändert; technischer Soak wird einmalig neu begonnen, Positionen bleiben erhalten.
+- Paper-/Portfolio-Produktionsparität mit Kurslücken, Mengenrundung und Restart geprüft; nicht ausführbare Kandidaten belegen keinen Slot. UI-Portfolio verwendet aktuelle Slot-/Notionaleinstellungen und ein datenbasiertes Testende.
+- Bestehende UI ohne Redesign verbessert: Freie Slots, verständlicher Wartezustand, frische offene Kerzen, korrekt gerasterte Paper-Fills und wiederverwendete Marker.
+- Begrenzte coinindividuelle V4-Untersuchung und echte sukzessive Nachkaufhypothese gerechnet; keine Aktivierung wegen schwacher jüngster Periode. Positive Dreijahreswerte bleiben von kontinuierlicher Profitabilität getrennt.
+- Prüfstand 74 Tests; Ruff, mypy, TypeScript und UI-Build bestanden. Live bleibt deaktiviert.
+
 ## 1.3.1 – 02.09.2026
 
 - Kontrollierte V1→V2-Paperaktivierung mit Sicherungshash, DOT-Migrationsschluss, V2-Start-Equity, getrenntem Session-PnL und neu gestartetem Soak dokumentiert.

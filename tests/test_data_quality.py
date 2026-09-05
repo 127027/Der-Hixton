@@ -46,4 +46,3 @@ def test_symbol_and_window_boundaries_are_not_silently_corrected() -> None:
     )
     codes = {issue.code for issue in report.issues}
     assert {"SYMBOL_MISMATCH", "COUNT_MISMATCH", "START_MISMATCH"} <= codes
-

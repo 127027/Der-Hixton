@@ -171,6 +171,8 @@ Die UI muss Loading, leer, stale, teilweise verfügbar, Fehler und Berechtigungs
 
 ## Akzeptanz für Chartperformance
 
+Präzisierung 05.09.: Der Zähler heißt **Freie Slots** (0 von 3 bedeutet drei belegte Slots). Marktkarten unterscheiden „Position läuft“ von „Wartet auf neuen Kauf“; ein alter grüner Trend ist kein neuer Kaufauftrag. Frische Streamkerzen aktualisieren Preise und den sichtbaren Chart, sind als „letzte Kerze live/offen“ gekennzeichnet und erzeugen keine Signale. Nach 90 Sekunden ohne frisches Symbolupdate fällt die Anzeige auf bestätigte Daten zurück. Paper-Fills werden nach ihrer gespeicherten Fillzeit auf die jeweilige Anzeigenkerze gerastert. Automatische Aktualisierung erhält den Zoom und verwendet dieselbe Markerinstanz. Farben, Layout und Navigation bleiben unverändert.
+
 - Wechsel zwischen Zeiträumen blockiert die Bedienung nicht dauerhaft.
 - Drei Jahre werden downsampled dargestellt, ohne die gespeicherten Backtestdaten zu verändern.
 - Marker bleiben zeitlich korrekt.

@@ -76,6 +76,8 @@ class PaperEvent:
     realized_pnl_usdt: Decimal | None
     breakout_strength: Decimal | None
     strategy_version: str = HIXTON_SPEC_VERSION
+    processed_at_utc: datetime | None = None
+    execution_model: str = "LEGACY_CLOSE_OR_MIGRATION"
 
 
 @dataclass(frozen=True, slots=True)

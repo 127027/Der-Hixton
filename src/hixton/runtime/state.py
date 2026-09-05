@@ -10,7 +10,7 @@ from uuid import uuid4
 
 from hixton.constants import SYMBOLS
 from hixton.data.quality import DataQualityReport
-from hixton.domain.models import IndicatorPoint
+from hixton.domain.models import Candle, IndicatorPoint
 
 
 @dataclass(frozen=True, slots=True)
@@ -58,6 +58,7 @@ class RuntimeState:
     backtest_status: str = "IDLE"
     _points: dict[str, tuple[IndicatorPoint, ...]] = field(default_factory=dict)
     _quality: dict[str, DataQualityReport] = field(default_factory=dict)
+    _live_candles: dict[str, tuple[Candle, datetime]] = field(default_factory=dict)
     _logs: deque[RuntimeLog] = field(default_factory=lambda: deque(maxlen=2_000))
     _lock: RLock = field(default_factory=RLock)
 
@@ -111,8 +112,10 @@ class RuntimeState:
                 setattr(self, name, value)
             current = (self.health, self.message, self.feed_mode, self.last_error)
             if current != previous:
-                level = "ERROR" if self.health == "HALTED" else (
-                    "WARNING" if self.health == "DEGRADED" or self.last_error else "INFO"
+                level = (
+                    "ERROR"
+                    if self.health == "HALTED"
+                    else ("WARNING" if self.health == "DEGRADED" or self.last_error else "INFO")
                 )
                 message = self.message
                 if self.last_error is not None:
@@ -170,6 +173,20 @@ class RuntimeState:
     def points(self) -> dict[str, tuple[IndicatorPoint, ...]]:
         with self._lock:
             return dict(self._points)
+
+    def set_live_candle(self, candle: Candle, *, at: datetime | None = None) -> None:
+        with self._lock:
+            previous = self._live_candles.get(candle.symbol)
+            if previous is None or candle.open_time_utc >= previous[0].open_time_utc:
+                self._live_candles[candle.symbol] = (candle, at or datetime.now(UTC))
+
+    def live_candle(
+        self, symbol: str, *, now: datetime | None = None
+    ) -> tuple[Candle, datetime] | None:
+        with self._lock:
+            item = self._live_candles.get(symbol)
+            age = ((now or datetime.now(UTC)) - item[1]).total_seconds() if item else 91
+            return item if 0 <= age <= 90 else None
 
     def quality(self) -> dict[str, DataQualityReport]:
         with self._lock:

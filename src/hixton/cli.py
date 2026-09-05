@@ -150,8 +150,7 @@ def command_data_sync(args: argparse.Namespace, config: ProjectConfig) -> int:
     with CandleStore(config.database_path) as store:
         for symbol in _symbols(args.symbol):
             print(
-                f"Synchronisiere {symbol}: {warmup_start.isoformat()} "
-                f"bis {report_end.isoformat()}"
+                f"Synchronisiere {symbol}: {warmup_start.isoformat()} bis {report_end.isoformat()}"
             )
             result = synchronize_symbol(
                 client=client,
@@ -337,9 +336,7 @@ def command_paper_activate(args: argparse.Namespace, config: ProjectConfig) -> i
         raise ValueError("paper strategy activation requires --confirmation AKTIVIEREN")
     strategy = strategy_definition(args.strategy)
     if strategy.key != config.strategy_key:
-        raise ValueError(
-            "activation target must equal the strategy selected in configuration"
-        )
+        raise ValueError("activation target must equal the strategy selected in configuration")
     warmup_start, _, report_end = _window(None)
     points, _ = rebuild_analysis(
         config.database_path,
@@ -417,6 +414,10 @@ def build_parser() -> argparse.ArgumentParser:
     portfolio.add_argument("--end", type=parse_utc)
     portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
     portfolio.add_argument("--strategy", choices=("v1", "v2", "v3"))
+    research = backtest_commands.add_parser(
+        "research", help="begrenzte V4-Pruefung ohne Paperwechsel"
+    )
+    research.add_argument("--output", type=Path, required=True)
 
     paper = commands.add_parser("paper", help="24/7-Paper-Bot mit lokaler UI starten")
     paper.add_argument("--no-browser", action="store_true")
@@ -453,6 +454,11 @@ def main(argv: list[str] | None = None) -> int:
             return command_backtest_all(args, config)
         if args.command == "backtest" and args.backtest_command == "portfolio":
             return command_backtest_portfolio(args, config)
+        if args.command == "backtest" and args.backtest_command == "research":
+            from hixton.backtest.research import run_review
+
+            run_review(config.database_path, args.output)
+            return 0
         if args.command == "live":
             return _not_ready(args.command.upper())
     except (BinanceApiError, OSError, ValueError) as error:

@@ -23,6 +23,7 @@ from hixton.data.sync import synchronize_symbol
 from hixton.domain.models import Candle, IndicatorPoint
 from hixton.domain.versions import strategy_definition
 from hixton.paper.engine import initialize_paper_at_latest, process_new_closed_points
+from hixton.paper.storage import PaperStore
 from hixton.runtime.analysis import rebuild_analysis
 from hixton.runtime.state import RuntimeState
 
@@ -37,8 +38,6 @@ def _subtract_calendar_years(value: datetime, years: int) -> datetime:
 def safe_closed_window(now: datetime | None = None) -> tuple[datetime, datetime, datetime]:
     current = (now or datetime.now(UTC)).astimezone(UTC)
     report_end = current.replace(minute=0, second=0, microsecond=0)
-    if current - report_end < timedelta(minutes=2):
-        report_end -= TIMEFRAME_DELTA
     report_start = _subtract_calendar_years(report_end, 3)
     return report_start - 400 * TIMEFRAME_DELTA, report_start, report_end
 
@@ -56,15 +55,34 @@ class RuntimeSupervisor:
         self.config = config
         self.strategy = strategy_definition(config.strategy_key)
         if not self.strategy.paper_approved:
-            raise ValueError(
-                f"strategy {self.strategy.version} is not approved for paper"
-            )
+            raise ValueError(f"strategy {self.strategy.version} is not approved for paper")
         self.state = RuntimeState(next_daily_audit_utc=next_daily_audit())
         self._stop = asyncio.Event()
         self._closed_bar_event = asyncio.Event()
         self._sync_lock = asyncio.Lock()
         self._task: asyncio.Task[None] | None = None
         self._backtest_task_handle: asyncio.Task[None] | None = None
+
+    def _process_paper(
+        self, points: dict[str, tuple[IndicatorPoint, ...]], rules: dict[str, ExecutionRules]
+    ) -> tuple[object, ...]:
+        # The current provisional candle supplies only its immutable OPEN for fills.
+        # It never enters the indicator or the closed-bar quality audit.
+        with CandleStore(self.config.database_path) as store:
+            execution = {
+                symbol: store.load_candles(
+                    symbol, start=values[0].candle.open_time_utc, closed_only=False
+                )
+                for symbol, values in points.items()
+            }
+        return process_new_closed_points(
+            str(self.config.database_path),
+            points,
+            rules,
+            strategy_key=self.strategy.key,
+            strategy_version=self.strategy.version,
+            execution_candles_by_symbol=execution,
+        )
 
     def start(self) -> None:
         if self._task is None or self._task.done():
@@ -132,8 +150,7 @@ class RuntimeSupervisor:
                 component="backtest",
                 event_code="BACKTEST_COMPLETE",
                 message=(
-                    f"Backtest {strategy_key} {mode} {symbol or 'ALL'} "
-                    "erfolgreich abgeschlossen"
+                    f"Backtest {strategy_key} {mode} {symbol or 'ALL'} erfolgreich abgeschlossen"
                 ),
             )
         except Exception as error:
@@ -185,12 +202,9 @@ class RuntimeSupervisor:
                     )
                     if not first_start:
                         events = await asyncio.to_thread(
-                            process_new_closed_points,
-                            str(self.config.database_path),
+                            self._process_paper,
                             points,
                             rules,
-                            strategy_key=self.strategy.key,
-                            strategy_version=self.strategy.version,
                         )
                         self.state.log(
                             level="INFO",
@@ -203,12 +217,9 @@ class RuntimeSupervisor:
                         )
                 else:
                     events = await asyncio.to_thread(
-                        process_new_closed_points,
-                        str(self.config.database_path),
+                        self._process_paper,
                         points,
                         rules,
-                        strategy_key=self.strategy.key,
-                        strategy_version=self.strategy.version,
                     )
                     if events:
                         self.state.log(
@@ -259,6 +270,12 @@ class RuntimeSupervisor:
                     start=warmup_start,
                     end_exclusive=report_end,
                 )
+                current_candles = client.fetch_klines(
+                    symbol, start=report_end, end_exclusive=report_end + TIMEFRAME_DELTA
+                )
+                if not any(candle.open_time_utc == report_end for candle in current_candles):
+                    raise RuntimeError(f"{symbol}: next opening candle not yet available; retry")
+                store.put_candles(current_candles)
         points, quality = rebuild_analysis(
             self.config.database_path,
             start=warmup_start,
@@ -285,11 +302,14 @@ class RuntimeSupervisor:
         symbol: str | None,
         strategy_key: str,
     ) -> None:
-        _, report_start, report_end = safe_closed_window()
         strategy = strategy_definition(strategy_key)
         points = self.state.points()
         if set(points) != set(SYMBOLS):
             raise RuntimeError("backtest requires synchronized data for all ten symbols")
+        report_end = (
+            min(values[-1].candle.open_time_utc for values in points.values()) + TIMEFRAME_DELTA
+        )
+        report_start = _subtract_calendar_years(report_end, 3)
         candles = {
             item_symbol: [point.candle for point in symbol_points]
             for item_symbol, symbol_points in points.items()
@@ -307,6 +327,8 @@ class RuntimeSupervisor:
                     min_notional=stored.min_notional,
                 )
         scenarios: dict[str, RunResult] = {}
+        with PaperStore(self.config.database_path) as store:
+            paper_settings = store.load_settings()
         for costs in (BASELINE_COSTS, STRESS_COSTS):
             if mode == "all":
                 scenarios[costs.name] = run_isolated_batch(
@@ -325,8 +347,8 @@ class RuntimeSupervisor:
                     report_start_utc=report_start,
                     report_end_utc=report_end,
                     starting_cash=self.config.paper_starting_cash_usdt,
-                    target_notional=self.config.paper_target_notional_usdt,
-                    slot_count=self.config.paper_slot_count,
+                    target_notional=paper_settings.target_notional_usdt,
+                    slot_count=paper_settings.slot_count,
                     costs=costs,
                     execution_rules=rules,
                     strategy_parameters=strategy.parameters,
@@ -361,9 +383,7 @@ class RuntimeSupervisor:
         write_report_bundle(
             scenarios=scenarios,
             output_root=(
-                self.config.run_output_root.parents[1]
-                / strategy.backtest_version
-                / "runs"
+                self.config.run_output_root.parents[1] / strategy.backtest_version / "runs"
             ),
             config_sha256=self.config.sha256,
             code_commit=code_commit,
@@ -396,6 +416,7 @@ class RuntimeSupervisor:
                         payload = json.loads(raw_message)
                         candle = parse_websocket_kline(payload)
                         self.state.set_status(last_stream_update_utc=datetime.now(UTC))
+                        self.state.set_live_candle(candle)
                         if candle.closed:
                             self._closed_bar_event.set()
                         else:
@@ -423,8 +444,7 @@ class RuntimeSupervisor:
             "stream_connected": True,
             "feed_mode": "WEBSOCKET",
             "message": (
-                f"Paper-Betrieb {self.strategy.version} aktiv; "
-                "Binance-Livestream verbunden"
+                f"Paper-Betrieb {self.strategy.version} aktiv; Binance-Livestream verbunden"
             ),
             "last_stream_update_utc": datetime.now(UTC),
         }
@@ -456,7 +476,14 @@ class RuntimeSupervisor:
                         last_error=str(error),
                     )
 
-            if self._closed_bar_event.is_set():
+            boundary = now.replace(minute=0, second=0, microsecond=0)
+            points = self.state.points()
+            overdue = (now - boundary).total_seconds() >= 120 and any(
+                not points.get(symbol)
+                or points[symbol][-1].candle.open_time_utc < boundary - TIMEFRAME_DELTA
+                for symbol in SYMBOLS
+            )
+            if self._closed_bar_event.is_set() or overdue:
                 await asyncio.sleep(2)
                 self._closed_bar_event.clear()
                 try:

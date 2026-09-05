@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+Zusätzlicher Nachweis ab 05.09.2026: `tests/test_runtime_parity.py` deckt DEC-040, DAT-006 (provisional), Folge-Open-Ausführung, Slot-/Cash-/Dust-Parität, Restart und Markerzeit ab. DEC-041 wird durch `backtests/v4/README.md` und den reproduzierbaren Befehl `backtest research` belegt. V4 ist keine aktive Strategie.
+
 Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber später weder gebaut noch geprüft wird.
 
 | Anforderung | Fachquelle | Zielkomponente/UI | Haupttest/Nachweis |

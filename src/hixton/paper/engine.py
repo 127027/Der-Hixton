@@ -10,7 +10,7 @@ from decimal import ROUND_DOWN, Decimal
 
 from hixton.backtest.models import BASELINE_COSTS, ONE, ZERO, ExecutionRules
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
-from hixton.domain.models import IndicatorPoint, Signal
+from hixton.domain.models import Candle, IndicatorPoint, Signal
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy
 from hixton.domain.versions import StrategyDefinition
@@ -24,7 +24,6 @@ from hixton.paper.models import (
 from hixton.paper.storage import PaperStore
 
 _HUNDRED = Decimal("100")
-_ENTRY_LATENCY = timedelta(milliseconds=250)
 
 
 def _d(value: float) -> Decimal:
@@ -74,6 +73,7 @@ def initialize_paper_at_latest(
             store.save_checkpoints(checkpoints)
             existing = checkpoints
         store.ensure_soak_started(existing, at=at)
+        store.ensure_execution_epoch(existing, at=at)
     return first_start
 
 
@@ -107,6 +107,7 @@ def _equity(
     cash: Decimal,
     positions: Mapping[str, PaperPosition],
     latest_prices: Mapping[str, Decimal],
+    dust: Mapping[str, Decimal] | None = None,
 ) -> tuple[Decimal, Decimal]:
     market_value = sum(
         (
@@ -116,7 +117,10 @@ def _equity(
         ZERO,
     )
     basis = sum((position.cost_basis_usdt for position in positions.values()), ZERO)
-    return cash + market_value, market_value - basis
+    dust_value = sum(
+        (qty * latest_prices.get(symbol, ZERO) for symbol, qty in (dust or {}).items()), ZERO
+    )
+    return cash + market_value + dust_value, market_value - basis
 
 
 def _risk_account(
@@ -155,6 +159,7 @@ def process_new_closed_points(
     *,
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
+    execution_candles_by_symbol: Mapping[str, list[Candle]] | None = None,
 ) -> tuple[PaperEvent, ...]:
     """Process every not-yet-checkpointed bar atomically and exactly once."""
 
@@ -172,6 +177,7 @@ def process_new_closed_points(
         account = store.load_account()
         settings = store.load_settings()
         positions = {position.symbol: position for position in store.load_positions()}
+        dust = store.load_dust()
         checkpoints = store.all_checkpoints()
         if set(checkpoints) != set(SYMBOLS):
             raise RuntimeError("paper checkpoints are incomplete; run startup initialization")
@@ -180,20 +186,43 @@ def process_new_closed_points(
         pending: dict[datetime, list[IndicatorPoint]] = {}
         processed_bars = dict.fromkeys(SYMBOLS, 0)
         latest_prices: dict[str, Decimal] = {}
+        execution = {
+            symbol: {candle.open_time_utc: candle for candle in candles}
+            for symbol, candles in (
+                execution_candles_by_symbol
+                or {
+                    symbol: [point.candle for point in values]
+                    for symbol, values in points_by_symbol.items()
+                }
+            ).items()
+        }
         for symbol in SYMBOLS:
             for point in points_by_symbol[symbol]:
-                latest_prices[symbol] = _d(point.candle.close)
+                if point.candle.close_time_utc <= checkpoints[symbol]:
+                    latest_prices[symbol] = _d(point.candle.close)
                 if point.candle.close_time_utc > checkpoints[symbol]:
-                    pending.setdefault(point.candle.close_time_utc, []).append(point)
+                    boundary = point.candle.open_time_utc + timedelta(hours=1)
+                    pending.setdefault(boundary, []).append(point)
 
         emitted: list[PaperEvent] = []
-        for close_time, group in sorted(pending.items()):
+        processed_time: datetime | None = None
+        for boundary, group in sorted(pending.items()):
             group_by_symbol = {point.symbol: point for point in group}
+            if set(group_by_symbol) != set(SYMBOLS):
+                raise RuntimeError("paper replay requires aligned bars for all ten symbols")
+            # Keep the last bar pending until the true next-bar OPEN is available.
+            if any(boundary not in execution.get(symbol, {}) for symbol in SYMBOLS):
+                break
+            fill_candles = {symbol: execution[symbol][boundary] for symbol in SYMBOLS}
+            if any(not candle.ohlc_is_valid for candle in fill_candles.values()):
+                raise RuntimeError("invalid execution candle")
+            close_time = max(point.candle.close_time_utc for point in group)
+            processed_time = close_time
             for symbol, point in group_by_symbol.items():
                 latest_prices[symbol] = _d(point.candle.close)
                 processed_bars[symbol] += 1
 
-            equity, _ = _equity(account.cash_usdt, positions, latest_prices)
+            equity, _ = _equity(account.cash_usdt, positions, latest_prices, dust)
             account, daily_paused, _ = _risk_account(account, equity=equity, at=close_time)
 
             for point in group:
@@ -204,23 +233,25 @@ def process_new_closed_points(
                     continue
                 position = positions[point.symbol]
                 rules = rules_by_symbol[point.symbol]
-                reference = _d(signal.close)
+                reference = _d(fill_candles[point.symbol].open)
                 fill_price = reference * (ONE - BASELINE_COSTS.adverse_price_rate)
                 quantity = _round_down(position.quantity, rules.step_size)
                 gross_quote = quantity * fill_price
                 if quantity < rules.min_qty or gross_quote < rules.min_notional:
                     emitted.append(_blocked_event(signal, "EXIT_BECAME_DUST"))
+                    dust[point.symbol] = dust.get(point.symbol, ZERO) + position.quantity
                     del positions[point.symbol]
                     continue
                 fee = gross_quote * BASELINE_COSTS.fee_rate
                 net_quote = gross_quote - fee
                 account = replace(account, cash_usdt=account.cash_usdt + net_quote)
-                realized = net_quote - position.cost_basis_usdt
+                realized = net_quote - position.cost_basis_usdt * quantity / position.quantity
+                dust[point.symbol] = dust.get(point.symbol, ZERO) + position.quantity - quantity
                 emitted.append(
                     PaperEvent(
                         event_id=_event_id(signal),
                         signal_id=signal.signal_id,
-                        occurred_at_utc=close_time + _ENTRY_LATENCY,
+                        occurred_at_utc=boundary,
                         symbol=signal.symbol,
                         action=signal.action.value,
                         status=PaperEventStatus.FILLED,
@@ -262,12 +293,15 @@ def process_new_closed_points(
                 if daily_paused:
                     emitted.append(_blocked_event(signal, "DAILY_LOSS_5_PERCENT"))
                     continue
-                if len(positions) >= settings.slot_count:
+                if (
+                    sum(position.slot_count for position in positions.values())
+                    >= settings.slot_count
+                ):
                     emitted.append(_blocked_event(signal, "NO_FREE_SLOT"))
                     continue
                 rules = rules_by_symbol[signal.symbol]
                 budget = min(settings.target_notional_usdt, account.cash_usdt)
-                reference = _d(signal.close)
+                reference = _d(fill_candles[signal.symbol].open)
                 fill_price = reference * (ONE + BASELINE_COSTS.adverse_price_rate)
                 gross_quantity = _round_down(budget / fill_price, rules.step_size)
                 quote_spend = gross_quantity * fill_price
@@ -286,10 +320,10 @@ def process_new_closed_points(
                     quantity=net_quantity,
                     average_price=fill_price,
                     cost_basis_usdt=quote_spend,
-                    entry_time_utc=close_time + _ENTRY_LATENCY,
+                    entry_time_utc=boundary,
                     entry_signal_id=signal.signal_id,
                     entry_fee_usdt=fee_quote,
-                    updated_at_utc=close_time + _ENTRY_LATENCY,
+                    updated_at_utc=boundary,
                     strategy_version=signal.strategy_version,
                     slot_count=1,
                 )
@@ -318,20 +352,16 @@ def process_new_closed_points(
                     )
                 )
 
-            checkpoints.update(
-                {point.symbol: point.candle.close_time_utc for point in group}
-            )
+            checkpoints.update({point.symbol: point.candle.close_time_utc for point in group})
 
-        if pending:
-            final_time = max(pending)
-            final_equity, _ = _equity(account.cash_usdt, positions, latest_prices)
-            account, _, _ = _risk_account(account, equity=final_equity, at=final_time)
+        if processed_time is not None:
             store.apply_cycle(
                 account=account,
                 positions=positions,
                 events=tuple(emitted),
                 checkpoints=checkpoints,
                 processed_bars=processed_bars,
+                dust=dust,
             )
         return tuple(emitted)
 
@@ -351,19 +381,12 @@ def activate_paper_strategy(
     if set(points_by_symbol) != set(SYMBOLS) or set(rules_by_symbol) != set(SYMBOLS):
         raise ValueError("paper strategy activation requires all ten symbols")
     moment = (at or datetime.now(UTC)).astimezone(UTC)
-    checkpoints = {
-        symbol: points_by_symbol[symbol][-1].candle.close_time_utc for symbol in SYMBOLS
-    }
-    latest_prices = {
-        symbol: _d(points_by_symbol[symbol][-1].candle.close) for symbol in SYMBOLS
-    }
+    checkpoints = {symbol: points_by_symbol[symbol][-1].candle.close_time_utc for symbol in SYMBOLS}
+    latest_prices = {symbol: _d(points_by_symbol[symbol][-1].candle.close) for symbol in SYMBOLS}
     with PaperStore(database_path) as store:
         store.initialize(at=moment)
         previous = store.load_strategy_session()
-        if (
-            previous.strategy_key == strategy.key
-            and previous.strategy_version == strategy.version
-        ):
+        if previous.strategy_key == strategy.key and previous.strategy_version == strategy.version:
             return ()
         account = store.load_account()
         positions = store.load_positions()
@@ -449,8 +472,9 @@ def load_paper_portfolio(
         account = store.load_account()
         settings = store.load_settings()
         positions = store.load_positions()
+        dust = store.load_dust()
     by_symbol = {position.symbol: position for position in positions}
-    equity, unrealized = _equity(account.cash_usdt, by_symbol, latest_prices)
+    equity, unrealized = _equity(account.cash_usdt, by_symbol, latest_prices, dust)
     account, daily_paused, drawdown_pct = _risk_account(account, equity=equity, at=moment)
     return PaperPortfolio(
         account=account,

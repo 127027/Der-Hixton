@@ -127,6 +127,10 @@ Ein Backtest ist nur `VALID`, wenn:
 
 ## Ergebnisinterpretation
 
+Der UI-Portfoliovergleich übernimmt die aktuell gespeicherte Paper-Slotanzahl und das Zielnotional, startet aber ein neues simuliertes Konto mit 240 USDT. Er übernimmt weder aktuelle offene Positionen noch bisherige Papergewinne. Sein Endzeitpunkt wird aus der letzten für alle zehn Coins vorhandenen geschlossenen Kerze bestimmt, nicht blind aus der Wanduhr.
+
+V4-Prüfung vom 05.09.2026: 24 begrenzte Parametervarianten je Coin, Auswahl anhand der schlechtesten Stressrendite der ersten beiden einzeln gestarteten Trainingsjahre, danach festgehaltener Vergleich im dritten Jahr. Exakte Finalisten verwenden die produktiven Decimal-Engines. Zusätzlich wird eine getrennte, vereinfachte Nachkaufhypothese getestet. Ergebnisse und Grenzen stehen einmalig in `backtests/v4/README.md`; weder diese Hypothese noch der coinindividuelle Kandidat ist aktiv. Ein hoher Gesamtwert bei Verlusten im jüngsten Neustartfenster rechtfertigt keine Übernahme.
+
 Korrekte Botreaktion und Profitabilität sind zwei verschiedene Ergebnisse. Korrekte Software kann Verlust ausweisen. Dann wird die Strategie nicht still verändert; der Eigentümer entscheidet separat über eine neue Strategieversion. Hohe Tradezahl wird nur positiv bewertet, wenn die Nettoperformance nach Binance-Gebühren und Slippage nicht dadurch verschlechtert wird.
 
 ## Auswahl- und Übernahmeprinzip

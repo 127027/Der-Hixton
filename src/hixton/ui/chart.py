@@ -6,7 +6,7 @@ from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from hixton.domain.models import IndicatorPoint
+from hixton.domain.models import Candle, IndicatorPoint
 from hixton.domain.strategy import HixtonStrategy
 from hixton.paper.models import PaperEvent
 
@@ -49,7 +49,7 @@ def range_start(value: str, *, now: datetime, timezone_name: str) -> datetime:
 def _bucket(value: datetime, resolution: str) -> datetime:
     value = value.astimezone(UTC)
     if resolution == "1h":
-        return value
+        return value.replace(minute=0, second=0, microsecond=0)
     if resolution == "4h":
         return value.replace(hour=value.hour - value.hour % 4, minute=0, second=0, microsecond=0)
     if resolution == "1d":
@@ -119,6 +119,7 @@ def build_chart_payload(
     timezone_name: str,
     now: datetime,
     paper_events: tuple[PaperEvent, ...] = (),
+    live_candle: Candle | None = None,
 ) -> dict[str, object]:
     start = range_start(range_key, now=now, timezone_name=timezone_name)
     resolution = RESOLUTION_BY_RANGE[range_key]
@@ -134,9 +135,7 @@ def build_chart_payload(
     fills = [
         {
             "time": _iso(event.occurred_at_utc),
-            "display_time": _iso(
-                _bucket(event.occurred_at_utc - timedelta(seconds=1), resolution)
-            ),
+            "display_time": _iso(_bucket(event.occurred_at_utc, resolution)),
             "action": event.action,
             "status": event.status.value,
             "price": float(event.execution_price or event.reference_price),
@@ -147,8 +146,42 @@ def build_chart_payload(
         for event in paper_events
         if event.occurred_at_utc >= start
     ]
+    bars = _bars(selected, resolution)
+    if (
+        live_candle is not None
+        and live_candle.open_time_utc >= start
+        and (not points or live_candle.open_time_utc > points[-1].candle.open_time_utc)
+    ):
+        time = _iso(_bucket(live_candle.open_time_utc, resolution))
+        if bars and bars[-1]["time"] == time:
+            last = bars[-1]
+            last.update(
+                high=max(float(str(last["high"])), live_candle.high),
+                low=min(float(str(last["low"])), live_candle.low),
+                close=live_candle.close,
+                volume=float(str(last["volume"])) + live_candle.volume,
+                provisional=True,
+            )
+        else:
+            bars.append(
+                {
+                    "time": time,
+                    "close_time": _iso(live_candle.close_time_utc),
+                    "open": live_candle.open,
+                    "high": live_candle.high,
+                    "low": live_candle.low,
+                    "close": live_candle.close,
+                    "volume": live_candle.volume,
+                    "vidya": None,
+                    "upper": None,
+                    "lower": None,
+                    "trend": "PROVISIONAL",
+                    "provisional": True,
+                    "native_bar_count": 1,
+                }
+            )
     return {
-        "available": bool(selected),
+        "available": bool(bars),
         "symbol": symbol,
         "range": range_key,
         "range_label": RANGE_LABELS[range_key],
@@ -157,7 +190,7 @@ def build_chart_payload(
         "display_resolution": resolution,
         "start_utc": _iso(start),
         "end_utc": _iso(now),
-        "bars": _bars(selected, resolution),
+        "bars": bars,
         "signals": markers,
         "paper_events": fills,
     }

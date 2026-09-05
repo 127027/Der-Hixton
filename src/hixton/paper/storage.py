@@ -103,26 +103,17 @@ class PaperStore:
             ).fetchone()
             if session is None:
                 legacy_rows = sum(
-                    int(
-                        self._connection.execute(
-                            f"SELECT COUNT(*) FROM {table}"
-                        ).fetchone()[0]
-                    )
+                    int(self._connection.execute(f"SELECT COUNT(*) FROM {table}").fetchone()[0])
                     for table in ("paper_events", "paper_positions", "paper_checkpoints")
                 )
                 initial_key = "v1" if legacy_rows else strategy_key
-                initial_version = (
-                    HIXTON_SPEC_VERSION if legacy_rows else strategy_version
-                )
+                initial_version = HIXTON_SPEC_VERSION if legacy_rows else strategy_version
                 account_row = self._connection.execute(
-                    "SELECT created_at_utc, starting_cash_text "
-                    "FROM paper_account WHERE singleton=1"
+                    "SELECT created_at_utc, starting_cash_text FROM paper_account WHERE singleton=1"
                 ).fetchone()
                 if account_row is None:
                     raise RuntimeError("paper account disappeared during initialization")
-                activated_at = (
-                    str(account_row["created_at_utc"]) if legacy_rows else _time(moment)
-                )
+                activated_at = str(account_row["created_at_utc"]) if legacy_rows else _time(moment)
                 starting_equity = str(account_row["starting_cash_text"])
                 self._connection.execute(
                     """
@@ -150,10 +141,7 @@ class PaperStore:
 
     def require_strategy(self, strategy_key: str, strategy_version: str) -> None:
         session = self.load_strategy_session()
-        if (
-            session.strategy_key != strategy_key
-            or session.strategy_version != strategy_version
-        ):
+        if session.strategy_key != strategy_key or session.strategy_version != strategy_version:
             raise RuntimeError(
                 "paper strategy mismatch: ledger uses "
                 f"{session.strategy_key}/{session.strategy_version}, configuration uses "
@@ -161,9 +149,7 @@ class PaperStore:
             )
 
     def load_account(self) -> PaperAccount:
-        row = self._connection.execute(
-            "SELECT * FROM paper_account WHERE singleton=1"
-        ).fetchone()
+        row = self._connection.execute("SELECT * FROM paper_account WHERE singleton=1").fetchone()
         if row is None:
             raise RuntimeError("paper account is not initialized")
         return PaperAccount(
@@ -201,9 +187,7 @@ class PaperStore:
             )
 
     def load_settings(self) -> PaperSettings:
-        row = self._connection.execute(
-            "SELECT * FROM paper_settings WHERE singleton=1"
-        ).fetchone()
+        row = self._connection.execute("SELECT * FROM paper_settings WHERE singleton=1").fetchone()
         if row is None:
             raise RuntimeError("paper settings are not initialized")
         return PaperSettings(
@@ -258,9 +242,7 @@ class PaperStore:
             )
 
     def load_positions(self) -> tuple[PaperPosition, ...]:
-        rows = self._connection.execute(
-            "SELECT * FROM paper_positions ORDER BY symbol"
-        ).fetchall()
+        rows = self._connection.execute("SELECT * FROM paper_positions ORDER BY symbol").fetchall()
         return tuple(
             PaperPosition(
                 symbol=str(row["symbol"]),
@@ -342,16 +324,8 @@ class PaperStore:
                     str(event.base_quantity) if event.base_quantity is not None else None,
                     str(event.quote_amount_usdt) if event.quote_amount_usdt is not None else None,
                     str(event.fee_usdt) if event.fee_usdt is not None else None,
-                    (
-                        str(event.realized_pnl_usdt)
-                        if event.realized_pnl_usdt is not None
-                        else None
-                    ),
-                    (
-                        str(event.breakout_strength)
-                        if event.breakout_strength is not None
-                        else None
-                    ),
+                    (str(event.realized_pnl_usdt) if event.realized_pnl_usdt is not None else None),
+                    (str(event.breakout_strength) if event.breakout_strength is not None else None),
                     event.strategy_version,
                 ),
             )
@@ -365,6 +339,7 @@ class PaperStore:
         events: tuple[PaperEvent, ...],
         checkpoints: Mapping[str, datetime],
         processed_bars: Mapping[str, int],
+        dust: Mapping[str, Decimal] | None = None,
     ) -> None:
         """Atomically persist one deterministic bar-close processing cycle."""
 
@@ -373,6 +348,17 @@ class PaperStore:
             raise ValueError("processed paper bars must be non-negative DMS symbol counts")
 
         with self._connection:
+            if dust is not None:
+                self._connection.executemany(
+                    "INSERT INTO paper_dust(symbol, quantity_text) VALUES (?, ?) "
+                    "ON CONFLICT(symbol) DO UPDATE SET quantity_text=excluded.quantity_text",
+                    [(symbol, str(qty)) for symbol, qty in dust.items()],
+                )
+            self._connection.executemany(
+                "INSERT OR IGNORE INTO paper_execution_audit "
+                "(event_id, processed_at_utc, execution_model) VALUES (?, ?, ?)",
+                [(event.event_id, _time(_now()), "NEXT_BAR_OPEN_V1") for event in events],
+            )
             self._connection.execute(
                 """
                 UPDATE paper_account SET
@@ -436,11 +422,7 @@ class PaperStore:
                         event.status.value,
                         event.reason,
                         str(event.reference_price),
-                        (
-                            str(event.execution_price)
-                            if event.execution_price is not None
-                            else None
-                        ),
+                        (str(event.execution_price) if event.execution_price is not None else None),
                         str(event.base_quantity) if event.base_quantity is not None else None,
                         (
                             str(event.quote_amount_usdt)
@@ -501,10 +483,19 @@ class PaperStore:
             parameters.append(symbol.replace("/", "").upper())
         parameters.append(limit)
         rows = self._connection.execute(
-            f"SELECT * FROM paper_events {clause} ORDER BY occurred_at_utc DESC LIMIT ?",
+            "SELECT paper_events.*, paper_execution_audit.processed_at_utc, "
+            "paper_execution_audit.execution_model FROM paper_events "
+            "LEFT JOIN paper_execution_audit USING(event_id) "
+            f"{clause} ORDER BY occurred_at_utc DESC LIMIT ?",
             parameters,
         ).fetchall()
         return tuple(self._row_to_event(row) for row in rows)
+
+    def load_dust(self) -> dict[str, Decimal]:
+        return {
+            str(row["symbol"]): Decimal(row["quantity_text"])
+            for row in self._connection.execute("SELECT * FROM paper_dust")
+        }
 
     def checkpoint(self, symbol: str) -> datetime | None:
         row = self._connection.execute(
@@ -542,10 +533,7 @@ class PaperStore:
         if set(checkpoints) != set(SYMBOLS):
             raise ValueError("strategy activation requires all ten checkpoints")
         previous = self.load_strategy_session()
-        if (
-            previous.strategy_key == strategy_key
-            and previous.strategy_version == strategy_version
-        ):
+        if previous.strategy_key == strategy_key and previous.strategy_version == strategy_version:
             return
         with self._connection:
             self._connection.execute(
@@ -693,6 +681,48 @@ class PaperStore:
                 [(symbol, _time(checkpoints[symbol])) for symbol in SYMBOLS],
             )
 
+    def ensure_execution_epoch(
+        self, checkpoints: Mapping[str, datetime], *, at: datetime | None = None
+    ) -> bool:
+        """Restart the technical soak once, preserving ledger, cash and positions."""
+        if set(checkpoints) != set(SYMBOLS):
+            raise ValueError("execution epoch requires all ten checkpoints")
+        action = "EXECUTION_NEXT_BAR_OPEN_V1_ACTIVATED"
+        if self._connection.execute(
+            "SELECT 1 FROM paper_audit WHERE action=?", (action,)
+        ).fetchone():
+            return False
+        moment = (at or _now()).astimezone(UTC)
+        previous = self.load_soak_progress(at=moment)
+        with self._connection:
+            self._connection.execute(
+                "INSERT INTO paper_audit VALUES (?, ?, 'TECHNICAL_UPGRADE', ?, ?)",
+                (
+                    str(uuid4()),
+                    _time(moment),
+                    action,
+                    json.dumps(
+                        {
+                            "previous_soak_start": _time(previous.started_at_utc),
+                            "previous_bars": dict(previous.processed_closed_bars_by_symbol),
+                            "previous_completed_trades": previous.completed_trades,
+                            "preserved_positions": [p.symbol for p in self.load_positions()],
+                            "decision": "DEC-040",
+                        }
+                    ),
+                ),
+            )
+            self._connection.execute(
+                "UPDATE paper_soak SET started_at_utc=?, updated_at_utc=? WHERE singleton=1",
+                (_time(moment), _time(moment)),
+            )
+            self._connection.executemany(
+                "UPDATE paper_soak_symbols SET baseline_close_utc=?, processed_closed_bars=0 "
+                "WHERE symbol=?",
+                [(_time(value), symbol) for symbol, value in checkpoints.items()],
+            )
+        return True
+
     def load_soak_progress(self, *, at: datetime | None = None) -> PaperSoakProgress:
         moment = (at or _now()).astimezone(UTC)
         state = self._connection.execute(
@@ -715,11 +745,17 @@ class PaperStore:
         completed_row = self._connection.execute(
             """
             SELECT COUNT(*) AS count
-            FROM paper_events
+            FROM paper_events AS exits
             WHERE action='EXIT_LONG' AND status='FILLED' AND occurred_at_utc>=?
                 AND strategy_version=?
+                AND EXISTS (
+                    SELECT 1 FROM paper_events AS entries
+                    WHERE entries.symbol=exits.symbol AND entries.action='ENTER_LONG'
+                        AND entries.status='FILLED' AND entries.occurred_at_utc>=?
+                        AND entries.occurred_at_utc<exits.occurred_at_utc
+                )
             """,
-            (_time(started_at), session.strategy_version),
+            (_time(started_at), session.strategy_version, _time(started_at)),
         ).fetchone()
         completed_trades = int(completed_row["count"] if completed_row is not None else 0)
         calendar_days = max(0, (moment.date() - started_at.date()).days)
@@ -728,13 +764,9 @@ class PaperStore:
         if calendar_days < _SOAK_MINIMUM_DAYS:
             blockers.append(f"DAYS_{calendar_days}_OF_{_SOAK_MINIMUM_DAYS}")
         if minimum_bars < _SOAK_MINIMUM_BARS_PER_SYMBOL:
-            blockers.append(
-                f"BARS_{minimum_bars}_OF_{_SOAK_MINIMUM_BARS_PER_SYMBOL}_PER_SYMBOL"
-            )
+            blockers.append(f"BARS_{minimum_bars}_OF_{_SOAK_MINIMUM_BARS_PER_SYMBOL}_PER_SYMBOL")
         if completed_trades < _SOAK_MINIMUM_COMPLETED_TRADES:
-            blockers.append(
-                f"TRADES_{completed_trades}_OF_{_SOAK_MINIMUM_COMPLETED_TRADES}"
-            )
+            blockers.append(f"TRADES_{completed_trades}_OF_{_SOAK_MINIMUM_COMPLETED_TRADES}")
         ready = not blockers
         if ready:
             status = "PASSED"
@@ -849,6 +881,15 @@ class PaperStore:
                 );
                 """
             )
+            self._connection.execute(
+                "CREATE TABLE IF NOT EXISTS paper_dust "
+                "(symbol TEXT PRIMARY KEY, quantity_text TEXT NOT NULL)"
+            )
+            self._connection.execute(
+                "CREATE TABLE IF NOT EXISTS paper_execution_audit "
+                "(event_id TEXT PRIMARY KEY, processed_at_utc TEXT NOT NULL, "
+                "execution_model TEXT NOT NULL)"
+            )
             event_columns = {
                 str(row["name"])
                 for row in self._connection.execute("PRAGMA table_info(paper_events)").fetchall()
@@ -864,9 +905,7 @@ class PaperStore:
                 )
             position_columns = {
                 str(row["name"])
-                for row in self._connection.execute(
-                    "PRAGMA table_info(paper_positions)"
-                ).fetchall()
+                for row in self._connection.execute("PRAGMA table_info(paper_positions)").fetchall()
             }
             if "strategy_version" not in position_columns:
                 self._connection.execute(
@@ -875,8 +914,7 @@ class PaperStore:
                 )
             if "slot_count" not in position_columns:
                 self._connection.execute(
-                    "ALTER TABLE paper_positions ADD COLUMN slot_count INTEGER "
-                    "NOT NULL DEFAULT 1"
+                    "ALTER TABLE paper_positions ADD COLUMN slot_count INTEGER NOT NULL DEFAULT 1"
                 )
             self._connection.execute("PRAGMA optimize")
 
@@ -902,6 +940,16 @@ class PaperStore:
             realized_pnl_usdt=decimal_or_none("realized_pnl_text"),
             breakout_strength=decimal_or_none("breakout_strength_text"),
             strategy_version=str(row["strategy_version"]),
+            processed_at_utc=(
+                _parse_time(row["processed_at_utc"])
+                if "processed_at_utc" in set(row.keys()) and row["processed_at_utc"]
+                else None
+            ),
+            execution_model=(
+                str(row["execution_model"])
+                if "execution_model" in set(row.keys()) and row["execution_model"]
+                else "LEGACY_CLOSE_OR_MIGRATION"
+            ),
         )
 
     def missing_checkpoint_symbols(self) -> tuple[str, ...]:

@@ -44,4 +44,3 @@ def test_strategy_parameter_guards() -> None:
         StrategyParameters(momentum_length=0)
     with pytest.raises(ValueError, match="cover"):
         StrategyParameters(warmup_bars=100)
-

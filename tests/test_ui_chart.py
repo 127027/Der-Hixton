@@ -54,4 +54,3 @@ def test_three_year_signal_markers_align_to_daily_display_bars() -> None:
     bar_times = {bar["time"] for bar in bars}
     assert signals
     assert all(signal["display_time"] in bar_times for signal in signals)
-

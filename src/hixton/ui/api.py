@@ -57,7 +57,13 @@ def _runtime_payload(snapshot: RuntimeSnapshot) -> dict[str, object]:
 
 def _latest_prices(supervisor: RuntimeSupervisor) -> dict[str, Decimal]:
     return {
-        symbol: Decimal(str(points[-1].candle.close))
+        symbol: Decimal(
+            str(
+                live[0].close
+                if (live := supervisor.state.live_candle(symbol))
+                else points[-1].candle.close
+            )
+        )
         for symbol, points in supervisor.state.points().items()
         if points
     }
@@ -104,9 +110,7 @@ def _paper_payload(
         "soak": {
             "started_at_utc": _iso(soak.started_at_utc),
             "calendar_days": soak.calendar_days,
-            "processed_closed_bars_by_symbol": dict(
-                soak.processed_closed_bars_by_symbol
-            ),
+            "processed_closed_bars_by_symbol": dict(soak.processed_closed_bars_by_symbol),
             "minimum_processed_closed_bars": soak.minimum_processed_closed_bars,
             "completed_trades": soak.completed_trades,
             "minimum_days": soak.minimum_days,
@@ -165,13 +169,27 @@ def _market_payloads(
                     }
                     break
         report = quality.get(symbol)
+        live = supervisor.state.live_candle(symbol)
+        entry_status = (
+            "POSITION_OPEN"
+            if symbol in positions
+            else "WAITING_FOR_NEW_FLIP"
+            if last_signal
+            else "NO_SIGNAL_YET"
+        )
         payloads.append(
             {
                 "symbol": symbol,
                 "display_symbol": symbol.removesuffix("USDT") + "/USDT",
                 "available": point is not None,
-                "price": point.candle.close if point else None,
-                "price_time_utc": _iso(point.candle.close_time_utc) if point else None,
+                "price": live[0].close if live else point.candle.close if point else None,
+                "price_time_utc": _iso(live[1])
+                if live
+                else _iso(point.candle.close_time_utc)
+                if point
+                else None,
+                "price_provisional": bool(live),
+                "entry_status": entry_status,
                 "trend": point.trend.value if point else "UNINITIALIZED",
                 "last_signal": last_signal,
                 "position": positions.get(symbol),
@@ -214,9 +232,7 @@ def _list_backtests(output_root: Path) -> list[dict[str, object]]:
 def _origin_is_local(request: Request) -> bool:
     origin = request.headers.get("origin")
     action_header = request.headers.get("x-hixton-action")
-    local_origin = origin is None or origin.startswith(
-        ("http://127.0.0.1:", "http://localhost:")
-    )
+    local_origin = origin is None or origin.startswith(("http://127.0.0.1:", "http://localhost:"))
     return local_origin and action_header == "local-ui-v1"
 
 
@@ -247,6 +263,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["X-Frame-Options"] = "DENY"
         return response
+
     app.mount("/assets", StaticFiles(directory=STATIC_ROOT / "assets"), name="assets")
 
     @app.get("/")
@@ -282,6 +299,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         if range_key not in RANGE_LABELS:
             raise HTTPException(status_code=400, detail="Unbekannter Chartzeitraum")
         points = supervisor.state.points().get(normalized, ())
+        live = supervisor.state.live_candle(normalized)
         try:
             with PaperStore(config.database_path) as store:
                 events = store.load_events(symbol=normalized, limit=5_000)
@@ -295,6 +313,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
                 timezone_name=timezone,
                 now=datetime.now(UTC),
                 paper_events=events,
+                live_candle=live[0] if live else None,
             )
         except (ValueError, ZoneInfoNotFoundError) as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
@@ -375,11 +394,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             definition = strategy_definition(strategy)
         except ValueError as error:
             raise HTTPException(status_code=400, detail=str(error)) from error
-        output_root = (
-            config.run_output_root.parents[1]
-            / definition.backtest_version
-            / "runs"
-        )
+        output_root = config.run_output_root.parents[1] / definition.backtest_version / "runs"
         return {
             "strategy": {
                 "key": definition.key,

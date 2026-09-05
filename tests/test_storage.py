@@ -51,4 +51,3 @@ def test_closed_only_excludes_provisional_candle(tmp_path) -> None:
         store.put_candles([candles[0], provisional])
         assert len(store.load_candles("BNBUSDT")) == 1
         assert len(store.load_candles("BNBUSDT", closed_only=False)) == 2
-

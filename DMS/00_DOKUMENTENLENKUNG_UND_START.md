@@ -2,6 +2,8 @@
 
 ## Zweck
 
+Aktueller Ergänzungsstand: **DMS 1.4, 05.09.2026**. Maßgeblich für die jüngste Prüfung sind DMS 18 und `backtests/v4/README.md`. Die folgenden Angaben vom 02.09. bleiben historische Abnahmen, kein Beweis fehlerfreier aktueller Ausführung: Am 05.09. wurden eine Stundenverzögerung und Paper-/Backtest-Abweichungen gefunden und korrigiert. 74 Tests bestanden; aktive Strategie weiterhin V2, Live weiterhin gesperrt.
+
 Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
 ## Geltungsbereich

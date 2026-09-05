@@ -11,4 +11,3 @@ __all__ = [
     "run_isolated_batch",
     "run_single_backtest",
 ]
-

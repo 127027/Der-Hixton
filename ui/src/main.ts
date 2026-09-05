@@ -8,6 +8,7 @@ import {
   type CandlestickData,
   type IChartApi,
   type ISeriesApi,
+  type ISeriesMarkersPluginApi,
   type SeriesMarker,
   type Time,
   type UTCTimestamp,
@@ -93,6 +94,7 @@ interface Market {
   data: { candle_count: number; gap_count: number | null; valid: boolean; first_open_utc: string | null; last_open_utc: string | null };
 }
 interface ChartBar {
+  provisional?: boolean;
   time: string;
   close_time: string;
   open: number;
@@ -175,6 +177,7 @@ let vidyaSeries: ISeriesApi<"Line"> | null = null;
 let upperSeries: ISeriesApi<"Line"> | null = null;
 let lowerSeries: ISeriesApi<"Line"> | null = null;
 let chartLoadGeneration = 0;
+let chartMarkers: ISeriesMarkersPluginApi<Time> | null = null;
 
 function showToast(message: string, error = false): void {
   const toast = required<HTMLDivElement>("#toast");
@@ -222,7 +225,7 @@ function renderStatus(status: StatusResponse): void {
 
 function marketCard(market: Market): string {
   const trendClass = market.trend.toLowerCase();
-  const signal = market.last_signal?.action === "ENTER_LONG" ? "KAUF" : market.last_signal?.action === "EXIT_LONG" ? "VERKAUF" : "Kein Signal";
+  const signal = market.position_state === "LONG" ? "Position läuft" : "Wartet auf neuen Kauf";
   return `<article class="market-card" data-symbol="${market.symbol}" tabindex="0">
     <div class="market-top"><strong>${market.display_symbol}</strong><span class="trend-tag ${trendClass}">${market.trend}</span></div>
     <div class="market-price">${formatPrice(market.price)} <small>USDT</small></div>
@@ -302,18 +305,18 @@ function ensureChart(): void {
   });
 }
 
-async function loadChart(): Promise<void> {
+async function loadChart(background = false): Promise<void> {
   const generation = ++chartLoadGeneration;
   const requestedSymbol = selectedSymbol;
   const requestedRange = selectedRange;
   const timezone = required<HTMLSelectElement>("#timezone-select").value;
   ensureChart();
-  required("#chart-loading").classList.remove("hidden");
+  if (!background) required("#chart-loading").classList.remove("hidden");
   text("#chart-symbol", requestedSymbol.replace("USDT", "/USDT"));
   try {
     const payload = await api<ChartPayload>(`/api/chart?symbol=${requestedSymbol}&range=${requestedRange}&timezone=${encodeURIComponent(timezone)}`);
     if (generation !== chartLoadGeneration) return;
-    text("#resolution-label", `Trading ${payload.trading_timeframe} · Anzeige ${payload.display_resolution}`);
+    text("#resolution-label", `Trading ${payload.trading_timeframe} · Anzeige ${payload.display_resolution}${payload.bars.some((bar) => bar.provisional) ? " · letzte Kerze live/offen" : " · geschlossene Kerzen"}`);
     const candles = payload.bars.map((bar) => ({ time: timestamp(bar.time), open: bar.open, high: bar.high, low: bar.low, close: bar.close }));
     candleSeries!.setData(candles);
     vidyaSeries!.setData(payload.bars.filter((bar) => bar.vidya !== null).map((bar) => ({ time: timestamp(bar.time), value: bar.vidya! })));
@@ -335,12 +338,13 @@ async function loadChart(): Promise<void> {
       markers.push({ time: timestamp(event.display_time), position: "inBar", color: "#d8b4fe", shape: "circle", text: "PAPER FILL" });
     }
     markers.sort((a, b) => Number(a.time) - Number(b.time));
-    createSeriesMarkers(candleSeries!, markers, { autoScale: true });
+    if (chartMarkers) chartMarkers.setMarkers(markers);
+    else chartMarkers = createSeriesMarkers(candleSeries!, markers, { autoScale: true });
     text("#chart-signal-count", `${payload.signals.length.toLocaleString("de-DE")} Signale`);
     required("#chart-signals-body").innerHTML = payload.signals.length
       ? [...payload.signals].reverse().slice(0, 50).map((signal) => `<tr><td>${formatDate(signal.time, true)}</td><td class="${signal.action === "ENTER_LONG" ? "good" : "negative"}">${signal.action === "ENTER_LONG" ? "KAUF" : "VERKAUF"}</td><td>${formatPrice(signal.price)}</td><td>${signal.strength === null ? "—" : formatNumber(signal.strength, 6)}</td><td class="mono" title="${signal.signal_id}">${signal.signal_id.slice(0, 14)}…</td></tr>`).join("")
       : `<tr><td colspan="5">In diesem Zeitraum liegt kein bestätigtes Signal.</td></tr>`;
-    chart!.timeScale().fitContent();
+    if (!background) chart!.timeScale().fitContent();
     if (!payload.available) showToast("Für diesen Zeitraum sind noch keine lokalen Daten vorhanden.", true);
   } catch (error) {
     if (generation === chartLoadGeneration) {
@@ -358,6 +362,7 @@ async function refreshCore(): Promise<void> {
     const [status, markets] = await Promise.all([api<StatusResponse>("/api/status"), api<{ markets: Market[] }>("/api/markets")]);
     renderStatus(status);
     renderMarkets(markets.markets);
+    if (required("#chart-panel").classList.contains("active")) void loadChart(true);
   } catch (error) {
     required("#connection-dot").className = "status-dot error";
     text("#connection-label", "UI-API getrennt");

@@ -1,5 +1,15 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Aktuelle Prüfung am 05.09.2026
+
+Der laufende Laptop-Bot belegte bei der Prüfung alle drei Slots mit ADA, DOGE und ETH. AVAX war korrekt mit `NO_FREE_SLOT` blockiert; es existiert keine globale Ein-Positions-Sperre. V2 hatte drei eröffnete, aber noch keinen abgeschlossenen Trade. Am 05.09. um 15:11 Europe/Berlin betrug die modellierte Equity 236,85166839858 USDT, somit −0,59465736 USDT gegenüber dem V2-Start von 237,44632575858 USDT. Der frühere V1-Verlust von −2,55367424142 USDT ist separat zu behandeln. Offene Buchgewinne/-verluste schwanken und sind kein realisierter Profit.
+
+Gefundene und korrigierte technische Defekte: permanent um eine Stunde verspätete Closed-Bar-Analyse; Paper-Fills zum Signalkerzen-Schlusskurs statt Folge-Open; fehlende separate Verarbeitungszeit; nicht erhaltene Mengenreste; ungenau gerasterte Paper-Chartmarker; keine fortlaufend angezeigte offene Chartkerze. DEC-040 beschreibt die Korrektur und den einmaligen technischen Soak-Neustart ohne Kontoreset. Historische Paperwerte werden nicht nachträglich verbessert und sind kein belastbarer Live-Latenznachweis.
+
+Die V4-Prüfung hat die bisherigen V2-Dreijahreswerte exakt reproduziert, zusätzlich jeden Coin in einem neu gestarteten jüngsten Jahresfenster geprüft und 24 individuelle Kandidaten je Coin untersucht. Das jüngste Jahr verliert bei allen zehn V2-Einzelkonten auch unter Baselinekosten. Der neue Coin-Kandidat erhöht das Dreijahresportfolio, verschlechtert aber das jüngste Neustartjahr. Kein Wechsel. Alle Vergleichswerte und Grenzen stehen in `backtests/v4/README.md`; Quell-/Daten-/Kosten-/Filter-Nachweis unter `backtests/v4/reports/review-20260905.json`. Live bleibt deaktiviert.
+
+Die folgenden Abschnitte dokumentieren frühere Runs und damalige Abnahmen; sie ersetzen nicht die obige aktuelle Fehler- und Robustheitsbewertung.
+
 ## Wahrheitsgemäßer Ist-Stand
 
 Am 01.09.2026 wurden der verbindliche V1-Drei-Jahres-Batch für alle zehn DMS-Märkte und ein ETH-Einzeltest erfolgreich ausgeführt. Die Strategie reagiert im Backtest deterministisch gemäß `HIXTON-SPEC-1.0`. Danach wurde V2 getrennt gegen die Eigentümer-Pine-Quelle entwickelt, reproduziert und am 02.09.2026 ausdrücklich für Paper freigegeben. Kein Ergebnis ist eine Zusage zukünftiger Gewinne oder eine Live-Freigabe.

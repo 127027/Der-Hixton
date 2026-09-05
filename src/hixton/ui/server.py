@@ -30,4 +30,3 @@ def run_local_dashboard(config: ProjectConfig, *, open_browser: bool = True) -> 
         access_log=False,
     )
     return 0
-
