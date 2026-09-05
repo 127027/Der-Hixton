@@ -31,6 +31,7 @@ from hixton.domain.models import (
     StrategySemantics,
 )
 from hixton.domain.strategy import HixtonStrategy
+from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 
 _HUNDRED = Decimal("100")
 
@@ -41,6 +42,7 @@ class _OpenTrade:
     fill: Fill
     quantity: Decimal
     cost_basis: Decimal
+    highest_close: float = 0.0
 
 
 def _d(value: float) -> Decimal:
@@ -77,9 +79,7 @@ def candle_snapshot_sha256(candles: list[Candle]) -> str:
     return digest.hexdigest()
 
 
-def _buy_and_hold(
-    candles: list[Candle], starting_cash: Decimal, costs: CostModel
-) -> Decimal:
+def _buy_and_hold(candles: list[Candle], starting_cash: Decimal, costs: CostModel) -> Decimal:
     first_open = _d(candles[0].open)
     fill_price = first_open * (ONE + costs.adverse_price_rate)
     gross_quantity = starting_cash / fill_price
@@ -100,6 +100,7 @@ def run_single_backtest(
     strategy_parameters: StrategyParameters | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
+    trade_policy: TradePolicy | None = None,
 ) -> BacktestResult:
     """Run an isolated no-compounding test and return immutable result records."""
 
@@ -110,11 +111,15 @@ def run_single_backtest(
     if report_start_utc >= report_end_utc:
         raise ValueError("report_start_utc must be before report_end_utc")
     parameters = strategy_parameters or StrategyParameters()
+    if (
+        trade_policy is not None
+        and trade_policy != TradePolicy()
+        and not (strategy_version or "").startswith("HIXTON-V5-")
+    ):
+        raise ValueError("research policy requires an explicit HIXTON-V5 strategy version")
     warmup_start = report_start_utc - parameters.warmup_bars * TIMEFRAME_DELTA
     selected = [
-        candle
-        for candle in candles
-        if warmup_start <= candle.open_time_utc < report_end_utc
+        candle for candle in candles if warmup_start <= candle.open_time_utc < report_end_utc
     ]
     quality = audit_candles(
         selected,
@@ -131,6 +136,7 @@ def run_single_backtest(
         strategy_version=strategy_version,
     )
     cash = starting_cash
+    policy_gate = TradePolicyGate(trade_policy)
     dust = ZERO
     open_trade: _OpenTrade | None = None
     pending_signal: Signal | None = None
@@ -177,6 +183,7 @@ def run_single_backtest(
                         fill=fill,
                         quantity=net_quantity,
                         cost_basis=quote_spend,
+                        highest_close=float(fill_price),
                     )
                     fills.append(fill)
             elif pending_signal.action is SignalAction.EXIT_LONG:
@@ -196,9 +203,7 @@ def run_single_backtest(
                     net_quote = gross_quote - fee_quote
                     modeled_adverse = sell_quantity * (reference - fill_price)
                     basis_fraction = (
-                        sell_quantity / open_trade.quantity
-                        if open_trade.quantity > ZERO
-                        else ZERO
+                        sell_quantity / open_trade.quantity if open_trade.quantity > ZERO else ZERO
                     )
                     realized_basis = open_trade.cost_basis * basis_fraction
                     realized_pnl = net_quote - realized_basis
@@ -244,13 +249,24 @@ def run_single_backtest(
             pending_signal = None
 
         point = strategy.update(candle)
+        if open_trade is not None:
+            open_trade.highest_close = max(open_trade.highest_close, candle.close)
+        decision = policy_gate.decide(
+            point,
+            entry_price=float(open_trade.fill.fill_price) if open_trade else None,
+            entry_atr=open_trade.signal.atr if open_trade else 0.0,
+            highest_close=open_trade.highest_close if open_trade else 0.0,
+        )
         if not in_report:
             continue
 
-        signal = strategy.signal_for(point, is_long=open_trade is not None)
+        signal = decision.signal
         if signal is not None:
             signals.append(signal)
-            pending_signal = signal
+            if decision.block_reason:
+                blocked.append(f"{signal.signal_id}:{decision.block_reason}")
+            else:
+                pending_signal = signal
 
         active_quantity = open_trade.quantity if open_trade is not None else ZERO
         position_value = (active_quantity + dust) * _d(candle.close)
@@ -268,9 +284,7 @@ def run_single_backtest(
         raise ValueError("report window did not contain candles")
     ending_equity = equity_curve[-1].equity
     report_candles = [
-        candle
-        for candle in selected
-        if report_start_utc <= candle.open_time_utc < report_end_utc
+        candle for candle in selected if report_start_utc <= candle.open_time_utc < report_end_utc
     ]
     buy_hold = _buy_and_hold(report_candles, starting_cash, costs)
     metrics = calculate_metrics(

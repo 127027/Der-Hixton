@@ -1,5 +1,14 @@
 # DMS-Changelog
 
+## 1.5.0 – 05.09.2026
+
+- V5: alle zehn Coins mit unveränderter Pine-Referenz, aktiver V2 und 348 begrenzten Hixton-Parameter-/Filter-/Stopkombinationen geprüft; Auswahl nur im Training.
+- Gemeinsame Forschungs-Regelentscheidung für Einzel-/Portfolioengine ergänzt, mit expliziter V5-Versionssperre, Schlusskurs-/Next-Open-Ausführung und unverändertem Identitätsverhalten der aktiven Strategie.
+- Verlustdiagnose je Coin, Haltedauern, Kursrückgaben, Konzentration auf wenige Gewinner, realisierter/offener PnL und ältere Rückschritte dokumentiert.
+- Vollständiges Kandidatenportfolio und zusätzlich nur XRP im 3×80-Konto geprüft; XRP-Nachbarsensitivität transparent als nachträgliche Diagnose gekennzeichnet. Keine Aktivierung wegen fehlender Mehrfenster-/Portfolioverbesserung.
+- 86 Tests bestanden; Ruff/mypy ohne Befund. Die Hauptmesswerte wurden zweimal identisch erzeugt. Keine UI-/Pine-/Config-/Paper-Ledgeränderung.
+- Ergebnisse ausschließlich unter `backtests/v5`, große Rohberichte weiter ignoriert; ein Starter und bestehende DMS-Struktur beibehalten. DEC-042 und Übergabehinweise für GPT/Codex nachgezogen.
+
 ## 1.4.0 – 05.09.2026
 
 - Permanente Stundenverzögerung der Closed-Bar-Synchronisierung beseitigt; Watchdog repariert fehlende Stunden unabhängig vom Close-Event.

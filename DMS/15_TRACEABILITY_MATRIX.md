@@ -2,6 +2,8 @@
 
 Zusätzlicher Nachweis ab 05.09.2026: `tests/test_runtime_parity.py` deckt DEC-040, DAT-006 (provisional), Folge-Open-Ausführung, Slot-/Cash-/Dust-Parität, Restart und Markerzeit ab. DEC-041 wird durch `backtests/v4/README.md` und den reproduzierbaren Befehl `backtest research` belegt. V4 ist keine aktive Strategie.
 
+V5/DEC-042: `tests/test_trade_policy.py` belegt Identitäts-, Kausalitäts-, Versionssperr- und Einzel-/Portfolio-Parität der Forschungsregeln (STR-008, BKT-002/003/007). `backtests/v5/README.md` und sein kuratierter JSON-Nachweis ordnen alle zehn Coin-Schwächen, trainierte Finalisten, Original-Pine-Kontrolle und Rückschritte zu. Aktive V2-Konfiguration, Positionsbestand und Paper-Regeln bleiben unverändert; eine V5-Paperparität wird nicht behauptet.
+
 Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber später weder gebaut noch geprüft wird.
 
 | Anforderung | Fachquelle | Zielkomponente/UI | Haupttest/Nachweis |

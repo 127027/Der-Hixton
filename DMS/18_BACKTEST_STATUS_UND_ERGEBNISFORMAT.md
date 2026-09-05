@@ -1,5 +1,13 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Neueste Einzelcoin-Forschung: V5, 05.09.2026
+
+Alle zehn Coins wurden mit 250 USDT einzeln diagnostiziert; 348 begrenzte Kombinationen aus Hixton-Parametern und expliziten Forschungsfiltern/-Stops wurden ausschließlich anhand der ersten zwei Trainingsjahre ausgewählt. Alle zehn V2-Kurztradegruppen unter 72 Stunden verlieren in Summe, während wenige lange Gewinner das Ergebnis tragen. ETH liefert einen interessanten 24-Bar-VIDYA-Steigungsfilter (jüngstes Stressjahr 213,63→278,47 USDT), aber einen älteren Rückschritt. XRP verbessert allein alle sechs Einzel-Endwerte und Drawdowns, besteht jedoch die gemeinsame Konto- und Nachbarprüfung nicht. Details für **jeden** Coin, einschließlich ADA-/DOT-Rückschritten, stehen zentral in `backtests/v5/README.md` und `backtests/v5/reports/coin-review-20260905.json`.
+
+Das vollständige Kandidatenportfolio endet im Dreijahresfenster bei 808,30/776,04 USDT statt V2 542,49/406,29 (Baseline/Stress), aber bei einem Start im jüngsten Jahr nur bei 202,81/202,55 statt 216,71/210,47. Ein Austausch ausschließlich von XRP verschlechtert dieses Jahr ebenfalls auf 213,15/206,73. Jeder Portfoliolauf enthält einen Risikohalt. Keine neue Paperfreigabe nach DEC-042; V2 bleibt aktiv, Live bleibt gesperrt. Endwerte mit offenen Positionen werden nicht als realisierter Gewinn ausgegeben.
+
+Hauptmesswerte in zwei Läufen identisch; Zusatzprüfung separat gekennzeichnet. 86 Tests, Ruff und mypy (37 Source-Dateien) bestanden. Kein UI-Redesign, keine Konfigurations-/Ledgeränderung und kein Neustart des Paper-Soaks für diese Forschung. Der parallel laufende Laptop meldete am 05.09.2026 um 21:47 Europe/Berlin `HEALTHY`, `PAPER`, `LIVE_DISABLED`, zehn aktuelle valide Märkte und weiterhin drei offene V2-Positionen (ADA/DOGE/ETH). Das ist ein Betriebs-, kein abgeschlossener Profitnachweis.
+
 ## Aktuelle Prüfung am 05.09.2026
 
 Der laufende Laptop-Bot belegte bei der Prüfung alle drei Slots mit ADA, DOGE und ETH. AVAX war korrekt mit `NO_FREE_SLOT` blockiert; es existiert keine globale Ein-Positions-Sperre. V2 hatte drei eröffnete, aber noch keinen abgeschlossenen Trade. Am 05.09. um 15:11 Europe/Berlin betrug die modellierte Equity 236,85166839858 USDT, somit −0,59465736 USDT gegenüber dem V2-Start von 237,44632575858 USDT. Der frühere V1-Verlust von −2,55367424142 USDT ist separat zu behandeln. Offene Buchgewinne/-verluste schwanken und sind kein realisierter Profit.

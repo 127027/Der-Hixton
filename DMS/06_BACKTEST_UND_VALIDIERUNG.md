@@ -133,6 +133,10 @@ V4-Prüfung vom 05.09.2026: 24 begrenzte Parametervarianten je Coin, Auswahl anh
 
 Korrekte Botreaktion und Profitabilität sind zwei verschiedene Ergebnisse. Korrekte Software kann Verlust ausweisen. Dann wird die Strategie nicht still verändert; der Eigentümer entscheidet separat über eine neue Strategieversion. Hohe Tradezahl wird nur positiv bewertet, wenn die Nettoperformance nach Binance-Gebühren und Slippage nicht dadurch verschlechtert wird.
 
+V5 ergänzt die Einzelcoin-Verlustdiagnose und bis zu 36 vorab begrenzte Kombinationen aus Original-Pine, V2-/V4-Trainingsparametern und Hixton-basierten Einstiegsfiltern bzw. Schlusskurs-ATR-Stops. Identische Parameterbasen werden dedupliziert: 348 Kandidaten insgesamt. Zwei separat gestartete Trainingsjahre bestimmen je Coin einen Finalisten; jüngstes Jahr und älteres Fenster ändern diese Auswahl nicht. Die XRP-Einzeländerungs-/Nachbarprüfung ist offen als nachträgliche Diagnose gekennzeichnet. Regeln, sämtliche Coins, Rückschritte und gemeinsame Portfoliowerte stehen in `backtests/v5/README.md`. Stops sind neue Forschung, nicht stillschweigend Teil der Original-Pine- oder aktiven Paperlogik.
+
+V5-Finalisten rechnen in denselben Decimal-Backtestengines wie V2, verwenden aber explizit andere Regeln. Eine funktionierende Forschungs-Backtestausführung ist **kein** Nachweis, dass diese neuen Regeln bereits im Paper implementiert oder aktiviert wären. Vor einer Übernahme wären Paper-/Restart-/Chart-Parität dieser Regeln und ein neuer versionierter Vorwärtslauf erforderlich. Endkapital, realisierter Gewinn und offene Bewertung werden getrennt ausgewiesen.
+
 ## Auswahl- und Übernahmeprinzip
 
 Der Zweck der Backtests ist nicht nur Archivierung: Eine nach dem vollständigen Prüfprogramm besser belegte, zulässige Version soll nach ausdrücklicher Eigentümerentscheidung als Paperstandard übernommen werden. Bewertet werden gemeinsam Nettoperformance, Stresskosten, ältere Zeitfenster, Nachbarstabilität, 3×80-Risikospiegel und Reproduzierbarkeit. Maximale Rendite in nur einem Fenster, mehr Trades allein oder gelockerte Risikogrenzen begründen keine Übernahme. Live-Freigabe bleibt davon strikt getrennt.

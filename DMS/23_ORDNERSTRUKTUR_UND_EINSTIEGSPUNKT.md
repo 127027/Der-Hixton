@@ -27,7 +27,9 @@ Der-Hixton/
 │   │   ├── trades/                   # kleine/sanitisierte Tradeexports
 │   │   └── data_quality/             # Qualitätsnachweise
 │   ├── v2/                           # aktive Paper-V2: README, Snapshot, lokale Runs
-│   └── v3/                           # verworfener Mehrfachslot-Versuch, lokale Runs
+│   ├── v3/                           # verworfener Mehrfachslot-Versuch, lokale Runs
+│   ├── v4/                           # coinindividuelle Parameterprüfung, nicht aktiv
+│   └── v5/                           # Verlustdiagnose/Hixton-Schutzregeln, nicht aktiv
 ├── config/
 │   └── examples/                     # secretfreie Beispiele
 ├── ui/                               # TypeScript-Quelle und reproduzierbarer UI-Build
@@ -51,6 +53,7 @@ py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
 py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py backtest portfolio --strategy v3
+py -3 src/main.py backtest research --study v5 --output backtests/v5/runs/neuer-review/research.json
 py -3 src/main.py paper
 py -3 src/main.py live
 py -3 src/main.py ui
@@ -63,6 +66,7 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 - `backtests/v1`: erste freigegebene Backtestmethodik.
 - `backtests/v2`: aktive Pine-v6-Paperstrategie; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält lokale unveränderliche Läufe.
 - `backtests/v3`: verworfener Mehrfachslot-Versuch mit eigener README und eigenem Snapshot; lokale Runs werden nicht eingecheckt.
+- `backtests/v4` und `backtests/v5`: getrennte Forschungsberichte, jeweils ein README, ein kompakter Nachweis unter `reports/`, große lokale Rohberichte unter ignoriertem `runs/`. Keine aktivierbare Paperstrategie.
 - Reine Wiederholung mit gleichen Regeln erhält innerhalb derselben Version eine neue unveränderliche Run-ID unter `runs/`.
 - Ein gültiger Run wird nicht überschrieben oder nachträglich „verbessert“.
 - Jede Version referenziert Code-, Strategie-, Config- und Datenhash; V2 referenziert zusätzlich verpflichtend den Eigentümer-Pine-Hash.
@@ -89,7 +93,7 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 
 ## Neue Datei oder neuer Ordner
 
-Ab 05.09.2026 ergänzt ausschließlich `backtests/v4/` die bestehende Versionsstruktur: ein README, ein kompakter kuratierter Ergebnisnachweis unter `reports/`, große reproduzierbare Läufe unter dem ignorierten `runs/`. Das Forschungsmodul liegt in `src/hixton/backtest/research.py` und wird nur über `src/main.py backtest research` aufgerufen. `Startbot.bat` bleibt der einzige Windows-Starter.
+Ab 05.09.2026 ergänzen `backtests/v4/` und `backtests/v5/` die bestehende Versionsstruktur. Die Forschungsorganisation liegt in `src/hixton/backtest/research.py` (V4) und `coin_review.py` (V5); beide werden nur über `src/main.py backtest research` aufgerufen. Die V5-Filter-/Stopentscheidung liegt einmalig in `domain/trade_policy.py` und wird von Einzel- und Portfolioengine gemeinsam verwendet. Keine Kopie pro Coin, keine zweite produktive Signalengine. `Startbot.bat` bleibt der einzige Windows-Starter.
 
 Vor dem Anlegen wird geprüft:
 

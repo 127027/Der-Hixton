@@ -6,7 +6,7 @@ Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
-Prüfstand 05.09.2026 (DMS 1.4): Paper-Ausführung und Charts wurden korrigiert, die aktive V2-Strategie bleibt unverändert. Der neue [V4-Prüfbericht](backtests/v4/README.md) trennt das gute historische Dreijahresergebnis von Verlusten bei einem Neustart im jüngsten Testjahr. **Noch nicht live-reif.**
+Prüfstand 05.09.2026 (DMS 1.5): Paper-Ausführung und Charts wurden korrigiert, die aktive V2-Strategie bleibt unverändert. Der [V5-Einzelcoinbericht](backtests/v5/README.md) untersucht nun die Schwächen aller zehn Coins, individuelle Hixton-Filter/Stops und ihre Wirkung auf das gemeinsame Konto. V4 bleibt unveränderte Forschungshistorie. **Noch nicht live-reif.**
 
 Im Repository existiert genau ein menschlicher Programmstarter:
 
@@ -31,6 +31,7 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung; V2 ist für Paper freigegeben, wegen früher Risikohalts aber ausdrücklich nicht für Live.
 - Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V2 verteilt höchstens einen Slot je Coin.
+- Backtest v4/v5: begrenzte Coin-Parametersuche, Verlustdiagnose, getrennte Trainings-/Prüffenster, Original-Pine-Kontrolle und explizit versionierte Forschungsregeln; keine automatische Paperumschaltung.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
 ## Sichere Grenzen
@@ -56,6 +57,7 @@ py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDT
 py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py backtest portfolio --strategy v3
 py -3 src/main.py backtest research --output backtests/v4/runs/mein-neuer-review/research.json
+py -3 src/main.py backtest research --study v5 --output backtests/v5/runs/mein-neuer-review/research.json
 py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
@@ -64,7 +66,7 @@ Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Pa
 
 `live` beendet sich absichtlich mit einer Sperrmeldung.
 
-`backtest research` prüft ein festes Raster von 24 Parametervarianten je Coin, wählt ausschließlich anhand der ersten zwei Jahre und prüft anschließend das dritte Jahr. Es ändert weder Paperstrategie noch Kontostand. Ein vorhandener Ausgabeordner wird nicht überschrieben. Das dritte Jahr war bereits in älteren Untersuchungen enthalten und ist deshalb kein unangetasteter Holdout.
+`backtest research` verwendet standardmäßig den unveränderten V4-Versuch mit 24 Parametervarianten je Coin. `--study v5` untersucht bis zu 36 Kombinationen je Coin aus drei Hixton-Parameterbasen und zwölf klar beschriebenen Filtern/Stops. Auswahl ausschließlich im Training, danach exakte Einzel-/Portfoliovergleiche. V5 benötigt zusätzlich den im Bericht angegebenen älteren lokalen Datensatz. Beide Studien ändern weder Paperstrategie noch Kontostand; vorhandene Ergebnisdateien werden nicht überschrieben. Bereits betrachtete Prüfdaten werden ausdrücklich nicht als unangetasteter Holdout bezeichnet.
 
 Paper verwendet seit der Ausführungskorrektur `NEXT_BAR_OPEN_V1`: Signal ausschließlich auf geschlossener Kerze, modellierter Fill mit dem tatsächlichen nächsten Kerzen-Open plus Kosten. Der echte Verarbeitungszeitpunkt wird zusätzlich gespeichert. Das ist ein deterministischer Ausführungssimulator, noch kein Nachweis realer Binance-Fills oder realistisch gemessener Orderlatenz. Alte Ereignisse bleiben als Legacy erhalten; der technische Soak startet einmalig neu, Cash und Positionen bleiben bestehen.
 

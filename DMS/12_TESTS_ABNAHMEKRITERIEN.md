@@ -51,6 +51,8 @@
 - schlechter Coin und Verlusttrade bleiben im Bericht;
 - Zielstatus basiert auf Netto-, nicht Bruttoergebnis.
 
+V5-Forschungsnachweise in `tests/test_trade_policy.py`: Identitätsregel verändert weder Einzel- noch Portfolioergebnis; gefilterte Käufe werden nicht auf späteren grünen Bars nachgeholt; Stops reagieren nur auf Schlusskurse, nicht auf Dochte; Steigung verwendet ausschließlich vergangene VIDYA-Werte; zukünftige Kerzen verändern keine vergangenen Fills; Float-Screen/Decimal-Finalist sowie Einzel-/Portfolioentscheidung stimmen auf kontrollierten Fixtures überein. Nichttriviale Forschungsregeln benötigen ausdrücklich eine `HIXTON-V5-…`-Kennung und dürfen sich nicht als aktive V2 ausgeben. Diese Tests ersetzen keinen Paper-Nachweis der Forschungsregeln.
+
 ## Execution-/Recovery-Prüfungen
 
 - Retry nach Timeout erzeugt keine Doppelorder;

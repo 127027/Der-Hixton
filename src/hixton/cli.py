@@ -415,9 +415,10 @@ def build_parser() -> argparse.ArgumentParser:
     portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
     portfolio.add_argument("--strategy", choices=("v1", "v2", "v3"))
     research = backtest_commands.add_parser(
-        "research", help="begrenzte V4-Pruefung ohne Paperwechsel"
+        "research", help="begrenzte V4-/V5-Pruefung ohne Paperwechsel"
     )
     research.add_argument("--output", type=Path, required=True)
+    research.add_argument("--study", choices=("v4", "v5"), default="v4")
 
     paper = commands.add_parser("paper", help="24/7-Paper-Bot mit lokaler UI starten")
     paper.add_argument("--no-browser", action="store_true")
@@ -455,6 +456,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "backtest" and args.backtest_command == "portfolio":
             return command_backtest_portfolio(args, config)
         if args.command == "backtest" and args.backtest_command == "research":
+            if args.study == "v5":
+                from hixton.backtest.coin_review import run_coin_review
+
+                run_coin_review(config.database_path, args.output)
+                return 0
             from hixton.backtest.research import run_review
 
             run_review(config.database_path, args.output)

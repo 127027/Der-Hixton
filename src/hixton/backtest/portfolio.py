@@ -25,6 +25,7 @@ from hixton.domain.allocation import ONE_PER_SYMBOL, allocate_entry_slots
 from hixton.domain.models import Candle, Signal, SignalAction, StrategyParameters, StrategySemantics
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy, rank_strength
+from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 
 _HUNDRED = Decimal("100")
 
@@ -36,6 +37,7 @@ class _OpenTrade:
     quantity: Decimal
     cost_basis: Decimal
     slots: int
+    highest_close: float = 0.0
 
 
 def _d(value: float) -> Decimal:
@@ -75,6 +77,7 @@ def run_shared_portfolio_backtest(
     execution_rules: dict[str, ExecutionRules] | None = None,
     strategy_parameters: StrategyParameters | None = None,
     strategy_parameters_by_symbol: dict[str, StrategyParameters] | None = None,
+    trade_policies_by_symbol: dict[str, TradePolicy] | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
     slot_allocation: str = ONE_PER_SYMBOL,
@@ -90,6 +93,15 @@ def run_shared_portfolio_backtest(
         raise ValueError("report_start_utc must be before report_end_utc")
 
     parameters = strategy_parameters or StrategyParameters()
+    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(SYMBOLS):
+        raise ValueError("trade policies require all ten symbols")
+    if any(p != TradePolicy() for p in (trade_policies_by_symbol or {}).values()) and not (
+        strategy_version or ""
+    ).startswith("HIXTON-V5-"):
+        raise ValueError("research policies require an explicit HIXTON-V5 strategy version")
+    policy_gates = {
+        symbol: TradePolicyGate((trade_policies_by_symbol or {}).get(symbol)) for symbol in SYMBOLS
+    }
     if strategy_parameters_by_symbol is not None:
         if set(strategy_parameters_by_symbol) != set(SYMBOLS):
             raise ValueError("per-coin parameters require all ten symbols")
@@ -277,13 +289,24 @@ def run_shared_portfolio_backtest(
                     net_quantity,
                     quote_spend,
                     allocated_slots,
+                    float(fill_price),
                 )
                 fills.append(fill)
             pending = []
 
         points = {}
+        decisions = {}
         for symbol in SYMBOLS:
             points[symbol] = strategies[symbol].update(candles[symbol])
+            position = positions.get(symbol)
+            if position is not None:
+                position.highest_close = max(position.highest_close, candles[symbol].close)
+            decisions[symbol] = policy_gates[symbol].decide(
+                points[symbol],
+                entry_price=float(position.fill.fill_price) if position else None,
+                entry_atr=position.signal.atr if position else 0.0,
+                highest_close=position.highest_close if position else 0.0,
+            )
         if in_report:
             max_concurrent = max(
                 max_concurrent,
@@ -313,12 +336,13 @@ def run_shared_portfolio_backtest(
 
             new_pending: list[Signal] = []
             for symbol in SYMBOLS:
-                new_signal = strategies[symbol].signal_for(
-                    points[symbol], is_long=symbol in positions
-                )
+                new_signal = decisions[symbol].signal
                 if new_signal is None:
                     continue
                 signals.append(new_signal)
+                if decisions[symbol].block_reason:
+                    blocked.append(f"{new_signal.signal_id}:{decisions[symbol].block_reason}")
+                    continue
                 if new_signal.action is SignalAction.ENTER_LONG and apply_risk_limits:
                     if risk_state.halted:
                         blocked.append(
