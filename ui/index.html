@@ -1,0 +1,162 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark" />
+    <title>Der Hixton</title>
+  </head>
+  <body>
+    <div id="app-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <span class="brand-mark">HX</span>
+          <div><strong>DER HIXTON</strong><small>TRADING SYSTEM</small></div>
+        </div>
+        <nav aria-label="Hauptnavigation">
+          <button class="nav-item active" data-target="overview">Übersicht</button>
+          <button class="nav-item" data-target="chart-panel">Chart & Signale</button>
+          <button class="nav-item" data-target="positions">Positionen & Orders</button>
+          <button class="nav-item" data-target="backtests">Backtests</button>
+          <button class="nav-item" data-target="quality">Datenqualität</button>
+          <button class="nav-item" data-target="system">System & Logs</button>
+          <button class="nav-item" data-target="settings">Einstellungen</button>
+          <button class="nav-item" data-target="documentation">Dokumentation</button>
+        </nav>
+        <div class="sidebar-foot">
+          <span id="connection-dot" class="status-dot"></span>
+          <span id="connection-label">Verbinde …</span>
+        </div>
+      </aside>
+
+      <main>
+        <header class="topbar">
+          <div>
+            <p id="active-strategy-label" class="eyebrow">BINANCE SPOT · 1H · STRATEGIE WIRD GELADEN</p>
+            <h1 id="page-title">Übersicht</h1>
+          </div>
+          <div class="status-cluster">
+            <span class="mode-pill paper">PAPER</span>
+            <span class="mode-pill disabled">LIVE_DISABLED</span>
+            <span id="health-pill" class="health-pill starting">STARTING</span>
+          </div>
+        </header>
+
+        <section id="overview" class="page active">
+          <div id="runtime-banner" class="runtime-banner loading">
+            <div><span class="pulse"></span><strong id="runtime-message">Startup-Prüfungen laufen</strong></div>
+            <small id="runtime-detail">Die UI bleibt sichtbar, während die zehn Märkte geprüft werden.</small>
+          </div>
+          <div class="metric-grid">
+            <article class="metric-card"><span>Paper Equity</span><strong id="metric-equity">—</strong><small>USDT</small></article>
+            <article class="metric-card"><span>Freier Cash</span><strong id="metric-cash">—</strong><small>USDT</small></article>
+            <article class="metric-card"><span>Freie Slots</span><strong id="metric-slots">—</strong><small>von 3</small></article>
+            <article class="metric-card"><span>Drawdown</span><strong id="metric-drawdown">—</strong><small>20 % Haltgrenze</small></article>
+          </div>
+          <div class="section-heading">
+            <div><p class="eyebrow">MARKTUNIVERSUM</p><h2>Alle zehn Kryptowährungen</h2></div>
+            <button id="sync-button" class="button secondary">Jetzt prüfen</button>
+          </div>
+          <div id="market-grid" class="market-grid" aria-live="polite"></div>
+        </section>
+
+        <section id="chart-panel" class="page">
+          <div class="section-heading chart-heading">
+            <div><p class="eyebrow">CHART & SIGNALE</p><h2><span id="chart-symbol">BTC/USDT</span></h2></div>
+            <div class="chart-controls">
+              <select id="coin-select" aria-label="Coin auswählen"></select>
+              <select id="timezone-select" aria-label="Zeitzone">
+                <option value="Europe/Berlin">Europe/Berlin</option>
+                <option value="UTC">UTC</option>
+              </select>
+              <label class="toggle"><input id="overlay-toggle" type="checkbox" checked /><span></span> Overlays</label>
+            </div>
+          </div>
+          <div class="range-bar" role="group" aria-label="Chartzeitraum">
+            <button data-range="today">Heute</button><button data-range="1w">1 Woche</button>
+            <button data-range="1m" class="active">1 Monat</button><button data-range="1y">1 Jahr</button>
+            <button data-range="3y">3 Jahre</button>
+            <span id="resolution-label">Trading 1h · Anzeige 1h</span>
+          </div>
+          <article class="chart-card">
+            <div id="chart-loading" class="chart-loading">Chart wird geladen …</div>
+            <div id="chart" aria-label="Candlestick-Chart"></div>
+            <div id="chart-tooltip" class="chart-tooltip hidden"></div>
+          </article>
+          <div class="legend">
+            <span><i class="legend-line vidya"></i>VIDYA</span>
+            <span><i class="legend-line band"></i>ATR-Bänder</span>
+            <span><i class="legend-marker buy"></i>Kaufsignal</span>
+            <span><i class="legend-marker sell"></i>Verkaufssignal</span>
+            <span><i class="legend-marker fill"></i>Paper-Fill</span>
+          </div>
+          <article class="table-card chart-signal-table">
+            <h3>Letzte Signale im gewählten Zeitraum <small id="chart-signal-count">0 Signale</small></h3>
+            <div class="table-scroll"><table><thead><tr><th>Signalkerze</th><th>Aktion</th><th>Preis</th><th>Ausbruch</th><th>Signal-ID</th></tr></thead><tbody id="chart-signals-body"></tbody></table></div>
+          </article>
+        </section>
+
+        <section id="positions" class="page">
+          <div class="section-heading"><div><p class="eyebrow">PAPER-LEDGER</p><h2>Positionen & Ereignisse</h2></div></div>
+          <div id="position-cards" class="position-grid"></div>
+          <article class="table-card"><h3>Letzte Signale, Fills und Blockaden</h3><div class="table-scroll">
+            <table><thead><tr><th>Zeit (Europe/Berlin)</th><th>Coin</th><th>Aktion</th><th>Status</th><th>Preis</th><th>Grund / PnL</th></tr></thead><tbody id="events-body"></tbody></table>
+          </div></article>
+        </section>
+
+        <section id="backtests" class="page">
+          <div class="section-heading"><div><p id="backtest-eyebrow" class="eyebrow">BACKTEST V1</p><h2 id="backtest-title">10×250 USDT oder Einzeltest</h2></div></div>
+          <article class="action-card">
+            <div><strong>Historischer Test</strong><p>Drei Jahre, 400 Warm-up-Bars, Baseline und Stress, Next-Bar-Open.</p></div>
+            <select id="backtest-strategy"><option value="v2">V2 · aktives Paper</option><option value="v1">V1 · Historie</option><option value="v3">V3 · Mehrfachslot verworfen</option></select>
+            <select id="backtest-symbol"><option value="PORTFOLIO">Gemeinsames 3×80-Portfolio</option><option value="ALL">10×250 isoliert</option></select>
+            <button id="backtest-button" class="button primary">Backtest starten</button>
+          </article>
+          <div id="backtest-runs" class="run-list"></div>
+          <article class="table-card backtest-detail">
+            <h3><span id="backtest-detail-title">Letzter Run · Baseline</span> <small>Netto nach Kosten</small></h3>
+            <div class="table-scroll"><table><thead><tr><th>Coin</th><th>Start</th><th>Ende</th><th>Rendite</th><th>Trades</th><th>Max. Drawdown</th><th>Buy & Hold Ende</th></tr></thead><tbody id="backtest-detail-body"></tbody></table></div>
+          </article>
+        </section>
+
+        <section id="quality" class="page">
+          <div class="section-heading"><div><p class="eyebrow">DATENQUALITÄT</p><h2>Drei Jahre plus Warm-up</h2></div></div>
+          <article class="table-card"><div class="table-scroll"><table><thead><tr><th>Coin</th><th>Status</th><th>Bars</th><th>Von</th><th>Bis</th><th>Lücken</th></tr></thead><tbody id="quality-body"></tbody></table></div></article>
+        </section>
+
+        <section id="system" class="page">
+          <div class="section-heading"><div><p class="eyebrow">24/7-BETRIEB</p><h2>System & Scheduler</h2></div></div>
+          <div id="system-grid" class="details-grid"></div>
+          <article class="table-card system-log-table">
+            <h3>Strukturierte Laufzeitereignisse <small>maximal 250 sichtbar</small></h3>
+            <div class="table-scroll"><table><thead><tr><th>Zeit (UTC)</th><th>Level</th><th>Komponente</th><th>Eventcode</th><th>Meldung</th><th>Korrelations-ID</th></tr></thead><tbody id="runtime-logs-body"></tbody></table></div>
+          </article>
+        </section>
+
+        <section id="settings" class="page">
+          <div class="section-heading"><div><p class="eyebrow">KONTROLLIERTE ÄNDERUNG</p><h2>Paper-Einstellungen</h2></div></div>
+          <article class="settings-card">
+            <label>Positionsslots<input id="slot-input" type="number" min="1" max="24" value="3" /></label>
+            <label>Zielnotional je neuem Entry (USDT)<input id="notional-input" type="number" min="5" step="0.01" value="80.00" /></label>
+            <label class="danger-toggle"><input id="emergency-input" type="checkbox" /> Not-Aus: neue Entries blockieren</label>
+            <p>Slots × Zielnotional darf 240 USDT nicht überschreiten. Änderungen gelten nur für neue Einstiege.</p>
+            <button id="settings-button" class="button primary">Mit „ANWENDEN“ bestätigen</button>
+          </article>
+        </section>
+
+        <section id="documentation" class="page">
+          <div class="section-heading"><div><p class="eyebrow">VERSIONEN & WAHRHEIT</p><h2>Dokumentation</h2></div></div>
+          <div class="doc-grid">
+            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/00_DOKUMENTENLENKUNG_UND_START.md" target="_blank"><strong>DMS Einstieg</strong><span>Dokumentenlenkung und Lesereihenfolge</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/03_STRATEGIE_HIXTON.md" target="_blank"><strong>HIXTON-SPEC-1.0</strong><span>Formeln, Warm-up und Signale</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/08_UI_UX_SPEZIFIKATION.md" target="_blank"><strong>UI-Spezifikation</strong><span>Ansichten und Akzeptanz</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/20_BETRIEBSRUNBOOK.md" target="_blank"><strong>Betriebsrunbook</strong><span>Start, Recovery und Not-Aus</span></a>
+          </div>
+          <article class="version-card"><span>Bot</span><strong id="doc-app-version">—</strong><span>Strategie</span><strong>HIXTON-SPEC-1.0</strong><span>Live</span><strong class="negative">DEAKTIVIERT</strong></article>
+        </section>
+      </main>
+    </div>
+    <div id="toast" class="toast hidden" role="status"></div>
+    <script type="module" src="/src/main.ts"></script>
+  </body>
+</html>

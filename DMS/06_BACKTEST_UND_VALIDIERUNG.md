@@ -2,7 +2,7 @@
 
 ## Ziel
 
-Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß `HIXTON-SPEC-1.0` reagiert; danach reproduzierbar messen, wie diese unveränderte Strategie unter realistischen Kosten abgeschnitten hätte. Ein zusätzlicher Vergleich mit einem später rechtmäßig verfügbaren Hersteller-Indikator ist zulässig, aber keine Voraussetzung für die Projektspezifikation. Der Backtest beweist keine zukünftige Profitabilität.
+Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß der ausgewählten, versionierten Strategie reagiert; danach reproduzierbar messen, wie diese unveränderte Version unter realistischen Kosten abgeschnitten hätte. V1 referenziert `HIXTON-SPEC-1.0`, V2 die vom Eigentümer bereitgestellte Pine-v6-Datei und einen eingefrorenen Parameter-Snapshot. Der Backtest beweist keine zukünftige Profitabilität.
 
 ## Testfenster
 
@@ -24,7 +24,7 @@ Für regelmäßige Neubewertung wird ein rollierendes 3-Jahres-Fenster verwendet
 2. Standard-Batch mit zehn isolierten Einzeltests à 250 USDT;
 3. Einzelmodus für ein frei gewähltes Paar, zum Beispiel nur ETH/USDT, mit 250 USDT;
 4. Vergleichsaggregation der zehn isolierten Ergebnisse (2.500 USDT rechnerisches Simulationskapital, kein gemeinsamer Cashpool);
-5. optionaler Paper-/Live-Spiegellauf mit gemeinsam 240 USDT und höchstens drei 80-USDT-Slots;
+5. Paper-/Live-Spiegellauf mit gemeinsam 240 USDT und höchstens drei 80-USDT-Slots;
 6. Buy-and-Hold-Benchmark je Coin;
 7. Sensitivität gegenüber Kosten und Slippage;
 8. Walk-forward-/Out-of-sample-Prüfung, falls Parameter überhaupt abgestimmt werden;
@@ -43,7 +43,7 @@ Die Engine verwendet eine feste Reihenfolge:
 
 Damit kann der Schlusskurs einer Bar nicht gleichzeitig rückwirkend als Fillpreis derselben Entscheidung dienen.
 
-## Verbindliches Kostenmodell V1
+## Verbindliches Kostenmodell
 
 Alle Werte gelten je ausgeführter Orderseite und wirken immer zu Ungunsten der Strategie.
 
@@ -89,12 +89,14 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Batch: zehn Resultate mit je 250 USDT werden einzeln gezeigt und nur zum Vergleich summiert;
 - Einzelmodus: Coin-Auswahl, zum Beispiel ETH, darf ohne die übrigen neun ausgeführt werden;
 - Spiegelportfolio: gemeinsamer Cashpool 240 USDT, drei 80-USDT-Slots und dokumentierte Slotpriorisierung;
+- Im Spiegelportfolio werden Ausstiege am nächsten Bar-Open vor Einstiegen verarbeitet. Gleichzeitige Einstiege werden nach normalisierter Ausbruchsstärke und danach in der festen DMS-Coinreihenfolge sortiert. Blockierte Signale werden nicht später künstlich nachgeholt;
+- Der echte Paper-/Live-Spiegel wendet zusätzlich dieselbe 5-%-UTC-Tagesverlustpause und denselben persistenten 20-%-High-Water-Drawdown-Halt wie die Paperengine an. Ein Lauf ohne diese Gates heißt ausdrücklich `strategy-only` und darf nicht als Paper-/Live-Ergebnis bezeichnet werden;
 - keine Verwechslung zwischen rechnerischer Batchsumme und realistischem gemeinsamen Cashbestand;
 - Equity nach gemeinsamer UTC-Zeitachse;
 - Korrelationen der Tagesrenditen;
 - Beitrag jedes Coins zu PnL und Drawdown;
 - maximale gleichzeitig investierte Summe;
-- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; kein festes 250-/500-USDT-Ziel.
+- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; 250→500 USDT je Coin darf als Wunschziel ausgewiesen werden, aber nie als Garantie oder Grund zum Verbergen schlechter Ergebnisse.
 
 ## Validierungsdesign und Anti-Overfitting
 
@@ -106,6 +108,9 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Sensitivität prüft Nachbarparameter; ein nur an einem exakten Punkt gutes Ergebnis gilt als fragil.
 - Monte-Carlo/Trade-Reordering kann als Robustheitsanalyse dienen, ersetzt aber keine Marktzeitsimulation.
 - Die Strategie wird nicht so lange verändert, bis ein gewünschter Gewinnwert erscheint.
+- Jede Verbesserung erhält `backtests/v2`, `v3` usw.; der aktive Paperstand wird nur nach explizitem, auditierbarem Wechsel vorwärtsgerichtet ersetzt.
+- Ein gemeinsamer Parametersatz für alle zehn Coins wird vor Coin-spezifischen Sonderwerten bevorzugt, solange kein sauberer Out-of-sample-Nachweis die zusätzliche Komplexität rechtfertigt.
+- Höhere Tradezahl ist nur ein Sekundärkriterium, wenn Baseline, Kosten-Stress, ältere Marktphasen und Nachbarparameter mindestens gleich robust bleiben.
 
 ## Mindest-Gates für fachliche Freigabe
 
@@ -122,4 +127,24 @@ Ein Backtest ist nur `VALID`, wenn:
 
 ## Ergebnisinterpretation
 
+Der UI-Portfoliovergleich übernimmt die aktuell gespeicherte Paper-Slotanzahl und das Zielnotional, startet aber ein neues simuliertes Konto mit 240 USDT. Er übernimmt weder aktuelle offene Positionen noch bisherige Papergewinne. Sein Endzeitpunkt wird aus der letzten für alle zehn Coins vorhandenen geschlossenen Kerze bestimmt, nicht blind aus der Wanduhr.
+
+V4-Prüfung vom 05.09.2026: 24 begrenzte Parametervarianten je Coin, Auswahl anhand der schlechtesten Stressrendite der ersten beiden einzeln gestarteten Trainingsjahre, danach festgehaltener Vergleich im dritten Jahr. Exakte Finalisten verwenden die produktiven Decimal-Engines. Zusätzlich wird eine getrennte, vereinfachte Nachkaufhypothese getestet. Ergebnisse und Grenzen stehen einmalig in `backtests/v4/README.md`; weder diese Hypothese noch der coinindividuelle Kandidat ist aktiv. Ein hoher Gesamtwert bei Verlusten im jüngsten Neustartfenster rechtfertigt keine Übernahme.
+
 Korrekte Botreaktion und Profitabilität sind zwei verschiedene Ergebnisse. Korrekte Software kann Verlust ausweisen. Dann wird die Strategie nicht still verändert; der Eigentümer entscheidet separat über eine neue Strategieversion. Hohe Tradezahl wird nur positiv bewertet, wenn die Nettoperformance nach Binance-Gebühren und Slippage nicht dadurch verschlechtert wird.
+
+V5 ergänzt die Einzelcoin-Verlustdiagnose und bis zu 36 vorab begrenzte Kombinationen aus Original-Pine, V2-/V4-Trainingsparametern und Hixton-basierten Einstiegsfiltern bzw. Schlusskurs-ATR-Stops. Identische Parameterbasen werden dedupliziert: 348 Kandidaten insgesamt. Zwei separat gestartete Trainingsjahre bestimmen je Coin einen Finalisten; jüngstes Jahr und älteres Fenster ändern diese Auswahl nicht. Die XRP-Einzeländerungs-/Nachbarprüfung ist offen als nachträgliche Diagnose gekennzeichnet. Regeln, sämtliche Coins, Rückschritte und gemeinsame Portfoliowerte stehen in `backtests/v5/README.md`. Stops sind neue Forschung, nicht stillschweigend Teil der Original-Pine- oder aktiven Paperlogik.
+
+V5-Finalisten rechnen in denselben Decimal-Backtestengines wie V2, verwenden aber explizit andere Regeln. Eine funktionierende Forschungs-Backtestausführung ist **kein** Nachweis, dass diese neuen Regeln bereits im Paper implementiert oder aktiviert wären. Vor einer Übernahme wären Paper-/Restart-/Chart-Parität dieser Regeln und ein neuer versionierter Vorwärtslauf erforderlich. Endkapital, realisierter Gewinn und offene Bewertung werden getrennt ausgewiesen.
+
+## Auswahl- und Übernahmeprinzip
+
+Der Zweck der Backtests ist nicht nur Archivierung: Eine nach dem vollständigen Prüfprogramm besser belegte, zulässige Version soll nach ausdrücklicher Eigentümerentscheidung als Paperstandard übernommen werden. Bewertet werden gemeinsam Nettoperformance, Stresskosten, ältere Zeitfenster, Nachbarstabilität, 3×80-Risikospiegel und Reproduzierbarkeit. Maximale Rendite in nur einem Fenster, mehr Trades allein oder gelockerte Risikogrenzen begründen keine Übernahme. Live-Freigabe bleibt davon strikt getrennt.
+
+## V2-Zyklus und Paperfreigabe
+
+Der Stand vom 02.09.2026 ist vollständig in `backtests/v2/README.md` und maschinenlesbar in `backtests/v2/candidate.json` dokumentiert. Der Zyklus umfasste ein breites Raster von 1.280 gemeinsamen Parametersätzen, eine Mehrfensterprüfung von 75 Finalisten, 48 Nachbarvarianten, Baseline-/Stresskosten und erneute Rechnung der Finalisten in der Produktionsengine. Im exakt gleichen aktuellen 3×80-Risikospiegel übertraf V2 V1: 542,49 statt 383,89 USDT Baseline und 406,29 statt 343,47 USDT Stress. Der Eigentümer gab V2 deshalb als bestbelegten bisherigen Stand für Paper frei. Ältere Verlustfenster und vorzeitige Risikohalts bleiben offen ausgewiesen und sperren weiterhin Live.
+
+## V3-Mehrfachslot-Versuch
+
+`HIXTON-V3-SLOT-CANDIDATE-1` ließ bei unveränderten V2-Signalen freie Slots auf demselben Coin wiederholen. Im aktuellen Dreijahres-Risikospiegel endete der Lauf `76a78440-405a-4624-bc0b-7765558b801c` bereits am 12.10.2023: 287,85 USDT Baseline beziehungsweise 282,16 USDT Stress, jeweils nur vier abgeschlossene Positionen. Weil diese Variante V2 deutlich untertraf und das Konzentrationsrisiko sofort auslöste, wurde sie am ersten Gate verworfen; weitere Altfensterrechnungen wären keine sinnvolle Nutzung von Rechenzeit. Der vollständige kuratierte Nachweis liegt unter `backtests/v3`.

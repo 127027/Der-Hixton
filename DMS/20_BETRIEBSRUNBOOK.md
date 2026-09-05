@@ -1,5 +1,15 @@
 # 20 – Betriebsrunbook
 
+## Aktueller Übergabestand 05.09.2026
+
+Anwendung 0.2.1 läuft auf dem Laptop über die einzige `Startbot.bat`; Strategie bleibt V2, drei Slots à 80 USDT, Live gesperrt. DMS 18 enthält Backup, Neustartnachweis und die beiden frisch aus der UI gestarteten Run-IDs. Der technische Soak startete wegen der Ausführungskorrektur einmalig neu. Alte Positionen und Trades dürfen dafür **nicht** gelöscht oder zu besseren Kursen umgebucht werden.
+
+Neuester Forschungsstand DMS 1.5: V5 untersucht alle zehn Coins einzeln. Zuerst `backtests/v5/README.md` einschließlich Rückschritten und realisiertem/offenem PnL lesen; nicht nur den hohen Dreijahres-Portfolioendwert übernehmen. Forschung über `backtest research --study v5` ändert keine Einstellungen und ist keine neue UI-Strategieauswahl. Keine riskanten Kontoresets oder Soak-Neustarts allein für einen Forschungsbericht. Für eine Fortsetzung durch GPT/Codex sind Versuchskatalog, Rohbericht-Hash, Quell-/Datenhashes und nächste fachliche Schritte im V5-Nachweis festgehalten.
+
+Bei „handelt zu wenig“ zuerst freie Slots, offene Positionen, letzten **neuen** Trendwechsel und den Blockierungsgrund unter Positionen/Orders prüfen. Ein grüner Dauertrend ist kein erneuter Entry; mehrere Slots im selben Coin sind weiterhin nicht freigegeben. Zum Zeitpunkt des Updates waren ADA, DOGE und ETH gleichzeitig offen.
+
+Für eine Verzögerungsprüfung tatsächlichen Verarbeitungszeitpunkt (`/api/paper/events`: `processed_at_utc`) und modellierte Fillzeit (`occurred_at_utc`) getrennt lesen. `LEGACY_CLOSE_OR_MIGRATION` besitzt keinen neuen Latenznachweis. Datenqualität muss die gerade abgeschlossene Stunde zeigen; nach zwei Minuten fehlende Kerzen sind ein Recoveryfall. Modellexits alter Einstiege zählen nicht als vollständige neue Soak-Trades. Der private Orderadapter, Reconciliation und ein realistischer Ausführungs-/Restore-/Störungsnachweis bleiben vor Echtgeld offen.
+
 ## Vor jedem ersten Start
 
 1. Modus `BACKTEST` oder `PAPER`; `LIVE` aus.
@@ -35,6 +45,22 @@ Dieser Check wird im Livebetrieb protokolliert. „Keine Warnung gesehen“ ist 
 7. Versionen/Config-Diff kontrollieren;
 8. erst danach vorherigen Modus explizit wieder freigeben.
 
+## Kontrollierter Paper-Strategiewechsel
+
+Ein Strategiewechsel ist kein normaler Neustart und erfolgt nie über die Backtestauswahl.
+
+1. ausdrückliche Eigentümerentscheidung und Zielversion im Entscheidungslog prüfen;
+2. laufenden Paperprozess geordnet stoppen und lokale SQLite-Datei sichern;
+3. Code, Konfiguration, DMS, Golden-Tests und Ziel-Backtests auf denselben Commit bringen;
+4. Daten für alle zehn Märkte vollständig synchronisieren und auditieren;
+5. einmalig über den einzigen Einstieg `py -3 src/main.py paper-activate --strategy v2 --confirmation AKTIVIEREN` migrieren;
+6. kontrollierte Schließungen alter Paperpositionen, Auditdatensatz, neue Strategie-Session, Start-Equity und zurückgesetzten Soak prüfen;
+7. Bot ausschließlich in Paper starten; ein Versionskonflikt muss den Start blockieren;
+8. Header, Systemkarte, Ledger, zehn Märkte und alle Chartzeiträume prüfen;
+9. `LIVE_DISABLED` muss unverändert sichtbar und technisch erzwungen sein.
+
+Die Migration löscht keine alten Ereignisse. Eine Wiederholung auf dieselbe aktive Version ist idempotent. Ein Wechsel zurück benötigt eine neue ausdrückliche Entscheidung; keine Datenbankdatei wird manuell umgeschrieben.
+
 ## Stream oder Datenfeed stale
 
 Auslöser: 90 Sekunden ohne Streamupdate oder finale 1h-Bar mehr als 120 Sekunden nach geplantem Schluss nicht verfügbar.
@@ -69,13 +95,15 @@ Ein nach 30 Sekunden verbleibender Teilfill-Rest wird nach Statusklärung storni
 - Keine der beiden Grenzen liquidiert Positionen automatisch.
 - Vor manueller Wiederaufnahme nach Drawdown: Ursachen-, Ledger-, Daten- und Konfigurationsprüfung, Incidentabschluss und ausdrückliche Eigentümerfreigabe.
 
-## Telegram-Kanal gestört
+## Lokale Alarmanzeige oder Log gestört
 
-1. Fehler in UI und Log sichtbar machen;
-2. bei Liveausfall über fünf Minuten `DEGRADED` setzen und neue Entries pausieren;
-3. Token/Ziel nur über Secret-Referenz prüfen, nie ausgeben;
-4. Testalarm senden und Empfang bestätigen;
+1. Botstatus direkt über die lokale Status-API und Datenbank nur lesend prüfen;
+2. bei Ausfall der UI **oder** des strukturierten Logs `DEGRADED` setzen und neue Entries pausieren;
+3. Ursache in API, Dateisystem, Datenbank und Browserkonsole prüfen;
+4. P1-Testereignis auslösen und Sichtbarkeit in UI sowie Log bestätigen;
 5. erst danach Entries wieder freigeben.
+
+Telegram ist kein Pflichtbestandteil. Ein später optionaler externer Alarmkanal wird als Zusatz behandelt und darf die lokalen Pflichtnachweise nicht ersetzen.
 
 ## Positions-/Saldodifferenz
 

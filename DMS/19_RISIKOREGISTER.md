@@ -4,7 +4,7 @@ Bewertung: Eintritt `N/M/H`, Auswirkung `N/M/H`. Das Register beschreibt Risiken
 
 | ID | Risiko | Eintritt | Auswirkung | Prävention/Erkennung | Reaktion | Owner |
 |---|---|---:|---:|---|---|---|
-| R-001 | Projektstrategie wird fälschlich als identisch mit einem nicht einsehbaren Hersteller-Pine dargestellt | M | H | eindeutiger Name `HIXTON-SPEC-1.0`, Golden-Daten, keine Herstellerparitätsbehauptung | Aussage korrigieren; späteren rechtmäßigen Source nur versioniert vergleichen | Strategie |
+| R-001 | V1, Eigentümer-Pine-V2 und ein nicht separat nachgewiesenes Herstellerprodukt werden fälschlich gleichgesetzt | M | H | getrennte Versionsnamen, Pine-Hash, Golden-Daten, keine Herkunftsbehauptung | Aussage korrigieren; Version/Runs nicht rückwirkend umdeuten | Strategie |
 | R-002 | Repainting/Look-ahead | M | H | Bar-Close-Regel, Replay=Batch, Code-Review | Ergebnisse ungültig, Live sperren | Strategie/QA |
 | R-003 | Datenlücke erzeugt falsches Signal | M | H | Raster-/Freshness-Audit, Symbolpause | nachladen, neu validieren, keine Nachholorder | Daten |
 | R-004 | Provider korrigiert Historie | M | M | Datenrevision/Hash | Runs stale markieren, neu rechnen | Daten/Backtest |
@@ -32,6 +32,8 @@ Bewertung: Eintritt `N/M/H`, Auswirkung `N/M/H`. Das Register beschreibt Risiken
 | R-026 | rohe Tradezahl wird über Nettoprofit gestellt und erzeugt Gebührenverluste | M/H | H | Nettoprofit nach Kosten als Primärziel | Variante verwerfen, Priorität korrigieren | Produkt/Backtest |
 | R-027 | mehr gleichzeitige Kaufsignale als drei freie Slots | H | M/H | deterministische Priorisierung und verpasste-Signale-Report | keine willkürliche Auswahl/Nachholorder | Strategie/Portfolio |
 | R-028 | Backtestkapital 10×250 wird mit Paperkapital 240 verwechselt | M | H | getrennte Run-Modi, Ledgers und UI-Badges | Run invalidieren/korrigieren | QA/UI |
+| R-029 | Mehrere Slots auf demselben Signal erhöhen Konzentration, aber nicht die Zahl unabhängiger Trades | H | H | eigene Strategieversion, 3×80-Risikospiegel, keine automatische Aktivierung | Challenger verwerfen; aktive Ein-Slot-Regel beibehalten | Strategie/Risiko |
+| R-030 | Paperledger und konfigurierte Strategieversion werden nach Wechsel vermischt | N | H | persistente Sessionversion, atomare Migration, Fail-closed-Startprüfung, versionierte Events | Bot gestoppt lassen, Backup einspielen oder explizite Migration wiederholen | Paper/Operations |
 
 ## Reviewtakt
 

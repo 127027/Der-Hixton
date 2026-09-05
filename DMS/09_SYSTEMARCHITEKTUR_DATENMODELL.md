@@ -34,7 +34,7 @@ Die Systeme sind getrennte Laufmodi und Ledgers, aber keine getrennten Kopien de
 | UI | Dashboard, Chart, Reports, Einstellungen |
 | Observability | Logs, Metriken, Health und Alerts |
 
-## Verbindlicher Referenzstack für V1
+## Verbindlicher Referenzstack
 
 - Python-3-Service für Domain, Backtest und Adapter;
 - lokale relationale Datenbank, initial SQLite im WAL-Modus; Migration auf PostgreSQL möglich;

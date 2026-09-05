@@ -2,20 +2,23 @@
 
 ## Verbindliches Prinzip
 
-Das Projekt besitzt genau **eine zentrale menschliche Startdatei** im Repository: `/README.md`.
+Das Projekt besitzt genau **eine zentrale menschliche Lesestartdatei**: `/README.md`, und genau **einen ausführbaren Windows-Starter**: `/Startbot.bat`.
 
-Die spätere Anwendung besitzt genau **einen technischen Einstiegspunkt**: `/src/main.py` oder ein einziges daraus gebautes Kommando. Backtest, Paper und Live werden als Modi dieses Einstiegs ausgeführt. Es werden keine parallelen Hauptskripte wie `start_backtest.py`, `paper_bot.py`, `live_bot.py`, `run_ui.py` oder durchnummerierte Kopien im Hauptordner angelegt.
+Die Anwendung besitzt genau **einen technischen Einstiegspunkt**: `/src/main.py`. `Startbot.bat` enthält keine zweite Botlogik, sondern bereitet ausschließlich die lokale Python-Umgebung vor und delegiert an `src/main.py start`. Backtest, Paper, UI und der sicher gesperrte Live-Modus sind Modi dieses Einstiegs. Parallele Hauptskripte wie `start_backtest.py`, `paper_bot.py`, `live_bot.py`, `run_ui.py`, weitere `.bat`-Starter oder durchnummerierte Kopien sind verboten.
 
 ## Verbindliche Struktur
 
 ```text
 Der-Hixton/
 ├── README.md                         # einziger Projektstart
+├── Startbot.bat                      # einziger Windows-Starter, delegiert an src/main.py
+├── pyproject.toml                    # Python-Paket und gepinnte Laufzeitabhängigkeiten
 ├── .gitignore
+├── .gitattributes                    # byte-stabile LF-Zeilenenden für gehashte Pine-Quelle
 ├── DMS/                              # verbindliche Dokumentation
 ├── strategy/
 │   ├── source_material/              # unveränderte Eingangsquellen
-│   └── pine/                         # optionaler, rechtmäßig veröffentlichbarer Vergleichs-Source
+│   └── pine/                         # einmalige Eigentümer-Pine-Referenz für V2
 ├── backtests/
 │   ├── v1/
 │   │   ├── manifest-template.yaml
@@ -23,39 +26,50 @@ Der-Hixton/
 │   │   ├── reports/                  # freigegebene Berichte
 │   │   ├── trades/                   # kleine/sanitisierte Tradeexports
 │   │   └── data_quality/             # Qualitätsnachweise
-│   ├── v2/                           # erst bei neuer Methodik anlegen
-│   └── v3/                           # erst bei Bedarf anlegen
+│   ├── v2/                           # aktive Paper-V2: README, Snapshot, lokale Runs
+│   ├── v3/                           # verworfener Mehrfachslot-Versuch, lokale Runs
+│   ├── v4/                           # coinindividuelle Parameterprüfung, nicht aktiv
+│   └── v5/                           # Verlustdiagnose/Hixton-Schutzregeln, nicht aktiv
 ├── config/
 │   └── examples/                     # secretfreie Beispiele
-├── src/                              # spätere Anwendung
-│   └── main.py                       # später einziger technischer Einstieg
+├── ui/                               # TypeScript-Quelle und reproduzierbarer UI-Build
+├── src/                              # implementierte Anwendung
+│   ├── main.py                       # einziger technischer Einstieg
+│   └── hixton/                       # Domain, Daten, Backtest, Paper, Runtime und UI/API
 └── tests/                            # Tests, Golden-Daten und Fixtures
 ```
 
-Nicht versionierte Laufzeitdaten liegen später in ignorierten Verzeichnissen wie `data/`, `runtime/`, `logs/` und `backups/`.
+Nicht versionierte Laufzeitdaten liegen in ignorierten Verzeichnissen wie `data/`, `runtime/`, `logs/` und `backups/`. Dazu gehören die beim Start und beim täglichen Audit automatisch ergänzten `1h`-Kerzen sowie die SQLite-Datenbank. `1m` in der UI bedeutet einen Monat und erzeugt keinen zweiten 1-Minuten-Datenbestand.
 
 ## Ein einziger Programmstart
 
-Vorgesehene spätere Bedienform:
+Verbindliche Bedienform:
 
 ```text
-hixton backtest --version v1 --all
-hixton backtest --version v1 --symbol ETHUSDT
-hixton paper
-hixton live
-hixton ui
+Startbot.bat
+py -3 src/main.py backtest all
+py -3 src/main.py backtest single --symbol ETHUSDT
+py -3 src/main.py backtest portfolio
+py -3 src/main.py backtest all --strategy v2
+py -3 src/main.py backtest portfolio --strategy v2
+py -3 src/main.py backtest portfolio --strategy v3
+py -3 src/main.py backtest research --study v5 --output backtests/v5/runs/neuer-review/research.json
+py -3 src/main.py paper
+py -3 src/main.py live
+py -3 src/main.py ui
 ```
 
-Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations-/Strategieengine. `live` bleibt technisch gesperrt, bis die Live-Gates bestanden sind. Die Beispiele beschreiben nur die Zielstruktur; sie implementieren noch keinen Bot.
+Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations-/Strategieengine. `live` bleibt technisch gesperrt, bis die Live-Gates bestanden sind. `Startbot.bat` startet den vorgesehenen Standard `PAPER + lokale UI`.
 
 ## Backtestversionierung
 
 - `backtests/v1`: erste freigegebene Backtestmethodik.
-- `backtests/v2`: nur bei fachlicher Änderung, beispielsweise neuem Fill-/Kostenmodell oder geänderter Strategieversion.
-- `backtests/v3`: nächste fachliche Änderung.
+- `backtests/v2`: aktive Pine-v6-Paperstrategie; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält lokale unveränderliche Läufe.
+- `backtests/v3`: verworfener Mehrfachslot-Versuch mit eigener README und eigenem Snapshot; lokale Runs werden nicht eingecheckt.
+- `backtests/v4` und `backtests/v5`: getrennte Forschungsberichte, jeweils ein README, ein kompakter Nachweis unter `reports/`, große lokale Rohberichte unter ignoriertem `runs/`. Keine aktivierbare Paperstrategie.
 - Reine Wiederholung mit gleichen Regeln erhält innerhalb derselben Version eine neue unveränderliche Run-ID unter `runs/`.
 - Ein gültiger Run wird nicht überschrieben oder nachträglich „verbessert“.
-- Jede Version referenziert Code-, Strategie-, Config- und Datenhash; ein Pine-Hash ist nur optionaler externer Vergleichsnachweis.
+- Jede Version referenziert Code-, Strategie-, Config- und Datenhash; V2 referenziert zusätzlich verpflichtend den Eigentümer-Pine-Hash.
 - Versionen werden numerisch ohne Fantasienamen geführt.
 
 ## Was nicht in den Hauptordner gehört
@@ -66,8 +80,20 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 - lose Reports oder CSV-Dateien;
 - API-Keys, `.env`, Datenbanken, Marktdaten oder Logs;
 - temporäre GPT-/Codex-Arbeitsdateien.
+- weitere `.bat`-/PowerShell-Starter oder generierte UI-Abhängigkeiten wie `node_modules`.
+
+## Verbindliche Aufräumregel
+
+- Git ist die Historie; alte Dateien werden nicht als `old`, `backup`, `final2` oder ähnlich aufgehoben.
+- Generierte Inhalte haben genau ein Buildziel. Temporäre Verzeichnisse und Abhängigkeitscaches bleiben ignoriert.
+- Leere Platzhalter werden entfernt, sobald ein Ordner reale Inhalte besitzt.
+- Lose Berichte, Datenbanken und Downloads im Hauptordner sind ein Fehler.
+- Vor einem Commit werden verwaiste Dateien, konkurrierende Einstiegspunkte und nicht ignorierte Laufzeitdaten geprüft.
+- Löschen oder Verschieben fremder/unklarer Dateien erfolgt erst nach Zielprüfung; Nutzeränderungen werden nicht still überschrieben.
 
 ## Neue Datei oder neuer Ordner
+
+Ab 05.09.2026 ergänzen `backtests/v4/` und `backtests/v5/` die bestehende Versionsstruktur. Die Forschungsorganisation liegt in `src/hixton/backtest/research.py` (V4) und `coin_review.py` (V5); beide werden nur über `src/main.py backtest research` aufgerufen. Die V5-Filter-/Stopentscheidung liegt einmalig in `domain/trade_policy.py` und wird von Einzel- und Portfolioengine gemeinsam verwendet. Keine Kopie pro Coin, keine zweite produktive Signalengine. `Startbot.bat` bleibt der einzige Windows-Starter.
 
 Vor dem Anlegen wird geprüft:
 

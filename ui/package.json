@@ -1,0 +1,17 @@
+{
+  "name": "der-hixton-ui",
+  "private": true,
+  "version": "0.2.0",
+  "type": "module",
+  "scripts": {
+    "build": "vite build",
+    "check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "lightweight-charts": "5.2.0"
+  },
+  "devDependencies": {
+    "typescript": "5.9.2",
+    "vite": "7.3.6"
+  }
+}

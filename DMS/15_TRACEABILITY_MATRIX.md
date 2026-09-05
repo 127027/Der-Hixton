@@ -1,5 +1,9 @@
 # 15 – Traceability-Matrix
 
+Zusätzlicher Nachweis ab 05.09.2026: `tests/test_runtime_parity.py` deckt DEC-040, DAT-006 (provisional), Folge-Open-Ausführung, Slot-/Cash-/Dust-Parität, Restart und Markerzeit ab. DEC-041 wird durch `backtests/v4/README.md` und den reproduzierbaren Befehl `backtest research` belegt. V4 ist keine aktive Strategie.
+
+V5/DEC-042: `tests/test_trade_policy.py` belegt Identitäts-, Kausalitäts-, Versionssperr- und Einzel-/Portfolio-Parität der Forschungsregeln (STR-008, BKT-002/003/007). `backtests/v5/README.md` und sein kuratierter JSON-Nachweis ordnen alle zehn Coin-Schwächen, trainierte Finalisten, Original-Pine-Kontrolle und Rückschritte zu. Aktive V2-Konfiguration, Positionsbestand und Paper-Regeln bleiben unverändert; eine V5-Paperparität wird nicht behauptet.
+
 Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber später weder gebaut noch geprüft wird.
 
 | Anforderung | Fachquelle | Zielkomponente/UI | Haupttest/Nachweis |
@@ -11,28 +15,32 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | STR-005 Parameter/Warm-up | DMS 03; DEC-001/002/003/011 | Config/Engine | Config-Schema + Golden-Test |
 | STR-006 1.000 Golden-Bars je Testmarkt | DMS 03 | CI/Testartefakt | Abweichungsbericht = 0 Signale |
 | STR-007 Signal-Audit | DMS 02/09 | Signal Store/UI | Persistenz-/Drill-down-Test |
+| STR-008 getrennte Strategieversionen | DMS 03; DEC-034/036/037 | Strategy/Config/Backtest/Paper/UI | Pine-Golden-Test + explizite atomare Umschaltung + Fail-closed-Konflikttest |
 | MKT-001 genau zehn Paare | Nutzerauftrag | Config/Dashboard | Schema- und UI-Test |
 | MKT-002 Coinliste | DMS 04; DEC-005 | Config/Data | Symbolmetadatenprüfung |
 | MKT-003 keine automatische Coinrotation | DMS 04/22; DEC-005 | Config/Data/Release | Delisting pausiert statt Ersatz zu wählen |
 | CAP-001 Paper/Live 240 USDT | Nutzerauftrag | Paper-/Live-Ledger, UI | Startsaldo-/Cash-Test |
 | CAP-002 drei Slots à 80 USDT | Nutzerauftrag | Portfolio/Execution/UI | Slotlimit- und Notionaltest |
 | CAP-003 UI-änderbare Slotgröße | Nutzerauftrag | Settings/Config/Audit | Validierungs-/Vorwärtswirkungstest |
-| CAP-004 kein fixes Gewinnziel | Nutzerklärung | Backtestreport | Report enthält Fakten statt Zieloptimierung |
+| CAP-004 250→500 als Wunsch, nicht Garantie | Nutzerklärung | Backtestreport | Zielerreichung und -verfehlung je Coin sichtbar |
 | CAP-005 Slotpriorisierung | DMS 03/04; DEC-029 | Strategy/Portfolio | simultane Signale/volle Slots |
 | CAP-006 Nettogewinn vor Tradezahl | Nutzerwunsch + Kostenrealität | Optimierung/Report | Gebühren-/Tradezahlvergleich |
+| CAP-007 bestbelegte Verbesserung übernehmen | DMS 06; DEC-037/038 | Backtest/Config/Paper/Audit | V1/V2-Risikospiegel + expliziter Migrationstest |
+| CAP-008 Mehrfachslots nur nach Nachweis | DMS 03/04/06; DEC-039 | Allocation/Backtest/Paper | Allokations-Unit-Test + negativer V3-Risikospiegel |
 | RSK-003 Tagesverlust/Drawdown | DMS 04; DEC-015 | Risk/UI | UTC-Tagesgrenze und High-Water-Mark-Test |
 | RSK-004 kein Auto-Compounding | DMS 04; DEC-030 | Backtest/Portfolio/Config/UI | Gewinn verändert weder 250- noch 80-USDT-Zielnotional |
 | BKT-008 10×250 USDT | Nutzerauftrag | Backtest Batch | zehn isolierte Ledger-Fixtures |
 | BKT-009 Einzeltest 250 USDT | Nutzerauftrag | Backtest UI/Engine | ETH-only-Test ohne andere Coins |
 | BKT-010 240-USDT-Spiegellauf | DMS 04/06 | Backtest Portfolio | Parität zu Paper-Slotmodell |
 | BKT-011 Baseline-/Stresskosten | DMS 06; DEC-010 | Backtest/Report | 15/40-bps-je-Seite-Fixtures |
+| BKT-012 versionierte Strategieverbesserung | DMS 06; DEC-035 | Backtest/Report | Suchraum-, Mehrfenster-, Stress- und Nachbarnachweis |
 | RSK-001 kein Leverage/Margin/Futures | DMS 04/11 | Config/Execution | Startblockade/Permissionscheck |
 | RSK-002 Börsenfilter | DMS 04/07 | Risk/Execution | Tick/Step/Min-Notional-Tests |
 | DAT-001 OHLCV persistent | Nutzerauftrag/DMS 05 | DB/Data API | Schema-/Roundtrip-Test |
 | DAT-002 Startup-Vollprüfung | Nutzerauftrag | Startup/UI Health | Lücken-/Duplikat-Fixtures |
 | DAT-003 inkrementelles Nachladen | Nutzerauftrag | Data Adapter | Paging-/Retry-Test |
 | DAT-004 00:05-UTC-Audit | DMS 05; DEC-012 | Scheduler/UI | Scheduler-/DST-Test |
-| DAT-005 Stream + REST-Fallback | Live-UI-Ziel | Data Adapter | Disconnect-/Recovery-Test |
+| DAT-005 Stream + REST-Fallback | Live-UI-Ziel | Data Adapter | Disconnect-/Recovery-Test einschließlich Löschen nur des stream-eigenen Fehlers |
 | DAT-006 offene Kerze vorläufig | DMS 05 | Engine/UI | kein Signal auf provisional |
 | DAT-007 lokale 3-Jahres-Historie | Nutzerauftrag | Chart API/UI | Range-/Datenquellentest |
 | BKT-001 drei Jahre | Nutzerauftrag | Backtest/Report | Fenstergrenzen-Test |
@@ -61,7 +69,7 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | OPS-003 Backup/Restore | DMS 10 | Operations | isolierter Restore-Test |
 | OPS-004 Paper-Soak-Gate | DMS 10/12; DEC-018 | Operations/Release | 30 Tage, 720 Bars, 20 Trades; Maximalverlängerung 90 Tage |
 | OPS-005 kein manueller Handel | DMS 11; DEC-021 | Account/Reconciliation | Fremdorder sperrt Live-Entries |
-| OPS-006 Telegram-Alarme | DMS 10; DEC-019 | Observability/Release | P1/P2-Testalarm und Kanalausfall |
+| OPS-006 lokale Pflichtalarme | DMS 10; DEC-019 | Observability/UI | persistenter P1/P2-UI-/Logtest |
 | OPS-007 Backup-Retention | DMS 10; DEC-020 | Operations/Storage | 7/4/12-Retention und vierteljährlicher Restore |
 | OPS-008 localhost/Windows-Service | DMS 10/11; DEC-022/023 | API/Service | Bind-/Autostart-/Restart-Test |
 | SEC-001 keine Secrets | DMS 11 | alle Komponenten | Secret-Scan/Logtest |
@@ -69,8 +77,8 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | SEC-003 Live-Gates | DMS 12 | Config/UI/Deploy | negativer Freischalttest |
 | QLT-001 Traceability | DMS 12/15 | DMS/Testmanagement | Review ohne kritische Lücke |
 | COL-001 GitHub-Repository | Nutzerauftrag/DMS 21 | Git/CI/DMS | Remote-/Secret-/Review-Check |
-| COL-002 öffentliche DMS, kein fremder Pine-Source | DMS 21; DEC-031 | Git/DMS/Release | Sichtbarkeits-, Rechte- und Secret-Check |
+| COL-002 öffentliche DMS/Eigentümer-Pine, kein fremder Source | DMS 21; DEC-031/034 | Git/DMS/Release | Sichtbarkeits-, Herkunfts- und Secret-Check |
 
 ## Pflege
 
-Neue kritische Anforderungen erhalten mindestens einen positiven und einen negativen Test. Ein `OFFEN` in der Fachquelle darf nicht durch einen grünen Implementierungstest kaschiert werden. Die Matrix enthält für DMS V1 keine kritische Fachquelle mit ausstehender Entscheidung; Test- und Implementierungsnachweise entstehen erst in den dafür vorgesehenen Phasen.
+Neue kritische Anforderungen erhalten mindestens einen positiven und einen negativen Test. Ein `OFFEN` in der Fachquelle darf nicht durch einen grünen Implementierungstest kaschiert werden. Die Matrix enthält für DMS V1.3 keine kritische Fachquelle mit ausstehender Entscheidung; noch fehlende Betriebs- und Live-Nachweise entstehen erst in den dafür vorgesehenen Phasen.

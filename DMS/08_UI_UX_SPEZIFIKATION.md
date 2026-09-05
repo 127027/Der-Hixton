@@ -9,6 +9,12 @@
 - Rot/Grün wird zusätzlich durch Text/Icon ergänzt, damit Farbe nie allein Bedeutung trägt.
 - Deutsche Oberfläche; technische IDs dürfen kopierbar sein.
 
+## Visueller Freeze V1
+
+Die am 01.09.2026 abgenommene Desktop- und Mobiloptik ist gemäß `DEC-033` eingefroren. Funktionale Ergänzungen dürfen Inhalte in den bestehenden Ansichten präzisieren, aber keine neue Designsprache, parallele Navigation, zusätzlichen Starter oder unverbundene Sonderseite einführen. Neue Statuswerte nutzen die vorhandenen Karten-, Tabellen-, Badge- und Typografieregeln.
+
+Der Header und die Systemkarte zeigen immer die tatsächlich konfigurierte Paperstrategie samt Aktivierungszeit und PnL seit diesem Strategiewechsel. Seit `DEC-037` lautet sie `V2 · aktives Paper`. Die Backtestauswahl kennzeichnet V1 als Historie und V3 als verworfenen Versuch; eine Backtestauswahl schaltet Paper niemals um.
+
 ## Hauptnavigation
 
 1. Übersicht
@@ -79,7 +85,7 @@ Die laufende Kerze erhält z. B. gestrichelte Kontur und Label „vorläufig“.
 | 1 Jahr | rollierende letzte 365 Tage |
 | 3 Jahre | rollierende letzte 3 Kalenderjahre bis jetzt |
 
-Standardauswahl ist **1 Monat**. Heute/1W/1M verwenden native `1h`-Bars; 1J wird standardmäßig zu `4h`, 3J zu `1d` aggregiert. Eine verfügbare Auflösung darf manuell gewählt werden. Indikatorwerte und Signalmarker stammen stets aus der nativen `1h`-Strategie; die UI berechnet aus aggregierten Bars keine neuen Signale. Kalenderwoche/-monat sind für V1 ausdrücklich nicht die Semantik.
+Standardauswahl ist **1 Monat**. Heute/1W/1M verwenden native `1h`-Bars; 1J wird standardmäßig zu `4h`, 3J zu `1d` aggregiert. Eine verfügbare Auflösung darf manuell gewählt werden. Indikatorwerte und Signalmarker stammen stets aus der nativen `1h`-Strategie; die UI berechnet aus aggregierten Bars keine neuen Signale. Kalenderwoche/-monat sind ausdrücklich keine Signal- oder Datenaggregationssemantik.
 
 ## Positionen & Orders
 
@@ -99,7 +105,7 @@ Startmaske:
 
 - `Alle 10 Coins`: zehn isolierte Läufe mit je 250 USDT;
 - `Einzeltest`: genau ein auswählbares Paar, etwa ETH/USDT, mit 250 USDT;
-- optional `Paper-/Live-Spiegel`: 240 USDT gemeinsamer Cashpool mit 3×80-USDT-Slots;
+- `Gemeinsames 3×80-Portfolio`: 240 USDT gemeinsamer Cashpool mit höchstens drei festen 80-USDT-Slots;
 - Zeitraum, Timeframe, Kostenmodell und Strategieversion vor Start sichtbar;
 - Backteststart löst niemals eine Börsenorder aus.
 
@@ -122,6 +128,7 @@ Darstellung:
 - Trades und Kosten;
 - je Coin Ampel „netto positiv/netto negativ/nicht bewertbar“ ohne Gewinnversprechen;
 - Portfolioaggregation ohne schlechte Coins auszublenden.
+- Spiegelportfolio als eigene Ergebniszeile mit Start, Ende, Rendite, Trades, Drawdown und gleichgewichtetem Buy-and-Hold; es darf nicht als 10×250-Batch beschriftet werden.
 
 ## Datenqualität
 
@@ -156,13 +163,15 @@ Pro Coin:
 - Paper-/Live-Positionsgröße startet bei 80 USDT, Slotanzahl bei drei; beide sind später änderbar.
 - UI validiert `Slotanzahl × Zielnotional` gegen verfügbares/konfiguriertes Gesamtkapital und aktuelle Binance-Mindestwerte.
 - Änderungen wirken nur auf künftige Entries; bestehende Positionen werden nicht automatisch angepasst.
-- Einstellungen zeigen die unveränderlichen V1-Baselines: 5 % Tagesverlustpause, 20 % Max-Drawdown-Halt, 25 bp maximale Preisabweichung, 10 Sekunden bis `UNKNOWN` und 30 Sekunden Teilfill-Restfrist.
+- Einstellungen zeigen die unveränderlichen Risikobaselines: 5 % Tagesverlustpause, 20 % Max-Drawdown-Halt, 25 bp maximale Preisabweichung, 10 Sekunden bis `UNKNOWN` und 30 Sekunden Teilfill-Restfrist.
 
 ## Zustände ohne Daten
 
 Die UI muss Loading, leer, stale, teilweise verfügbar, Fehler und Berechtigungsproblem unterscheiden. `0` darf nicht als Ersatz für „unbekannt“ erscheinen.
 
 ## Akzeptanz für Chartperformance
+
+Präzisierung 05.09.: Der Zähler heißt **Freie Slots** (0 von 3 bedeutet drei belegte Slots). Marktkarten unterscheiden „Position läuft“ von „Wartet auf neuen Kauf“; ein alter grüner Trend ist kein neuer Kaufauftrag. Frische Streamkerzen aktualisieren Preise und den sichtbaren Chart, sind als „letzte Kerze live/offen“ gekennzeichnet und erzeugen keine Signale. Nach 90 Sekunden ohne frisches Symbolupdate fällt die Anzeige auf bestätigte Daten zurück. Paper-Fills werden nach ihrer gespeicherten Fillzeit auf die jeweilige Anzeigenkerze gerastert. Automatische Aktualisierung erhält den Zoom und verwendet dieselbe Markerinstanz. Farben, Layout und Navigation bleiben unverändert.
 
 - Wechsel zwischen Zeiträumen blockiert die Bedienung nicht dauerhaft.
 - Drei Jahre werden downsampled dargestellt, ohne die gespeicherten Backtestdaten zu verändern.

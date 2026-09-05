@@ -12,7 +12,7 @@
 - Code/Build:
 - Strategieversion: `HIXTON-SPEC-1.0`
 - normative Strategiequelle: `DMS/03_STRATEGIE_HIXTON.md`
-- optionaler Hersteller-Pine-SHA-256: `null`, solange kein rechtmäßig verfügbarer Source existiert
+- Eigentümer-Pine-SHA-256: für V2 verpflichtend, für historische V1-Runs `null`
 - Konfigurations-SHA-256:
 - Daten-Snapshot-SHA-256:
 - Dependency-Lock-SHA-256:

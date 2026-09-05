@@ -3,7 +3,7 @@
 ## Testebenen
 
 1. Unit-Tests für Mathematik, Zustände, Rundung und Gebühren.
-2. Golden-Tests gegen unabhängig berechnete Werte aus `HIXTON-SPEC-1.0`; optional zusätzlicher Vergleich mit rechtmäßig verfügbarem Pine-Source.
+2. Golden-Tests gegen unabhängig berechnete Werte aus `HIXTON-SPEC-1.0` für V1 und gegen die gehashte Eigentümer-Pine-Semantik für V2;
 3. Integrationsprüfungen für Datenprovider, DB und Börsenadapter.
 4. Replay-/Backtests mit historischen Bars.
 5. End-to-End-Tests der UI bis Ledger/Report.
@@ -51,6 +51,8 @@
 - schlechter Coin und Verlusttrade bleiben im Bericht;
 - Zielstatus basiert auf Netto-, nicht Bruttoergebnis.
 
+V5-Forschungsnachweise in `tests/test_trade_policy.py`: Identitätsregel verändert weder Einzel- noch Portfolioergebnis; gefilterte Käufe werden nicht auf späteren grünen Bars nachgeholt; Stops reagieren nur auf Schlusskurse, nicht auf Dochte; Steigung verwendet ausschließlich vergangene VIDYA-Werte; zukünftige Kerzen verändern keine vergangenen Fills; Float-Screen/Decimal-Finalist sowie Einzel-/Portfolioentscheidung stimmen auf kontrollierten Fixtures überein. Nichttriviale Forschungsregeln benötigen ausdrücklich eine `HIXTON-V5-…`-Kennung und dürfen sich nicht als aktive V2 ausgeben. Diese Tests ersetzen keinen Paper-Nachweis der Forschungsregeln.
+
 ## Execution-/Recovery-Prüfungen
 
 - Retry nach Timeout erzeugt keine Doppelorder;
@@ -78,7 +80,7 @@
 
 ## Nichtfunktionale Kriterien
 
-Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Märkten:
+Verbindliche Grenzwerte auf der dokumentierten Referenzinstallation mit zehn Märkten:
 
 - UI-/Lese-API p95 höchstens 2 Sekunden; sie darf den Tradingloop nie synchron blockieren;
 - Verarbeitung eines 1h-Bar-Close für alle zehn Märkte einschließlich Persistenz höchstens 60 Sekunden;
@@ -86,6 +88,21 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - 3-Jahres-Chart p95 höchstens 3 Sekunden nach verfügbarer lokaler Historie und serverseitiger Aggregation;
 - Retention hält normale Betriebslogs bei höchstens 90 Tagen, ohne Audit-/Trade-/Backtestnachweise zu löschen;
 - Restore ist in einer sauberen Umgebung reproduzierbar und wird vor Live sowie vierteljährlich nachgewiesen.
+
+## Automatisierter Nachweisstand vom 02.09.2026
+
+- `pytest`: 68 von 68 Tests bestanden, einschließlich versionierter Ledger-Migration, Fail-closed-Strategiekonflikt, Mehrfachslot-Allokation, Aktivierungssperre der verworfenen V3 und Websocket-Health-Recovery ohne Verdecken fremder Fehler;
+- Ruff: keine Lint-/Sauberkeitsabweichung;
+- mypy: keine Typfehler in 34 Source-Dateien;
+- TypeScript: `tsc --noEmit` bestanden;
+- npm Audit: 0 bekannte Schwachstellen in 67 Abhängigkeiten;
+- Datenqualität: zehn von zehn Märkten mit drei Jahren plus 400 Warm-up-Bars ohne Lücke;
+- Backtest: 10×250-USDT-Batch, ETH-Einzelmodus und gemeinsames 3×80-USDT-Portfolio einschließlich risikogleichem Paper-/Live-Spiegel ausgeführt;
+- Reproduktion: Metrik-, Trade- und Equity-Dateien bytegleich;
+- Browsermatrix: 10 Coins × 5 Zeiträume ohne fehlgeschlagene Chartabfrage geprüft;
+- responsive Kernansicht, System-/Log-, Backtest-, Qualitäts-, Einstellungs- und Dokumentationsseite lokal abgenommen.
+
+Diese Nachweise schließen Gate A und Gate B für V1 und V2. Restart-Checkpoint, Nachverarbeitung verpasster Bars, kontrollierter V1→V2-Wechsel, Strategiekonflikt-Sperre und persistente Soak-Zähler sind automatisiert geprüft. Sie ersetzen nicht die noch offenen Gate-C-Nachweise für Backup/Restore, vollständige Failure-Injection und den real ablaufenden V2-Paper-Soak. V3 ist nach dem negativen Mehrfachslot-Risikospiegel verworfen.
 
 ## Freigabegates
 
@@ -97,7 +114,7 @@ Verbindliche V1-Grenzwerte auf der dokumentierten Referenzinstallation mit zehn 
 - keine kritische Strategieentscheidung steht auf `OFFEN`;
 - DMS-Version/Tag und Changelog sind gesetzt.
 
-Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich und wird ohne Rechte nicht veröffentlicht. Eine Herstellerparität darf ohne ihn nicht behauptet werden.
+V1 bleibt durch seine eigene eingefrorene Spezifikation reproduzierbar. Die später vom Eigentümer bereitgestellte Pine-v6-Datei wird zusätzlich für V2 gehasht und per unabhängiger Golden-Implementierung geprüft; sie deutet V1 nicht rückwirkend um.
 
 ### Gate B – Backtest valide
 
@@ -111,7 +128,7 @@ Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich
 
 - alle Integrations-, UI- und Failure-Tests grün;
 - keine kritischen offenen Defekte;
-- Monitoring, Telegram-Testalarm und Backups aktiv;
+- Monitoring in UI/strukturierten Logs und Backups aktiv;
 - dedizierter Bot-Account/Subaccount ohne manuellen Handel vorbereitet.
 
 ### Gate D – Live bereit
@@ -124,6 +141,8 @@ Ein proprietärer Hersteller-Pine-Source ist für dieses Gate nicht erforderlich
 
 ## Definition „99 % dokumentiert“
 
+Ergänzung 05.09.2026: 74 Python-Tests sowie Ruff, mypy (35 Quelldateien), TypeScript und UI-Produktionsbuild bestanden. `tests/test_runtime_parity.py` vergleicht echte Produktionsengines einschließlich Kurslücken, Mengenrundung/Dust, verschiedener Close-Millisekunden und geteilter Restart-Verarbeitung. Zusätzlich geprüft: fehlendes Folge-Open schreibt keinen Checkpoint, die UTC-Grenze innerhalb der ersten zwei Minuten, Fill-/Chart-Zeitraster, vorläufige Kerze ohne neues Signal, Preisfrische und einmaliger Soak-Neustart ohne Positions-/Cash-/Ledgerverlust. Die frühere API-/Browserabnahme hatte die Ausführungslücke nicht erkannt; sie wird nicht als umfassender Paritätsnachweis weiterverwendet. Gate D bleibt offen.
+
 Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bedeutet er:
 
 - 100 % der kritischen Anforderungen haben Owner, Status und Test;
@@ -133,4 +152,4 @@ Der Wert ist kein mathematisch exakter Qualitätsbeweis. Für dieses Projekt bed
 - Traceability besitzt keine kritische Lücke;
 - ein unabhängiger Leser kann ohne Strategieerfindung implementieren.
 
-Dieser Dokumentationszustand ist mit DMS V1 erreicht: Die Strategie lässt sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Das ist **keine** Aussage, dass Bot, Backtest, Paper- oder Live-Gates bereits bestanden sind; deren reale Testartefakte stehen bis zur jeweiligen Umsetzungsphase auf `NACHWEIS AUSSTEHEND`.
+Dieser Dokumentationszustand ist mit DMS V1.3 erreicht: Die Strategien lassen sich ohne Erfindung implementieren und Dokument 16 enthält keine offene kritische Produktentscheidung. Stand 02.09.2026 bestehen 68 automatisierte Strategie-/Daten-/Backtest-/Paper-/Portfolio-Risiko-/Migration-/Restart-/Recovery-/API-/Charttests, der echte Drei-Jahres-Datenaudit und reproduzierte Backtests. Nach der V2-Aktivierung bestanden alle 50 Coin-/Zeitraumkombinationen die lokale API-Prüfung; Übersicht, Chartbedienung, Signalhistorie, Paper-Ledger und Status wurden zusätzlich im gerenderten Browser geprüft, die Konsole meldete keine Warnung und keinen Fehler. Gate C bleibt bis zu externem Backup-/vollständigen Failure-Nachweisen und dem vorgeschriebenen realen V2-Paper-Soak offen; Gate D bleibt vollständig offen und `LIVE_DISABLED`.

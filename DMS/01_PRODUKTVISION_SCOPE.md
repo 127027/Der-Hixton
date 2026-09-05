@@ -1,6 +1,6 @@
 # 01 – Produktvision und Scope
 
-Status: `VERBINDLICH` für DMS V1.
+Status: `VERBINDLICH` für DMS V1.3.
 
 ## Produktziel
 
@@ -35,7 +35,7 @@ Ein fachkundiger Dritter kann anhand dieses DMS und der späteren Artefakte:
 
 ## Nicht enthalten
 
-- Entwicklung oder Änderung des Pine-Indikators innerhalb dieses Dokumentationsauftrags;
+- undokumentierte Änderung der vom Eigentümer gelieferten Pine-Formel oder der visuell eingefrorenen UI;
 - Ergebnis- oder Gewinnversprechen;
 - Futures, Margin, Leverage oder Short-Positionen ohne neue Freigabe;
 - Martingale, Grid oder DCA/Pyramiding;

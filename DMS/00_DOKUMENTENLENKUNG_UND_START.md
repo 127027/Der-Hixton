@@ -2,7 +2,9 @@
 
 ## Zweck
 
-Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was später gebaut, getestet, angezeigt und betrieben werden soll. Es ist kein Implementierungsstand und kein Nachweis einer profitablen Strategie.
+Aktueller Ergänzungsstand: **DMS 1.5, 05.09.2026**. Maßgeblich für die jüngste Forschung sind DMS 18 und `backtests/v5/README.md`: alle zehn Coins, 348 Kandidaten, Verlustdiagnose, Einzel-/Portfoliogegenproben und keine neue Paperfreigabe. 86 Tests bestanden; aktive Strategie weiterhin V2, Live weiterhin gesperrt. Die folgenden Angaben vom 02.09. bleiben historische Abnahmen, kein Beweis fehlerfreier aktueller Ausführung: Am 05.09. wurden eine Stundenverzögerung und Paper-/Backtest-Abweichungen gefunden und korrigiert; diese technische Korrektur ist in DMS 1.4 dokumentiert.
+
+Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
 ## Geltungsbereich
 
@@ -22,9 +24,9 @@ Die Dokumentation deckt ab:
 Bei einem Widerspruch gilt diese Reihenfolge:
 
 1. schriftlich vom Eigentümer freigegebene Entscheidung im Entscheidungslog;
-2. normative Strategie `HIXTON-SPEC-1.0` in Dokument 03;
+2. für den aktiven Paperbetrieb die in `DEC-037` freigegebene V2 samt unveränderlichem Snapshot in Dokument 03 und `backtests/v2/candidate.json`;
 3. diese DMS-Dokumente mit Status `VERBINDLICH`;
-4. ein später rechtmäßig verfügbarer Pine-Quellcode samt Hash und Parameter-Snapshot als Vergleichsquelle, nicht als stille Überschreibung von V1;
+4. die am 01.09.2026 vom Eigentümer bereitgestellte Pine-v6-Quelle samt Hash; sie überschreibt historische V1-Nachweise nicht;
 5. vorhandene Analyse `Der Hixton Indikator.md`;
 6. Kommentare, Beispiele, UI-Mockups und sonstige Hinweise.
 
@@ -40,15 +42,29 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1 ist fachlich entscheidungsvollständig und als Implementierungsleitfaden eingefroren.** Kritische Produktentscheidungen stehen nicht mehr auf `OFFEN`. Implementierung, echte Binance-Daten, Backtests, Paper-Soak und Live-Nachweise existieren noch nicht und bleiben ausdrücklich `NACHWEIS AUSSTEHEND`.
+Aktueller Paketstatus: **DMS V1.5; V2 ist die aktive Paperstrategie, V1 bleibt Historie, V3 ist verworfen und V4/V5 sind abgeschlossene Forschung ohne Paperfreigabe.** Die bestehenden fachlichen Produktentscheidungen bleiben verbindlich, aber ihr Nachweis bedeutet keine zuverlässige Profitabilität. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und frühere Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
+
+## Arbeitsübergabe vom 02.09.2026
+
+- Der Eigentümer hat V2 ausdrücklich für Paper freigegeben. Aktiver Laufzeitstand ist **V2 `HIXTON-V2-RESEARCH-CANDIDATE-1`**; die unveränderliche Kennung wird trotz neuem Status nicht umbenannt. V1-Ledger und V1-Runs bleiben erhalten. Live ist nicht freigegeben.
+- Der V2-10×250-Test war im aktuellen Dreijahresfenster stark. Der echte 3×80-Paper-/Live-Risikospiegel hielt jedoch im aktuellen Fenster und in beiden älteren Prüfsegmenten wegen der verbindlichen Risikogrenzen vorzeitig an. Er belegt deshalb keinen kontinuierlichen Dreijahresbetrieb und keine tägliche Gewinnerwartung.
+- Band 4,0 wurde trotz besserem aktuellen Fenster wegen schwacher älterer Segmente verworfen. Der nächste Bearbeiter darf diesen Challenger nicht ohne neue robuste Nachweise reaktivieren und die 5-%-Tagesverlustpause oder den 20-%-Drawdown-Halt nicht zur Ergebnisverbesserung lockern.
+- Der erste V3-Versuch erlaubte die vom Eigentümer gewünschte Mehrfachbelegung eines Coins: zuerst je gleichzeitigem Kandidaten ein Slot, danach alle freien Slots an den stärksten Kandidaten. Er endete schon am 12.10.2023 im Risikohalt bei 287,85 USDT Baseline bzw. 282,16 USDT Stress und ist verworfen. Aktive V2 bleibt bei höchstens einem Slot je Coin.
+- Grundprinzip: Die bestbelegte zulässige Version wird nach explizitem, protokolliertem Wechsel für Paper übernommen. Ein einzelner Spitzenwert genügt nicht; Kosten-Stress, Altfenster, Risikospiegel und Reproduzierbarkeit bleiben Pflicht. Live benötigt immer eine eigene Freigabe.
+- Abgenommener Stand nach dem Betriebswechsel: 68 grüne Python-Tests, Ruff, mypy, TypeScript und Produktionsbuild bestanden. Die lokale V2-UI wurde nach dem Neustart sichtbar geprüft; alle 50 Kombinationen aus zehn Coins und fünf Chartzeiträumen lieferten Daten, Coin-/Zeitraumwechsel und Signal-/Paper-Fill-Daten funktionierten und die Browserkonsole blieb ohne Warnung oder Fehler.
+- Die kontrollierte Migration am 02.09.2026 schloss genau die offene V1-DOT-Position zu Baselinekosten mit `-2,55367424142 USDT`, bewahrte beide Ledger-Ereignisse und startete V2 bei `237,44632575858 USDT`. Seit V2-Aktivierung sind noch keine V2-Trades abgeschlossen; der V2-Session-PnL ist deshalb `0 USDT` und darf nicht mit dem historischen V1-Verlust vermischt werden.
+- Vor der Migration wurde `backups/hixton-before-v2-20260902-1533.sqlite3` erstellt und byte-/hashgleich zur Quelldatenbank geprüft (`SHA-256 EE5F0D278F5A184BFE0D8AFEADF8FB89220FD7AECE9B66EAFE19D40BDB42428E`). Dieses lokale Backup ist bewusst nicht Teil von Git.
+- Marktdaten sind lokale, automatisch nachgeladene `1h`-Kerzen. UI-Kürzel `1m` bedeutet einen Monat. Datenbank, Marktdaten, Logs und große reproduzierbare Run-Artefakte bleiben durch `.gitignore` lokal.
+- Gemeinsamer Übergabestand liegt im Branch `codex/build-foundation-v1` und Pull Request 2. Der nach der Browserabnahme ergänzte Recovery-Fix `3deea9e` verhindert einen dauerhaft falschen `DEGRADED`-Status nach erfolgreicher Websocket-Wiederverbindung, ohne unabhängige Fehler zu verdecken. Dokument 18 und `backtests/v2/README.md` enthalten die belastbaren Run-IDs, Hashes, Ergebnisse und Grenzen.
 
 ## Eingangsbestand vom 31.08.2026
 
 | Datei | Umfang | SHA-256 | Bewertung |
 |---|---:|---|---|
 | `Der Hixton Indikator.md` | 7.226 Bytes / 27 Zeilen | `3577700EAFA4738D8941769F8275024BEDE86B6D8CB344C7B1EA8E60E7E4E117` | Analyse/Beschreibung, kein Pine-Quellcode |
+| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Formelreferenz der aktiven Paper-V2, nicht rückwirkend für V1 |
 
-Die Datei beschreibt unter anderem Pine-v6-Verhalten, Bar-Close-Auswertung und fehlendes Repainting. Sie bleibt als unverändertes Eingangsmaterial erhalten, ist aber keine normative Signalquelle. Die selbstständige und vollständig implementierbare Projektdefinition steht in `03_STRATEGIE_HIXTON.md`; eine Identität mit nicht einsehbarem Hersteller-Source wird nicht behauptet.
+Die ursprüngliche Markdown-Analyse bleibt als unverändertes Eingangsmaterial erhalten. Der später vom Eigentümer vollständig übermittelte Pine-v6-Code liegt einmalig unter `strategy/pine/` und ist die Referenz für V2. Die selbstständige V1-Projektdefinition in Dokument 03 und sämtliche V1-Runs bleiben unverändert erhalten.
 
 ## Dokumentenkarte
 

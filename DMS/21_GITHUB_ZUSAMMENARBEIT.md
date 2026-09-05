@@ -19,7 +19,7 @@ DMS/
   ... verbindliche Dokumente ...
 strategy/
   source_material/
-  pine/                # nur wenn Veröffentlichung erlaubt
+  pine/                # einmalige, vom Eigentümer freigegebene Pine-Referenz
 backtests/
   v1/                  # danach v2, v3 nur bei neuer Methodik
 src/
@@ -27,10 +27,13 @@ tests/
 config/
   examples/          # niemals echte Secrets
 .gitignore
+.gitattributes          # Pine-Referenz auf LF fixiert, damit SHA-256 plattformstabil bleibt
 LICENSE              # in DMS V1 bewusst nicht vorhanden; siehe Lizenzregel
 ```
 
-Historische Marktdaten, Datenbanken, große Logs, Backups, API-Schlüssel und lokale Secret-Dateien gehören nicht ins Git-Repository. Lose oder durchnummerierte Startskripte im Hauptordner sind verboten.
+Historische Marktdaten, Datenbanken, große Logs, Backups, API-Schlüssel und lokale Secret-Dateien gehören nicht ins Git-Repository. Das gilt insbesondere für die beim Start und beim täglichen Audit automatisch geladenen `1h`-Kerzen und die SQLite-Datenbank. Lose oder durchnummerierte Startskripte im Hauptordner sind verboten.
+
+Aktuelle Übergabe vom 02.09.2026: Gemeinsamer Arbeitsstand ist Branch `codex/build-foundation-v1` in Pull Request 2. Vor Weiterarbeit zuerst diesen Branch beziehungsweise nach Merge den neuesten `main`-Stand holen; DMS 00 beschreibt den fachlichen Übergabepunkt. Große lokale Daten- und Run-Artefakte werden anhand der gespeicherten Kommandos und Hashes reproduziert, nicht per Git verteilt.
 
 ## Branch- und Reviewregel
 
@@ -60,8 +63,9 @@ Commits sollen klein, nachvollziehbar und thematisch geschlossen sein. Ein DMS-U
 ## Quellen der Wahrheit in Git
 
 - `DMS/` beschreibt den freigegebenen Sollzustand.
-- `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die V1-Signallogik.
-- Ein später rechtmäßig verfügbarer Pine-Hash ist ein Vergleichsnachweis, keine stille Überschreibung der Spezifikation.
+- `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die historische V1-Signallogik weiterhin reproduzierbar.
+- Die Eigentümer-Pine-Datei, ihr Hash und der V2-Snapshot definieren die aktive Paper-V2, ohne V1-Artefakte oder alte Ledgerereignisse umzudeuten.
+- Neue Varianten liegen geordnet unter `backtests/v3`, `v4` usw.; eine verworfene Version bleibt als kleiner kuratierter Nachweis erhalten, große Runs bleiben lokal ignoriert.
 - Konfigurationsbeispiele enthalten keine echten Schlüssel.
 - Dependency-Lock und Codecommit definieren einen Build.
 - Backtest-Manifest referenziert Code-, Config- und Datenhash.
@@ -77,7 +81,7 @@ Niemals committen:
 - Account-, Saldo- oder Steuerexporte mit Identifikatoren;
 - Backup-Archive;
 - Screenshots mit Secrets;
-- private Pine-Quelle, falls Rechte oder Veröffentlichungsfreigabe fehlen.
+- Pine-Quellen, für die Rechte oder Veröffentlichungsfreigabe fehlen.
 
 Vor jedem Push läuft ein Secret-Scan. Ein versehentlich veröffentlichter Schlüssel wird nicht nur aus Git gelöscht, sondern sofort bei Binance gesperrt und rotiert.
 
@@ -86,7 +90,7 @@ Vor jedem Push läuft ein Secret-Scan. Ein versehentlich veröffentlichter Schl�
 - Das Repository ist gemäß DEC-031 öffentlich.
 - Öffentlich bedeutet nicht automatisch Open Source. Solange keine `LICENSE`-Datei vom Eigentümer bewusst freigegeben wurde, bleiben die üblichen Urheberrechte vorbehalten; fremde dürfen den Inhalt ansehen, erhalten aber keine darüber hinausgehende pauschale Nutzungslizenz.
 - Eigene DMS- und Projektspezifikation dürfen veröffentlicht werden.
-- Proprietärer/fremder Hixton-Pine-Source darf ohne eindeutigen Eigentums- und Lizenznachweis **nicht** committed werden. Ein privater Hash oder rechtmäßig erzeugte Referenzwerte sind zulässig, wenn sie keine Geheimnisse oder geschützten Quelltext offenlegen.
+- Die am 01.09.2026 vom Eigentümer ausdrücklich zur Projektverwendung übermittelte Datei `strategy/pine/Der_Hixton_Indikator_v6.pine` darf committed werden. Andere proprietäre/fremde Pine-Quellen bleiben ohne eindeutigen Rechte- und Lizenznachweis ausgeschlossen.
 - Öffentliche Backtestreports müssen reproduzierbare Methodik und alle Coins zeigen, dürfen aber keine Account-IDs, Keys, Saldenexporte oder sonstigen personenbezogenen Kontodaten enthalten.
 - Eine spätere Open-Source-Lizenz ist eine neue Eigentümerentscheidung; sie wird nicht automatisch angenommen.
 
@@ -97,7 +101,7 @@ Ein Stand darf vorher als klar gekennzeichneter Arbeitsstand gepusht werden. Der
 - normative Referenzspezifikation vorhanden;
 - kritische Entscheidungen geschlossen;
 - DMS-Link-/Konsistenzprüfung grün;
-- öffentliche Repo-Sichtbarkeit und Nichtveröffentlichung fremden Pine-Sources dokumentiert sind;
+- öffentliche Repo-Sichtbarkeit, Herkunft der Eigentümer-Pine-Datei und Ausschluss fremder Quellen dokumentiert sind;
 - Secret-Scan grün;
 - DMS-Changelog und Freeze-Status gesetzt sind.
 

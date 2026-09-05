@@ -8,7 +8,7 @@ status: not_run
 strategy:
   version: HIXTON-SPEC-1.0
   normative_spec: DMS/03_STRATEGIE_HIXTON.md
-  vendor_pine_sha256: null
+  owner_pine_reference_sha256: null  # V1 predates the later V2 reference
   config_sha256: TO_BE_ASSIGNED
   code_commit: TO_BE_ASSIGNED
 
