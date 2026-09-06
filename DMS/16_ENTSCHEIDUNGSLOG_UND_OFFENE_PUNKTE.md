@@ -78,6 +78,8 @@ Ergänzende technische Entscheidungen vom 05.09.2026 im Auftrag der Fehlerkorrek
 
 ## Vom Nutzer verbindlich vorgegeben
 
+**DEC-046 – BEAUFTRAGT, TEILUMSETZUNG 06.09.2026 / Anwendung 0.4.0:** Eigentümer verlangt dauerhaft bedienbare Paper-Settings und Vorbereitung eines späteren Live-An/Aus-Ablaufs mit sicher eingegebenem Binance-Key/Secret. Erster beabsichtigter Echtgeldversuch 1×50, spätere Erhöhung auf 3×80 und dann insgesamt 750 USDT nur ausdrücklich, nicht automatisch. Implementiert: Entwurfs-/Polling-Fix, validierte persistente Paperänderung ohne Reset, Windows-Schlüsselablage mit lokalem Passwort/Session, read-only Binance-Vorcheck, transparente gesperrte Live-Anforderung. **Nicht implementiert/freigegeben:** Echtgeld-Dispatcher, echte Fill-/Positionsbuchung, Recovery/Reconciliation und vollständige Live-Abnahme. Der Auftrag erteilt keine Erlaubnis zum Auslösen realer Testorders durch den Entwicklungsagenten und hebt die bestehenden DMS-Gates nicht stillschweigend auf. V6-Profile, bestehende Paper-Settings und Konto bleiben bei Auslieferung unverändert. Die im UI sichtbare höhere Ausbauperspektive hebt die 240-USDT-Papergrenze nicht vorzeitig auf. Offene Arbeiten und Schlüsselsicherheit stehen in DMS 20/11.
+
 - Die reine Dokumentationsphase wurde nach dem DMS-Freeze beendet; anschließend wurde der Bau ausdrücklich beauftragt.
 - Zehn Kryptowährungen auf Binance Spot/USDT.
 - Backtest-Batch: zehn isolierte Tests à 250 USDT; Einzeltest für einen wählbaren Coin ebenfalls 250 USDT.

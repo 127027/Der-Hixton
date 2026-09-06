@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.8.0 – 06.09.2026 / Anwendung 0.4.0
+
+- DEC-046: Paper-Formular vor überschreibenden 5-Sekunden-Polls geschützt, Entwurf/Speicherstand getrennt, Anwenden/Verwerfen und Fehlererhaltung. Ganze Slots und endliche positive Beträge serverseitig validiert; 1×50 ohne Konto-/Soak-Reset geprüft.
+- Live-Vorbereitung, **keine Live-Fertigstellung**: Windows Credential Manager, separates lokales Passwort, kurzlebige Sitzung, genaue Origin-/Host-Prüfung, begrenzte Secret-Eingaben, kein Cache/Secret-Echo, redigierte Netzwerkfehler.
+- Getrenntes Vorbereitungs-Audit; ausschließlich allowlistbasierte GET-Abfragen an `https://api.binance.com`, keine Proxy-/Redirect-Weiterleitung und keine Ordermethode. Erlaubnis-, Guthaben-, Fremdorder-/Bestands- und grundlegende Filterprüfung; Rate-Limit und Frischegrenze.
+- Live-Anforderung zeigt reale Blocker und bleibt `LIVE_DISABLED`, auch bei bestandenem Konto-Vorcheck. Echtgeld-Dispatcher, Fill-Ledger, Reconciliation, Testnet-Ausführungsprüfung und DMS-Freigabe sind weiterhin offen. Kein Übertragen von Paperpositionen, keine automatische Budgeterhöhung oder Lockerung der Risikogates.
+
 ## 1.7.1 – 06.09.2026 / Anwendung 0.3.2
 
 - Eigentümerwunsch UI-Bereinigung: Strategie, 3×80-/10×250-/Einzeltest gemeinsam filtern; neuester passender Lauf sichtbar, ältere Nachweise eingeklappt, nichts gelöscht.

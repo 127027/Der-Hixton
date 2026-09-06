@@ -1,5 +1,16 @@
 # 11 – Sicherheit und Compliance
 
+## Implementierter Schutz ab 0.4.0 (Vorbereitung, keine Echtgeldfreigabe)
+
+- Native Windows-Credential-Manager-API, Generic Credential, Persistenz `CRED_PERSIST_LOCAL_MACHINE`: **aktueller Windows-Benutzer auf diesem PC**, nicht alle Benutzer; kein Enterprise-Roaming und kein Klartext-Fallback. Ziel ist pro Installations-Datenbankpfad gehasht; Umzug benötigt erneute Einrichtung. Es werden nur zwei exakte Hixton-Ziele angesprochen, nie fremde Credentials aufgelistet.
+- HMAC API-Key/Secret und der Salt/Scrypt-Verifier des getrennten lokalen Hixton-Passworts liegen außerhalb des Projekts im Windows-Speicher. Passwort wird nicht im Klartext persistiert; Scrypt N=32768/r=8/p=1. Binance-Kontopasswort wird nicht benötigt. Ersteinrichtung ist nur für den vertrauenswürdigen lokalen Betreiber vorgesehen, keine Mehrbenutzer-Webplattform.
+- Geschützte Aktionen benötigen ein korrektes lokales Passwort und eine 15-Minuten-Sitzung; HttpOnly/SameSite=Strict-Cookie nur unter `/api/live`, serverseitiger Token-Hash, nach Restart abgelaufen, ein geschützter Browser zur Zeit. Fünf Fehlversuche führen zu einer prozesslokalen 60-Sekunden-Sperre. Nur exakt gleiche localhost-Origin, zusätzlich Action-Header/TrustedHost; keine CORS-Freigabe. Loopback-HTTP, kein Remotezugang.
+- Secret-Eingaben maximal 4096 Byte, keine Pydantic-Input-Echos, keine URL/Signature/Header/Provider-Freitext-Fehlerausgabe, API `Cache-Control: no-store`. Kein Browserstorage oder Secret-Export; Fingerprint und Änderungsdatum nur entsperrt. Python kann Kopien sensitiver Strings im Prozessspeicher nicht garantiert überschreiben; Crash-/Speicherdumps sind deshalb weiter zu schützen.
+- Read-only-Client besitzt **keine Order-/Transfer-/Auszahlungsfunktion**. Fester TLS-Host `api.binance.com`, keine Redirects oder Umgebungsproxies, kleine Endpunkt-Allowlist, zehn Sekunden Timeout, keine automatische Wiederholung, Rate-Limit-Wartezeit. Ein Netzwerkfehler bedeutet nie erfolgreiche Freigabe.
+- Grenzen: Schadsoftware unter demselben Windows-Benutzer, Administratorzugriff, kompromittierte Browser/Erweiterungen oder Prozessdumps sind nicht durch dieses App-Passwort zuverlässig abwehrbar. Credential Manager ist kein absoluter Zugriffsschutz. Windows-Konto/BitLocker/Updates/IP-Allowlist und dedizierter Binance-Bot-Account bleiben Betreiberaufgaben.
+
+Primärquellen, geprüft 06.09.2026: [Microsoft Credential-Struktur/Persistenz](https://learn.microsoft.com/en-us/windows/win32/api/wincred/ns-wincred-credentialw), [CredWriteW](https://learn.microsoft.com/en-us/windows/win32/api/wincred/nf-wincred-credwritew), [Binance Signatur und Request-Sicherheit](https://developers.binance.com/docs/binance-spot-api-docs/rest-api/request-security), [Binance Key-Rechte](https://developers.binance.com/docs/wallet/account/api-key-permission).
+
 ## Sicherheitsziele
 
 - keine unbefugten Orders;

@@ -1,5 +1,7 @@
 # Der Hixton Trading Bot
 
+Aktuell: **Anwendung 0.4.0 / DMS 1.8.0**. Die Paper-Einstellungen lassen sich jetzt ohne Zurückspringen bearbeiten und beispielsweise mit 1×50 USDT speichern. Neu ist die **Live-Vorbereitung**, nicht ein fertiger Echtgeld-Bot: lokaler Passwortschutz, Windows-Schlüsselablage und ausschließlich lesende Binance-Kontoprüfung. **Live bleibt gesperrt**, solange Order-/Fill-/Reconciliation-Implementierung und DMS-Abnahme fehlen. Das bloße Eintragen eines Keys hebt keine Sperre auf. Anleitung und offene Arbeiten: [DMS 20](DMS/20_BETRIEBSRUNBOOK.md#live-vorbereitung-ab-anwendung-040).
+
 Ein normaler Doppelklick auf `Startbot.bat` setzt **nichts** zurück. Der nur ausdrücklich beauftragte Offline-Neuanfang ist unter [DMS 20](DMS/20_BETRIEBSRUNBOOK.md) dokumentiert. Nach einem frischen Start sind zunächst drei Slots frei: Es wird auf neue qualifizierte Signale gewartet, nicht in alte grüne Trends hineingekauft.
 
 Der Hixton ist ein lokales Binance-Spot-System mit einer gemeinsamen, deterministischen Strategieengine für Backtest und 24/7-Paperbetrieb. Aktiver Paperstand gemäß `DEC-045` ist V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` mit zehn ausdrücklich definierten Coin-Profilen. V2 bleibt die vorherige Vergleichsreferenz. Echte Live-Orders bleiben technisch deaktiviert.
@@ -37,6 +39,9 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - V6: zehn explizite Coin-Profile, deterministische Zusatzfilter/Schlusskurs-Stops und Paper-/Backtest-/Restart-Parität; ausdrückliche Paper-Experimentfreigabe trotz dokumentierter Mehrfenster-Portfoliorückschritte.
 - Ziel sind gute Signalquellen und effiziente Nutzung von höchstens drei Slots. 250→500 USDT und genannte Tradezahlen sind Beispiele, keine Optimierungsquoten; kein Overfitting und keine erzwungenen Trades.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
+- Einstellungen: ungespeicherter Entwurf bleibt über Status-Polls erhalten, explizites Anwenden/Verwerfen, Anzeige gespeicherter Werte; keine Kontoauffüllung oder Änderung bestehender Positionen.
+- Live-Vorbereitung mit HMAC API-Key **und** Secret ausschließlich im Windows-Anmeldedatenspeicher des aktuellen Benutzers und PCs. Kein Export, keine Klartextdatei, kein lokaler Browserstorage. Separates Hixton-Passwort, 15-Minuten-Sitzung, genaue Origin-Prüfung, redigierte Fehler und eigener Vorbereitungs-Audit.
+- Read-only Binance-Prüfung: Uhr, Rechte/IP-Freigabe, freie USDT/BNB, offene Orders, Fremdbestände und grundlegende Filter aller zehn Paare. Sie erzeugt keine Orders und ist kein Ausführungsnachweis. Erster geplanter Echtgeldversuch höchstens 1×50, spätere Erhöhungen separat.
 
 ## Sichere Grenzen
 

@@ -1,0 +1,127 @@
+"""Audited preparation, not a simulated LIVE status or a production dispatcher."""
+
+from __future__ import annotations
+
+import json
+import sqlite3
+import time
+from collections.abc import Callable
+from datetime import UTC, datetime
+from decimal import Decimal
+from pathlib import Path
+from threading import RLock
+
+from hixton.live.binance import BinanceCheckError, BinanceReadOnlyClient
+from hixton.live.credentials import CredentialService, LocalAccess, Vault
+
+RELEASE_BLOCKERS = (
+    "Echte Orderausführung, Fill-Ledger und Wiederanlauf-Reconciliation "
+    "noch nicht implementiert/abgenommen.",
+    "Keine Livefreigabe für die aktive Strategie; Paper-Freigabe ist keine Echtgeldfreigabe.",
+    "Paper-/Live-Ausführungsabgleich, Störfalltests und Binance-Testnet-Nachweis fehlen.",
+)
+
+
+class LivePreparation:
+    def __init__(
+        self,
+        database: Path,
+        vault: Vault,
+        client_factory: Callable[..., BinanceReadOnlyClient] = BinanceReadOnlyClient,
+    ) -> None:
+        self.database = database
+        self.credentials = CredentialService(vault)
+        self.access = LocalAccess(vault)
+        self.lock = RLock()
+        self.client_factory = client_factory
+        self._check: dict[str, object] | None = None
+        self._check_time = 0.0
+        self._next_check = 0.0
+
+    def audit(self, action: str, details: dict[str, object] | None = None) -> None:
+        self.database.parent.mkdir(parents=True, exist_ok=True)
+        with sqlite3.connect(self.database, timeout=10) as connection:
+            connection.execute("PRAGMA synchronous=FULL")
+            connection.execute(
+                "CREATE TABLE IF NOT EXISTS live_preparation_audit ("
+                "id INTEGER PRIMARY KEY, at_utc TEXT NOT NULL, action TEXT NOT NULL, "
+                "details_json TEXT NOT NULL)"
+            )
+            connection.execute(
+                "INSERT INTO live_preparation_audit(at_utc, action, details_json) VALUES (?, ?, ?)",
+                (datetime.now(UTC).isoformat(), action, json.dumps(details or {})),
+            )
+
+    def invalidate_check(self) -> None:
+        self._check = None
+        self._check_time = 0
+
+    def check(self) -> dict[str, object]:
+        # Serialize save/delete/check to avoid checking a replaced credential.
+        with self.lock:
+            if time.monotonic() < self._next_check:
+                raise BinanceCheckError(
+                    "Binance-Prüfung pausiert. Bitte nach der Wartezeit erneut prüfen."
+                )
+            credentials = self.credentials.load()
+            if credentials is None:
+                raise BinanceCheckError(
+                    "Binance API-Schlüssel fehlt. Bitte lokal sicher eintragen."
+                )
+            self.invalidate_check()
+            self._next_check = time.monotonic() + 30
+            self.audit("BINANCE_READ_ONLY_CHECK_REQUESTED")
+            try:
+                result = self.client_factory(credentials).inspect(Decimal("50"))
+            except BinanceCheckError as error:
+                self._next_check = max(self._next_check, time.monotonic() + error.retry_after)
+                self.audit("BINANCE_READ_ONLY_CHECK_FAILED")
+                raise
+            self._check = {**result, "checked_at_utc": datetime.now(UTC).isoformat()}
+            self._check_time = time.monotonic()
+            # Do not persist complete Binance account balances or raw API responses.
+            self.audit(
+                "BINANCE_READ_ONLY_CHECK_COMPLETE",
+                {
+                    "passed": result.get("account_checks_passed") is True,
+                    "fingerprint": credentials.fingerprint,
+                },
+            )
+            return dict(self._check)
+
+    def status(self, *, authenticated: bool, soak_ready: bool, healthy: bool) -> dict[str, object]:
+        with self.lock:
+            credential_status = self.credentials.status()
+            blockers = list(RELEASE_BLOCKERS)
+            if not credential_status["configured"]:
+                blockers.insert(0, "Binance API-Schlüssel fehlt. Bitte hier lokal eintragen.")
+            if not soak_ready:
+                blockers.append(
+                    "Paper-Dauertest noch nicht bestanden (mindestens 30 Tage / 20 Trades)."
+                )
+            if not healthy:
+                blockers.append("Marktdaten/Bot derzeit nicht vollständig gesund.")
+            fresh_check = self._check if time.monotonic() - self._check_time <= 60 else None
+            if fresh_check is None:
+                blockers.append("Keine frische Binance-Kontoprüfung (höchstens 60 Sekunden alt).")
+            elif fresh_check.get("account_checks_passed") is not True:
+                blockers.append("Binance-Kontoprüfung enthält Blockierungen.")
+            return {
+                "state": "LIVE_DISABLED",
+                "order_dispatch_available": False,
+                "ready": False,
+                "authenticated": authenticated,
+                "password_configured": self.access.configured(),
+                "credentials": credential_status
+                if authenticated
+                else {
+                    "configured": credential_status["configured"],
+                },
+                "blockers": blockers,
+                "account_check": fresh_check if authenticated else None,
+                "first_live_trial": {
+                    "slot_count": 1,
+                    "target_notional_usdt": "50.00",
+                    "minimum_free_usdt": "60.00",
+                },
+            }

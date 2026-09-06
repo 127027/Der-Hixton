@@ -1,5 +1,33 @@
 # 20 – Betriebsrunbook
 
+## Live-Vorbereitung ab Anwendung 0.4.0
+
+**Status: Vorbereitung nutzbar, Echtgeld-Orderversand NICHT implementiert/freigegeben.** Der Paper-Test läuft weiter. Der neue Bereich ist kein Schalter, der trotz fehlender Prüfungen echte Orders auslösen darf.
+
+1. Unter Einstellungen Paper-Slots/Notional bearbeiten, z. B. 1 und 50. Der Entwurf bleibt trotz Polling erhalten. „ANWENDEN“ mit genau diesem Wort bestätigen. Gespeicherten Stand kontrollieren. „Verwerfen“ lädt den aktuellen Speicherstand zurück. Keine Kontoauffüllung, keine Schließung/Vergrößerung bestehender Positionen. Ein Einstellungswechsel segmentiert die spätere Auswertung über den vorhandenen Audit, ohne Soak-/Kontohistorie zu löschen.
+2. Im getrennten Live-Bereich ein **eigenes lokales Hixton-Passwort** mit mindestens zwölf Zeichen festlegen und wiederholen. Es ist nicht das Binance-Passwort. Bei späterer Nutzung damit entsperren. Sitzung gilt höchstens 15 Minuten und endet nach Bot-Neustart/Abmelden.
+3. Einen eigenen HMAC API-Key samt Secret für einen dedizierten Binance-Bot-Account/Subaccount **nur in der lokalen UI** eintragen. Lesen/Spot erlauben; Auszahlung, interne/universelle Transfers, Margin, Futures, Optionen und sonstige Handelszugriffe deaktivieren; IP-Beschränkung setzen. Fehlende oder unbekannte Rechte bleiben blockiert. Keine Keys in Chat, Git, Terminal oder Markdown.
+4. Sicher speichern/Ersetzen ausdrücklich bestätigen. Ablage erfolgt im Windows-Anmeldedatenspeicher des aktuellen Benutzers/PCs, nicht in OneDrive. Beide Eingabefelder werden geleert. Sichtbar bleiben nur Status/Fingerprint/Datum im entsperrten Bereich.
+5. „Binance-Konto prüfen — keine Orders“ liest Uhr, Rechte, Spotkonto, offene Orders und Filter aller zehn Märkte. Erster geplanter Echtgeld-Test: **1×50 USDT**, mindestens 60 freie USDT inkl. anfänglichem Gebühren-/Cashpuffer. BNB-Guthaben wird separat angezeigt, kein Rabatt allein daraus unterstellt. USDC zählt nicht als USDT. Fremdbestände/offene Orders werden nicht automatisch verkauft, importiert oder storniert. Eine positive Kontoprüfung ersetzt keine Ausführungsprüfung.
+6. „Live anfordern / Freigabe prüfen“ zeigt fehlende Schritte. **Aktuell immer `LIVE_DISABLED`**, auch mit gültigem Key und bestandenem Kontovorcheck. Kein automatischer Folgeauftrag nach Schlüsseleingabe. Kontoprüfung verfällt nach 60 Sekunden, Restart oder Schlüsseländerung; frühestens nach 30 Sekunden erneut anfordern, Provider-Rate-Limits können länger sperren.
+7. „Live aus“ bestätigt in dieser Stufe den ausgeschalteten Zustand. „Schlüssel entfernen“ entfernt nur den lokalen Key/Secret, nicht das lokale Passwort und nicht den Binance-Key auf der Börse. Widerruf bei Binance ist eine gesonderte Betreiberaktion. „Sperren“ beendet die geschützte UI-Sitzung.
+
+### Noch vor einem tatsächlichen 1×50-Liveversuch zu bauen und abzunehmen
+
+- Gemeinsame frische Order-Intents für Paper/Live, aber getrennte Konten, Positions-/Order-/Fill-Ledger und Checkpoints. Kein Weiterleiten historischer Paper-Replay-Fills; kein spontaner Kauf beim Moduswechsel.
+- Binance-Submit mit persistenter Client-ID **vor** Netzwerkzugriff, echte Teilfills/Gebühren (einschließlich BNB), Filter-/Saldo-/Slippagekontrolle, UNKNOWN-Behandlung und Neustart-Reconciliation ohne Doppelorder. Getestete Fremdorder-/Saldoerkennung und BNB-Gebührenreserve dürfen keine fremden Assets vereinnahmen.
+- Geprüfte Live-aus-Semantik: keine neuen Entries, reale offene Positionen sichtbar weiter überwachen/regelkonform aussteigen lassen; vollständiges Schließen nur separat bestätigt. Kein stiller Wechsel ins Paperkonto bei noch existierenden Echtgeldpositionen. Neustart beginnt gesperrt und verlangt Reconciliation.
+- Separate wirksame Budgetfreigabe: zunächst maximal 1×50. Erst spätere ausdrücklich bestätigte und getestete Erhöhungen auf 3×80, 750 USDT oder mehr. Keine selbsttätige Erhöhung durch Kontoguthaben, Gewinne oder Beispielwerte in der UI.
+- Binance-Testnet-/Failure-Injection-Nachweis und vergleichbare Paper-/Live-Ausführung, vollständiger Paper-Soak, Sicherheit/Recovery/Backup/Incident-Abnahme nach DMS 12 sowie gesonderte Eigentümerfreigabe. Auch danach sind identische Fillpreise oder Gewinne nicht garantiert.
+
+Das sind offene Implementierungs-/Nachweisarbeiten, keine bereits vorhandene Funktion. Ein fest gespeichertes `live=true` oder allein eine abgeänderte Statusanzeige wäre keine zulässige Umsetzung. Die größere Echtgeldfunktion darf nicht aus dem Vorbereitungs-UI als fertig abgeleitet werden.
+
+### Schlüssel-/Passwort-Recovery und Installation
+
+Windows-Speicherziele heißen `DerHixton/<Installationshash>/binance-hmac` und `/ui-password`; der Hash bezieht sich auf den exakten Datenbankpfad. Ein anderes Windows-Konto, ein anderer PC oder verschobener Projektpfad benötigt eine neue Einrichtung. Das ist keine Mehrbenutzer-Webplattform. Ein vergessenes lokales Passwort wird nicht über eine unauthentifizierte HTTP-Resetfunktion zurückgesetzt. In dieser noch orderlosen Version: Bot stoppen, Betreiber entfernt ausschließlich die **beiden exakt zugehörigen** Hixton-Einträge über Windows-Anmeldeinformationsverwaltung, anschließend neu einrichten; bei Unsicherheit zuerst den Binance-Key widerrufen. Vor künftigem Livebetrieb ist Recovery mit offenen Orders gesondert abzusichern.
+
+Audit liegt separat unter `data/live-preparation.sqlite3` und enthält Zeit/Aktion sowie gegebenenfalls Fingerprint/Prüferfolg, keine Secretwerte oder kompletten Binance-Antworten. Nach einem erfolgten Schlüsselschreibvorgang, aber fehlgeschlagener Audit-Endmeldung bleibt Live weiterhin gesperrt; Speicherstatus lokal prüfen, nicht von einer Erfolgsmeldung ausgehen. Normale Projektbackups enthalten keine Windows-Secrets. Gegen Schadsoftware mit denselben Windows-Rechten oder Administratoren gibt es keinen absoluten Schutz.
+
 UI-Stand 0.3.2: Nach einem UI-Update die vorhandene Browserseite einmal neu laden (bei altem Bundle `Strg+F5`). Kein Kontoreset nötig. Unter Backtests zuerst Version und Testart wählen; nur der neueste passende Lauf steht direkt sichtbar, frühere Läufe lassen sich aufklappen. Ein historischer RISIKOHALT ist nicht der aktuelle Paper-Healthstatus. Abnahme und unverändert erhaltener V6-Soak: DMS 18.
 
 ## Aktuell: V6-Paperexperiment und ausdrücklicher Neuanfang (DEC-045)

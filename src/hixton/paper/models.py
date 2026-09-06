@@ -24,9 +24,9 @@ class PaperSettings:
     emergency_stop: bool = False
 
     def __post_init__(self) -> None:
-        if self.slot_count <= 0:
+        if type(self.slot_count) is not int or self.slot_count <= 0:
             raise ValueError("paper slot_count must be positive")
-        if self.target_notional_usdt <= 0:
+        if not self.target_notional_usdt.is_finite() or self.target_notional_usdt <= 0:
             raise ValueError("paper target_notional_usdt must be positive")
         if Decimal(self.slot_count) * self.target_notional_usdt > Decimal("240.00"):
             raise ValueError("slot_count multiplied by target notional may not exceed 240 USDT")

@@ -8,9 +8,10 @@ from collections.abc import AsyncIterator
 from contextlib import asynccontextmanager
 from dataclasses import asdict
 from datetime import UTC, datetime
-from decimal import Decimal
+from decimal import Decimal, InvalidOperation
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlsplit
 from zoneinfo import ZoneInfoNotFoundError
 
 from fastapi import FastAPI, HTTPException, Query, Request
@@ -22,12 +23,14 @@ from hixton import __version__
 from hixton.config import ProjectConfig
 from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
+from hixton.live.credentials import Vault
 from hixton.paper.engine import load_paper_portfolio
 from hixton.paper.models import PaperSettings
 from hixton.paper.storage import PaperStore
 from hixton.runtime.state import RuntimeSnapshot
 from hixton.runtime.supervisor import RuntimeSupervisor
 from hixton.ui.chart import RANGE_LABELS, build_chart_payload
+from hixton.ui.live import install_live_routes
 
 STATIC_ROOT = Path(__file__).with_name("static")
 
@@ -212,7 +215,10 @@ def _market_payloads(
 
 
 def _list_backtests(
-    output_root: Path, *, mode: str | None = None, symbol: str | None = None,
+    output_root: Path,
+    *,
+    mode: str | None = None,
+    symbol: str | None = None,
 ) -> list[dict[str, object]]:
     if not output_root.exists():
         return []
@@ -260,11 +266,26 @@ def _list_backtests(
 def _origin_is_local(request: Request) -> bool:
     origin = request.headers.get("origin")
     action_header = request.headers.get("x-hixton-action")
-    local_origin = origin is None or origin.startswith(("http://127.0.0.1:", "http://localhost:"))
+    try:
+        parsed = urlsplit(origin) if origin else None
+        local_origin = parsed is None or (
+            parsed.scheme == "http"
+            and parsed.hostname in {"127.0.0.1", "localhost"}
+            and parsed.port == request.url.port
+            and not parsed.username
+            and not parsed.password
+            and not parsed.path
+            and not parsed.query
+            and not parsed.fragment
+        )
+    except ValueError:
+        local_origin = False
     return local_origin and action_header == "local-ui-v1"
 
 
-def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
+def create_app(
+    config: ProjectConfig, supervisor: RuntimeSupervisor, *, live_vault: Vault | None = None
+) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
         supervisor.start()
@@ -290,7 +311,11 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         response.headers["X-Content-Type-Options"] = "nosniff"
         response.headers["Referrer-Policy"] = "no-referrer"
         response.headers["X-Frame-Options"] = "DENY"
+        if request.url.path.startswith("/api/"):
+            response.headers["Cache-Control"] = "no-store"
         return response
+
+    install_live_routes(app, config, supervisor, _origin_is_local, live_vault)
 
     app.mount("/assets", StaticFiles(directory=STATIC_ROOT / "assets"), name="assets")
 
@@ -379,13 +404,23 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         if not isinstance(payload, dict) or payload.get("confirmation") != "ANWENDEN":
             raise HTTPException(status_code=400, detail="Bestaetigung ANWENDEN fehlt")
         try:
+            if type(payload.get("slot_count")) is not int:
+                raise ValueError("Slots müssen eine ganze Zahl sein")
+            if type(payload.get("emergency_stop", False)) is not bool:
+                raise ValueError("Not-Aus muss wahr oder falsch sein")
             settings = PaperSettings(
-                slot_count=int(payload["slot_count"]),
+                slot_count=payload["slot_count"],
                 target_notional_usdt=Decimal(str(payload["target_notional_usdt"])),
-                emergency_stop=bool(payload.get("emergency_stop", False)),
+                emergency_stop=payload.get("emergency_stop", False),
             )
-        except (KeyError, TypeError, ValueError) as error:
-            raise HTTPException(status_code=400, detail=str(error)) from error
+        except (KeyError, TypeError, ValueError, InvalidOperation):
+            raise HTTPException(
+                status_code=400,
+                detail=(
+                    "Ungültige Paper-Einstellungen: 1-3 Slots, positives endliches Notional, "
+                    "zusammen höchstens 240 USDT."
+                ),
+            ) from None
         with PaperStore(config.database_path) as store:
             store.initialize(
                 strategy_key=supervisor.strategy.key,
@@ -425,7 +460,8 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
     @app.get("/api/backtests")
     def backtests(
         strategy: str = Query(default=config.strategy_key),
-        mode: str | None = None, symbol: str | None = None,
+        mode: str | None = None,
+        symbol: str | None = None,
     ) -> dict[str, object]:
         if mode not in {None, "portfolio", "all", "single"}:
             raise HTTPException(status_code=400, detail="Unbekannte Backtestart")

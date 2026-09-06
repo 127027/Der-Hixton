@@ -14,6 +14,8 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import "./styles.css";
+import { SettingsDraft } from "./settings-draft";
+import { initializeLivePreparation } from "./live-preparation";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "DOGEUSDT"] as const;
 type SymbolName = (typeof symbols)[number];
@@ -177,6 +179,8 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
 let selectedSymbol: SymbolName = "BTCUSDT";
 let selectedRange: RangeKey = "1m";
 let lastStatus: StatusResponse | null = null;
+const settingsDraft = new SettingsDraft();
+let coreLoadGeneration = 0;
 let chart: IChartApi | null = null;
 let candleSeries: ISeriesApi<"Candlestick"> | null = null;
 let vidyaSeries: ISeriesApi<"Line"> | null = null;
@@ -229,11 +233,23 @@ function renderStatus(status: StatusResponse): void {
   text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - usedSlots)));
   required("#metric-slots").nextElementSibling!.textContent = `von ${status.paper.settings.slot_count}`;
   text("#metric-drawdown", `${formatNumber(status.paper.drawdown_pct)} %`);
-  required<HTMLInputElement>("#slot-input").value = String(status.paper.settings.slot_count);
-  required<HTMLInputElement>("#notional-input").value = status.paper.settings.target_notional_usdt;
-  required<HTMLInputElement>("#emergency-input").checked = status.paper.settings.emergency_stop;
+  text("#settings-saved", `Gespeichert: ${status.paper.settings.slot_count} × ${formatNumber(status.paper.settings.target_notional_usdt)} USDT · ${status.paper.settings.emergency_stop ? "Not-Aus aktiv" : "Paper"}`);
+  if (settingsDraft.acceptsPolling) renderSettingsInputs(status.paper.settings);
   renderPositions(status.paper.positions);
   renderSystem(status);
+}
+
+function renderSettingsInputs(settings: PaperPayload["settings"]): void {
+  required<HTMLInputElement>("#slot-input").value = String(settings.slot_count);
+  required<HTMLInputElement>("#notional-input").value = settings.target_notional_usdt;
+  required<HTMLInputElement>("#emergency-input").checked = settings.emergency_stop;
+}
+
+function renderSettingsEditState(): void {
+  text("#settings-edit-state", settingsDraft.saving ? "Wird gespeichert …" : settingsDraft.dirty ? "Ungespeicherte Änderung — ANWENDEN oder verwerfen." : "Keine ungespeicherten Änderungen.");
+  for (const selector of ["#slot-input", "#notional-input", "#emergency-input", "#settings-button", "#settings-discard"]) {
+    required<HTMLInputElement | HTMLButtonElement>(selector).disabled = settingsDraft.saving;
+  }
 }
 
 function marketCard(market: Market): string {
@@ -375,12 +391,15 @@ async function loadChart(background = false): Promise<void> {
 }
 
 async function refreshCore(): Promise<void> {
+  const generation = ++coreLoadGeneration;
   try {
     const [status, markets] = await Promise.all([api<StatusResponse>("/api/status"), api<{ markets: Market[] }>("/api/markets")]);
+    if (generation !== coreLoadGeneration) return;
     renderStatus(status);
     renderMarkets(markets.markets);
     if (required("#chart-panel").classList.contains("active")) void loadChart(true);
   } catch (error) {
+    if (generation !== coreLoadGeneration) return;
     required("#connection-dot").className = "status-dot error";
     text("#connection-label", "UI-API getrennt");
     showToast(error instanceof Error ? error.message : String(error), true);
@@ -490,12 +509,36 @@ function initializeControls(): void {
     catch (error) { showToast(error instanceof Error ? error.message : String(error), true); }
     finally { button.disabled = false; }
   });
+  for (const selector of ["#slot-input", "#notional-input", "#emergency-input"]) {
+    required<HTMLInputElement>(selector).addEventListener("input", () => { settingsDraft.edit(); renderSettingsEditState(); });
+  }
+  required<HTMLButtonElement>("#settings-discard").addEventListener("click", () => {
+    settingsDraft.discard();
+    if (lastStatus?.paper) renderSettingsInputs(lastStatus.paper.settings);
+    renderSettingsEditState();
+  });
   required<HTMLButtonElement>("#settings-button").addEventListener("click", async () => {
-    if (window.prompt("Zum Speichern ANWENDEN eingeben:") !== "ANWENDEN") return;
+    const slots = required<HTMLInputElement>("#slot-input");
+    const notional = required<HTMLInputElement>("#notional-input");
+    if (!slots.reportValidity() || !notional.reportValidity()) return;
+    const settings = { slot_count: Number(slots.value), target_notional_usdt: notional.value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked };
+    if (settings.slot_count * Number(settings.target_notional_usdt) > 240) { showToast("Positionsbudget darf aktuell 240 USDT nicht überschreiten.", true); return; }
+    if (!settingsDraft.beginSave()) return;
+    renderSettingsEditState();
+    // Capture the draft BEFORE the modal; delayed polls must not change the submitted values.
+    if (window.prompt(`Paper auf ${settings.slot_count} × ${settings.target_notional_usdt} USDT ändern? Zum Speichern ANWENDEN eingeben:`) !== "ANWENDEN") {
+      settingsDraft.finishSave(false); renderSettingsEditState(); return;
+    }
     try {
-      await api("/api/paper/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", slot_count: Number(required<HTMLInputElement>("#slot-input").value), target_notional_usdt: required<HTMLInputElement>("#notional-input").value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked }) });
-      showToast("Paper-Einstellungen wurden für neue Entries gespeichert."); await refreshCore();
-    } catch (error) { showToast(error instanceof Error ? error.message : String(error), true); }
+      const result = await api<{ settings: PaperPayload["settings"] }>("/api/paper/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", ...settings }) });
+      ++coreLoadGeneration;
+      settingsDraft.finishSave(true);
+      if (lastStatus?.paper) lastStatus.paper.settings = result.settings;
+      renderSettingsInputs(result.settings);
+      showToast("Paper-Einstellungen wurden für neue Entries gespeichert.");
+      await refreshCore();
+    } catch (error) { settingsDraft.finishSave(false); showToast(error instanceof Error ? error.message : String(error), true); }
+    finally { renderSettingsEditState(); }
   });
   required<HTMLButtonElement>("#backtest-button").addEventListener("click", async () => {
     const symbol = required<HTMLSelectElement>("#backtest-symbol").value;
@@ -507,6 +550,7 @@ function initializeControls(): void {
 }
 
 initializeControls();
+initializeLivePreparation();
 ensureChart();
 void Promise.all([refreshCore(), refreshEvents(), refreshBacktests(), refreshRuntimeLogs()]).then(() => loadChart());
 window.setInterval(() => void refreshCore(), 5_000);

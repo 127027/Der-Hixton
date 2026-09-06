@@ -1,5 +1,7 @@
 # 00 – Dokumentenlenkung und Start
 
+Aktueller Stand **DMS 1.8.0 / Anwendung 0.4.0, DEC-046**: Paper-Eingabefehler korrigiert; gesonderter Live-Vorbereitungsbereich mit Windows-Schlüsselablage und Read-only-Kontoprüfung. **Keine Echtgeldfreigabe und kein fertiger Orderadapter.** Die datierten Stände darunter bleiben Historie. Keine Änderung von V6-Profilen oder laufendem Paperkonto; aktive UI-Settings sind aus der API zu lesen, nicht aus dem Standardwert 3×80 abzuleiten.
+
 ## Zweck
 
 Aktueller Ergänzungsstand: **DMS 1.7.1, 06.09.2026 / Anwendung 0.3.2**. DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe. Historische Abnahmen unten bleiben datierte Nachweise.

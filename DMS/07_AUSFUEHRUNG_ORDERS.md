@@ -1,5 +1,7 @@
 # 07 – Ausführung und Orders
 
+Implementierungsstand 0.4.0 / DEC-046: Die neue Live-Vorbereitung liest nur Binance-Zeit, Key-Rechte, Spotkonto, offene Orders und ExchangeInfo. **Kein Submit, kein Storno, kein Order-Test-POST, keine Kontoübernahme.** Strategielogik bleibt unverändert. Der spätere Echtgeldadapter darf die derzeitigen Paper-Fills nicht schlicht weiterleiten: Paper-Replay enthält historische Modellfills, Live muss ausschließlich frische Intents nach Freigabe ausführen und tatsächliche Börsenfills separat buchen. Paperpositionen werden beim Moduswechsel nicht gekauft oder verkauft. Die nachfolgenden Live-Orderregeln sind weiterhin verbindliches Zielbild, kein bereits implementierter Nachweis.
+
 V6 ist technisch für coinindividuelle Regeln vorbereitet: CMO-/VIDYA-Filter prüfen nur frische Hixton-BUY-Flips; XRP kann zusätzlich bei `close <= entry_fill - 4 * entry_ATR` aussteigen. Der Entry-ATR bleibt gespeichert, der Stop gilt nur am Schlusskurs und wird mit dem tatsächlichen nächsten Open plus Kosten ausgeführt. Kein garantierter Stoppreis, kein intrabar erfundener Fill, kein erneuter Kauf ohne neuen Flip. Strategiewechsel verlangen eine gesonderte protokollierte Aktivierung; technische Implementierung allein aktiviert nichts.
 
 ## Grundmodell

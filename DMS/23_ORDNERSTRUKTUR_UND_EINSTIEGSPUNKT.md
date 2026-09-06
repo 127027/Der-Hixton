@@ -1,6 +1,6 @@
 # 23 – Ordnerstruktur und einziger Einstiegspunkt
 
-Aktiver Stand: V6 unter `backtests/v6/`. Ein einziges Laufzeitkonto bleibt unter `data/hixton.sqlite3`; abgelöste Paperkonten und alte Startlogs werden unter `backups/paper-v2-archive-20260906/` gesammelt. Keine `Startbot-neu.bat`, keine zweite aktive Datenbank, kein Löschen wissenschaftlicher Gegenbelege. Wartung ist ein Unterbefehl von `src/main.py`, nicht ein weiterer Starter.
+Aktiver Stand: V6 unter `backtests/v6/`. Ein einziges Paper-Handelskonto bleibt unter `data/hixton.sqlite3`; abgelöste Paperkonten und alte Startlogs werden unter `backups/paper-v2-archive-20260906/` gesammelt. Ab 0.4.0 enthält `data/live-preparation.sqlite3` ausschließlich getrennten Sicherheits-/Vorbereitungs-Audit, **kein** zweites Paperkonto, keine Marktduplikate, keine Secrets. `src/hixton/live/` bündelt Schlüsselablage, Read-only-Binance-Prüfung und Vorbereitung. Keine `Startbot-neu.bat`, kein Löschen wissenschaftlicher Gegenbelege. Wartung ist ein Unterbefehl von `src/main.py`, nicht ein weiterer Starter.
 
 Ergänzung DMS 1.7: `backtests/v6/` enthält nur `README.md`, den unveränderlichen `candidate.json`, einen kompakten kuratierten Nachweis unter `reports/` und ignorierte reproduzierbare Rohartefakte unter `runs/`. Keine neue Startdatei, keine zweite Handelsengine, keine großen Kerzendaten in Git. Der einzige Starter bleibt `Startbot.bat`.
 

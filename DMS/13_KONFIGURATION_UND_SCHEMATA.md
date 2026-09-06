@@ -1,5 +1,9 @@
 # 13 – Konfiguration und Schemata
 
+DEC-046 / Anwendung 0.4.0: Der JSON-Baselinewert 3×80 bleibt unverändert. Aktive Paper-Settings kommen restartfest aus `paper_settings`; UI darf 1–3 Slots mit positivem endlichem Zielnotional, zusammen höchstens 240 USDT speichern. Beispiel 1×50 ändert weder Startcash noch Positionen oder Soak. Der gemeinsame UI-Portfoliobacktest liest die aktuellen gespeicherten Slotwerte und schreibt sie ins Manifest; historische 3×80-Ergebnisse sind kein Ergebnis einer neuen 1×50-Konfiguration.
+
+Keine API-Keys, Secrets, lokalen Passwörter oder Live-Enable-Flags in JSON/YAML/ENV. Live-Vorbereitung verwendet Windows Credential Manager sowie ein getrenntes `data/live-preparation.sqlite3` nur für Vorbereitungs-Audit, nicht als zweites Handelskonto. Konto-Vorchecks bleiben maximal 60 Sekunden im Speicher und verfallen bei Schlüsseländerung oder Restart. Geplanter erster Echtgeldumfang ist 1×50 mit mindestens 60 freien USDT; dies ist noch keine wirksame Live-Konfiguration. Erhöhung auf 3×80/750 oder darüber benötigt neue ausdrücklich bestätigte Budgetgrenzen samt Spiegeltest; wird nicht vorweggenommen.
+
 DEC-045: aktive JSON-Config `strategy.key=v6`, vollständige unveränderte Profilmap aus `candidate.json`, Runziel `backtests/v6/runs`, Paperstart 250 USDT / 3×80. Die Paperfreigabe gilt dem Experiment, nicht einer Live-Ausführung.
 
 Aktuelle Runtime-Quelle ist ausschließlich `config/examples/config.example.json`, geprüft gegen `StrategyDefinition.config_payload()`. Neue Modellkonten starten gemäß DEC-044 mit `paper.starting_cash_usdt: "250.00"`, drei Slots à 80 USDT. Alte V2-Configs mit 240 USDT bleiben lesbar; vorhandene Konten werden bei normalen Starts nie umgebucht. Ein separater Offline-Neuanfang nach DEC-045 archiviert stattdessen das alte Konto. Das folgende umfangreiche YAML enthält auch zukünftige Live-Felder und ist kein Ersatz für diese streng geprüfte JSON-Datei.
