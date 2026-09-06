@@ -1,5 +1,7 @@
 # 20 – Betriebsrunbook
 
+UI-Stand 0.3.2: Nach einem UI-Update die vorhandene Browserseite einmal neu laden (bei altem Bundle `Strg+F5`). Kein Kontoreset nötig. Unter Backtests zuerst Version und Testart wählen; nur der neueste passende Lauf steht direkt sichtbar, frühere Läufe lassen sich aufklappen. Ein historischer RISIKOHALT ist nicht der aktuelle Paper-Healthstatus. Abnahme und unverändert erhaltener V6-Soak: DMS 18.
+
 ## Aktuell: V6-Paperexperiment und ausdrücklicher Neuanfang (DEC-045)
 
 DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe.

@@ -1,5 +1,13 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## UI-Bereinigung abgenommen – 06.09.2026, Anwendung 0.3.2
+
+- Code `2b8611a5d510f1236037bcf6f0e9c61924469251`: Liste und Tabelle gemeinsam nach Version/Testart/Einzelcoin gefiltert, neuester passender Lauf sichtbar, Historie eingeklappt. Keine historischen Dateien gelöscht und keine Handelsparameter geändert.
+- Eigentümerläufe bleiben erhalten: V6-Batch `5a194dd7-ee6f-459b-be2e-c9ac8995c488`, V6-Portfolio `d97de0ed-733b-4b0b-891d-5b8fa3202fe8`. Letzterer verwendet **06.09.2023 13:00 bis 06.09.2026 13:00 UTC**, endet unter Baseline bei **739,52 USDT / 193 Trades / 21,66 % maximalem Drawdown**, mit Risikohalt am 24.03.2026. Er ist kein Widerspruch zum reproduzierten 733,31-USDT-Lauf: anderer Fensterbeginn, anderes Warm-up und andere historische Signalsequenz. Die UI nennt jetzt beide Fenster ausdrücklich.
+- Vor normalem Neustart geprüftes Konto-Backup `backups/hixton-before-v032-20260906.sqlite3`, Integrität `ok`, SHA-256 `ac0551b298c54d5e88d10921b701bfa701578cbb1f46ed2d2a96d4afc1ac48a0`. Kein erneuter Fresh-Start-Befehl. Konto, Strategie-Session, Einstellungen, Positionen, Ereignisse, Audit und Soak-Beginn anschließend gegen Backup geprüft und erhalten.
+- **107 Tests** auf Arbeitskopie und Laptop bestanden; Ruff, mypy, TypeScript und UI-Build erfolgreich. Gerendert geprüft: V6-Portfolio mit einer Karte, Aufklappen der drei älteren Portfolios, V6-Batch mit zehn Ergebniszeilen ohne Portfolio-Beimischung, leere V6-ETH-Einzelansicht ohne fremde Resultate, separate V2-Portfolioansicht und dynamische V6-Dokumentationskennung. Browserkonsole ohne Warnungen/Fehler. Vorherige unterbrochene Sichtprüfung damit ergänzt.
+- Um **20:04 Europe/Berlin**: `HEALTHY / PAPER / LIVE_DISABLED`, Anwendung 0.3.2, zehn valide Märkte, **50/50 Chartkombinationen** erneut bestanden. Cash/Equity 250 USDT, PnL 0, keine offenen Positionen oder Paperfills. Kontoaktivierung weiterhin 15:14:58, Soak weiterhin seit 15:16:26, mittlerweile fünf neue Bars je Coin. Startup über die Stundengrenze wurde automatisch nachsynchronisiert; keine manuelle Soak-Rücksetzung.
+
 ## Aktueller Betrieb – ausdrücklicher V6-Neuanfang, 06.09.2026
 
 - DEC-045 umgesetzt mit Anwendung **0.3.1**, Code `226be5ba8755727fa19b024e0efce45e4f0f0071`. V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` ist ein ausdrücklich gewähltes Paper-Experiment, keine nachgewiesen robuste oder live-reife Strategie.
