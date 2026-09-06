@@ -30,6 +30,8 @@ class PaperSettings:
             raise ValueError("paper target_notional_usdt must be positive")
         if Decimal(self.slot_count) * self.target_notional_usdt > Decimal("240.00"):
             raise ValueError("slot_count multiplied by target notional may not exceed 240 USDT")
+        if self.slot_count > 3:
+            raise ValueError("paper supports at most 3 simultaneous slots")
 
 
 @dataclass(frozen=True, slots=True)
@@ -57,6 +59,8 @@ class PaperPosition:
     updated_at_utc: datetime
     strategy_version: str = HIXTON_SPEC_VERSION
     slot_count: int = 1
+    entry_atr: Decimal = Decimal("0")
+    highest_close: Decimal = Decimal("0")
 
 
 @dataclass(frozen=True, slots=True)

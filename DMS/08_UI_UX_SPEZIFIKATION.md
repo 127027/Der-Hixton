@@ -1,5 +1,7 @@
 # 08 – UI-/UX-Spezifikation
 
+Ergänzung 06.09.2026: Optik und Navigation bleiben bestehen. Jede Marktkarte zeigt ihre tatsächlichen VIDYA-/Momentum-/SMA-/ATR-/Bandwerte und Zusatzfilter. Die Backtestauswahl wird beim Laden aus der aktiven Paperstrategie vorbelegt; ein manuell gewählter Vergleich verändert Paper nicht. V6 ist ein Vergleichskandidat, nicht aufgrund seiner Anzeige automatisch aktiv. Qualifizierte hypothetische Coin-Signale und echte Ledger-Fills sind getrennt: Slots, Cash und Risikogates können ein Signal blockieren; Stopmarker heißen STOP. Der grüne Trend allein ist keine erneute Kaufaufforderung.
+
 ## UI-Grundsätze
 
 - Die UI zeigt Fakten und Status, keine Renditeversprechen.
@@ -105,7 +107,7 @@ Startmaske:
 
 - `Alle 10 Coins`: zehn isolierte Läufe mit je 250 USDT;
 - `Einzeltest`: genau ein auswählbares Paar, etwa ETH/USDT, mit 250 USDT;
-- `Gemeinsames 3×80-Portfolio`: 240 USDT gemeinsamer Cashpool mit höchstens drei festen 80-USDT-Slots;
+- `Gemeinsames 3×80-Portfolio`: 250 USDT gemeinsamer Cashpool (10 USDT Startreserve) mit höchstens drei festen 80-USDT-Slots;
 - Zeitraum, Timeframe, Kostenmodell und Strategieversion vor Start sichtbar;
 - Backteststart löst niemals eine Börsenorder aus.
 

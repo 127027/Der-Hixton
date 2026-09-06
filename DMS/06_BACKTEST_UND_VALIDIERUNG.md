@@ -1,5 +1,7 @@
 # 06 – Backtest und Validierung
 
+V6-Prüfstand (06.09.2026): `backtest research --study v6` bewertet eingefrorene Coin-Profile und V2 mit identischen Produktionsengines, Börsenfiltern, Kosten und Fenstern. Für einen fairen gemeinsamen Vergleich starten beide bei 250 USDT; alte 240-USDT-Nachweise bleiben unverändert. Auswahl zwischen V2 und V5-Finalist nutzt den höchsten schlechtesten Stress-Endwert aus allen drei bereits betrachteten Zeiträumen. Deshalb sind diese Zeiträume Kalibrierung/retrospektive Diagnose, **kein unangetasteter Holdout**. Keine nachträgliche Umwahl nach Portfoliobefund. Ergebnisse und Rückschritte: `backtests/v6/README.md`.
+
 ## Ziel
 
 Der Backtest hat zwei getrennte Ziele: zuerst beweisen, dass der Bot auf jede historische Kerze exakt gemäß der ausgewählten, versionierten Strategie reagiert; danach reproduzierbar messen, wie diese unveränderte Version unter realistischen Kosten abgeschnitten hätte. V1 referenziert `HIXTON-SPEC-1.0`, V2 die vom Eigentümer bereitgestellte Pine-v6-Datei und einen eingefrorenen Parameter-Snapshot. Der Backtest beweist keine zukünftige Profitabilität.
@@ -24,7 +26,7 @@ Für regelmäßige Neubewertung wird ein rollierendes 3-Jahres-Fenster verwendet
 2. Standard-Batch mit zehn isolierten Einzeltests à 250 USDT;
 3. Einzelmodus für ein frei gewähltes Paar, zum Beispiel nur ETH/USDT, mit 250 USDT;
 4. Vergleichsaggregation der zehn isolierten Ergebnisse (2.500 USDT rechnerisches Simulationskapital, kein gemeinsamer Cashpool);
-5. Paper-/Live-Spiegellauf mit gemeinsam 240 USDT und höchstens drei 80-USDT-Slots;
+5. Paper-/Live-Spiegellauf mit gemeinsam 250 USDT und höchstens drei 80-USDT-Slots;
 6. Buy-and-Hold-Benchmark je Coin;
 7. Sensitivität gegenüber Kosten und Slippage;
 8. Walk-forward-/Out-of-sample-Prüfung, falls Parameter überhaupt abgestimmt werden;
@@ -88,7 +90,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 
 - Batch: zehn Resultate mit je 250 USDT werden einzeln gezeigt und nur zum Vergleich summiert;
 - Einzelmodus: Coin-Auswahl, zum Beispiel ETH, darf ohne die übrigen neun ausgeführt werden;
-- Spiegelportfolio: gemeinsamer Cashpool 240 USDT, drei 80-USDT-Slots und dokumentierte Slotpriorisierung;
+- Spiegelportfolio: gemeinsamer Cashpool 250 USDT, drei 80-USDT-Slots und dokumentierte Slotpriorisierung;
 - Im Spiegelportfolio werden Ausstiege am nächsten Bar-Open vor Einstiegen verarbeitet. Gleichzeitige Einstiege werden nach normalisierter Ausbruchsstärke und danach in der festen DMS-Coinreihenfolge sortiert. Blockierte Signale werden nicht später künstlich nachgeholt;
 - Der echte Paper-/Live-Spiegel wendet zusätzlich dieselbe 5-%-UTC-Tagesverlustpause und denselben persistenten 20-%-High-Water-Drawdown-Halt wie die Paperengine an. Ein Lauf ohne diese Gates heißt ausdrücklich `strategy-only` und darf nicht als Paper-/Live-Ergebnis bezeichnet werden;
 - keine Verwechslung zwischen rechnerischer Batchsumme und realistischem gemeinsamen Cashbestand;
@@ -96,7 +98,7 @@ Bei zu wenigen Trades werden instabile Kennzahlen sichtbar als „nicht aussagek
 - Korrelationen der Tagesrenditen;
 - Beitrag jedes Coins zu PnL und Drawdown;
 - maximale gleichzeitig investierte Summe;
-- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; 250→500 USDT je Coin darf als Wunschziel ausgewiesen werden, aber nie als Garantie oder Grund zum Verbergen schlechter Ergebnisse.
+- separate Darstellung von Brutto-, Nettoergebnis und Tradezahl; 250→500 USDT je Coin darf als Beispiel ausgewiesen werden, aber nie als Garantie oder Grund zum Verbergen schlechter Ergebnisse.
 
 ## Validierungsdesign und Anti-Overfitting
 
@@ -127,7 +129,7 @@ Ein Backtest ist nur `VALID`, wenn:
 
 ## Ergebnisinterpretation
 
-Der UI-Portfoliovergleich übernimmt die aktuell gespeicherte Paper-Slotanzahl und das Zielnotional, startet aber ein neues simuliertes Konto mit 240 USDT. Er übernimmt weder aktuelle offene Positionen noch bisherige Papergewinne. Sein Endzeitpunkt wird aus der letzten für alle zehn Coins vorhandenen geschlossenen Kerze bestimmt, nicht blind aus der Wanduhr.
+Der UI-Portfoliovergleich übernimmt die aktuell gespeicherte Paper-Slotanzahl und das Zielnotional, startet aber ein neues simuliertes Konto mit dem Startkapital der aktiven Config (jetzt 250 USDT). Er übernimmt weder aktuelle offene Positionen noch bisherige Papergewinne. Sein Endzeitpunkt wird aus der letzten für alle zehn Coins vorhandenen geschlossenen Kerze bestimmt, nicht blind aus der Wanduhr.
 
 V4-Prüfung vom 05.09.2026: 24 begrenzte Parametervarianten je Coin, Auswahl anhand der schlechtesten Stressrendite der ersten beiden einzeln gestarteten Trainingsjahre, danach festgehaltener Vergleich im dritten Jahr. Exakte Finalisten verwenden die produktiven Decimal-Engines. Zusätzlich wird eine getrennte, vereinfachte Nachkaufhypothese getestet. Ergebnisse und Grenzen stehen einmalig in `backtests/v4/README.md`; weder diese Hypothese noch der coinindividuelle Kandidat ist aktiv. Ein hoher Gesamtwert bei Verlusten im jüngsten Neustartfenster rechtfertigt keine Übernahme.
 

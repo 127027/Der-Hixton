@@ -1,5 +1,7 @@
 # 02 – Verbindliche Anforderungen
 
+Ergänzung STR-009 / CAP-009 (DEC-043/044, VERBINDLICH): Ein Coin-Profil besteht aus versionierten Hixton-Parametern und expliziten Zusatzregeln. Paper, Einzeltest, Batch und Portfolio müssen dieselbe ausgewählte Definition verwenden; Charts zeigen qualifizierte Signale getrennt von tatsächlichen Paper-Fills. Eine gemeinsame Einstellung darf je Coin beibehalten werden, wenn sie im begrenzten Vergleich besser belegt ist. Profilindividualisierung ist kein Gewinnnachweis. Schlechtere Portfolio-/Stress-/Altfenster werden berichtet, nicht durch mehr Trades oder gelockerte Risikogates verdeckt.
+
 Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umnummerieren versteckt.
 
 ## Strategie
@@ -22,10 +24,10 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | MKT-001 | Genau zehn aktive USDT-Spot-Paare bilden das initiale Universum. | VERBINDLICH |
 | MKT-002 | Initiales Universum: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT. Alle zehn waren beim DMS-Abgleich auf Binance Spot im Status `TRADING` und besitzen mindestens drei Jahre Binance-Historie. | VERBINDLICH |
 | MKT-003 | Die Coinliste wird nicht automatisch nach Performance ausgetauscht. Eine spätere Überprüfung ist versioniert, vorwärtsgerichtet und benötigt neue Backtests. | VERBINDLICH |
-| CAP-001 | Paper-/späteres Live-Portfolio startet mit 240,00 USDT aus einem gemeinsamen Cashbestand. | VERBINDLICH |
+| CAP-001 | Paper-/späteres Live-Portfolio startet neu mit 250,00 USDT aus einem gemeinsamen Cashbestand: 3×80 USDT plus 10 USDT anfängliche Reserve. Bestehende Ledger werden nicht aufgefüllt. | VERBINDLICH |
 | CAP-002 | Paper-/Live-Anfangskonfiguration: höchstens drei gleichzeitig belegte Positionsslots mit 80,00 USDT Zielnotional je Einstieg. | VERBINDLICH |
 | CAP-003 | Positionsgröße und Slotanzahl sind später in der UI änderbar; Änderungen gelten nur vorwärts, werden validiert, bestätigt und auditierbar versioniert. | VERBINDLICH |
-| CAP-004 | 250 auf mindestens 500 USDT je Coin innerhalb von drei Jahren ist ein gewünschtes Optimierungsziel, aber keine Garantie und kein Freigabegrund allein. Jeder Backtest prüft zuerst korrekte Reaktion und berichtet danach die vollständige Nettoperformance. | VERBINDLICH |
+| CAP-004 | 250→500 USDT und genannte Tradezahlen sind illustrative Beispiele, keine verpflichtenden Optimierungs- oder Freigabequoten. Jeder Backtest prüft zuerst korrekte Reaktion und berichtet danach die vollständige Nettoperformance. | VERBINDLICH |
 | CAP-005 | Bei mehr Kaufkandidaten als freien Slots gewinnt der auf 12 Dezimalstellen Half-Even gerundete größte Wert `(close-upper)/ATR`; Gleichstand folgt der festen Coinreihenfolge aus DMS 03. | VERBINDLICH |
 | CAP-006 | Primärziel der Portfolioauswahl ist maximaler Nettogewinn nach Kosten; hohe Tradezahl ist nur Sekundärziel. | VERBINDLICH |
 | CAP-007 | Die bestbelegte zulässige Strategieverbesserung wird nach bestandenem Vergleich und ausdrücklicher Entscheidung vorwärtsgerichtet als Paperstandard übernommen. „Bestbelegt“ verlangt Reproduzierbarkeit, Kosten-Stress, Altfenster und den risikogleichen 3×80-Spiegel; ein höchster Einzelwert genügt nicht. Live bleibt ein separates Gate. | VERBINDLICH |
@@ -60,7 +62,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | BKT-007 | Kapitalunabhängige Signalparität wird getrennt von PnL- und Portfoliosimulation ausgewiesen. | VERBINDLICH |
 | BKT-008 | Standard-Batchlauf: zehn isolierte Coin-Backtests mit jeweils 250,00 USDT Startkapital. | VERBINDLICH |
 | BKT-009 | Einzelmodus: ein frei wählbares Paar, zum Beispiel ETH/USDT, wird separat mit 250,00 USDT getestet. | VERBINDLICH |
-| BKT-010 | Der Paper-/Live-Spiegellauf simuliert verpflichtend das gemeinsame 240-USDT-Portfolio mit drei 80-USDT-Slots sowie derselben 5-%-Tagesverlustpause und demselben 20-%-Drawdown-Halt wie Paper. Varianten ohne Risikogates heißen `strategy-only`. | VERBINDLICH |
+| BKT-010 | Der Paper-/Live-Spiegellauf simuliert verpflichtend das gemeinsame neue 250-USDT-Portfolio mit drei 80-USDT-Slots sowie derselben 5-%-Tagesverlustpause und demselben 20-%-Drawdown-Halt wie Paper. Varianten ohne Risikogates heißen `strategy-only`. | VERBINDLICH |
 | BKT-011 | Baseline je Orderseite: 10 bps Gebühr + 2 bps Spread + 3 bps Slippage; Stress: 10 + 10 + 20 bps. Kosten wirken advers auf Kauf und Verkauf. | VERBINDLICH |
 | BKT-012 | Strategieverbesserungen werden nur als neue Backtestversion angelegt. Suchraum, Auswahlregel, ältere Marktsegmente, Kosten-Stress, Nachbarparameter und verworfene Varianten werden dokumentiert; mehr Trades sind nur bei robuster Nettowirkung besser. | VERBINDLICH |
 

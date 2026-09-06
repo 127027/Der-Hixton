@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Aktueller Ergänzungsstand: **DMS 1.5, 05.09.2026**. Maßgeblich für die jüngste Forschung sind DMS 18 und `backtests/v5/README.md`: alle zehn Coins, 348 Kandidaten, Verlustdiagnose, Einzel-/Portfoliogegenproben und keine neue Paperfreigabe. 86 Tests bestanden; aktive Strategie weiterhin V2, Live weiterhin gesperrt. Die folgenden Angaben vom 02.09. bleiben historische Abnahmen, kein Beweis fehlerfreier aktueller Ausführung: Am 05.09. wurden eine Stundenverzögerung und Paper-/Backtest-Abweichungen gefunden und korrigiert; diese technische Korrektur ist in DMS 1.4 dokumentiert.
+Aktueller Ergänzungsstand: **DMS 1.6, 06.09.2026**. V2 bleibt aktiv. V6-Coin-Profile sind technisch durchgängig implementiert, aber wegen schlechterer jüngster/älterer Portfolioergebnisse nicht zur Übernahme freigegeben. Maßgeblich: DEC-043/044, DMS 18 und `backtests/v6/README.md`. Neue Modellkonten 250 USDT einschließlich 10 USDT Anfangsreserve; bestehender Kontostand und Historie unverändert. Live weiterhin gesperrt. Historische Abnahmen unten sind datierte Nachweise, keine Behauptung durchgängiger Profitabilität.
 
 Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
@@ -42,7 +42,7 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1.5; V2 ist die aktive Paperstrategie, V1 bleibt Historie, V3 ist verworfen und V4/V5 sind abgeschlossene Forschung ohne Paperfreigabe.** Die bestehenden fachlichen Produktentscheidungen bleiben verbindlich, aber ihr Nachweis bedeutet keine zuverlässige Profitabilität. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und frühere Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
+Aktueller Paketstatus: **DMS V1.6; V2 aktiv, V1 historisch, V3 verworfen, V4/V5 historische Forschung, V6 geprüfter Coin-Mix ohne Paperfreigabe.** Die bestehenden fachlichen Produktentscheidungen bleiben verbindlich, aber ihr Nachweis bedeutet keine zuverlässige Profitabilität. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und frühere Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
 
 ## Arbeitsübergabe vom 02.09.2026
 

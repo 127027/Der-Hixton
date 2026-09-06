@@ -10,9 +10,9 @@ from decimal import ROUND_DOWN, Decimal
 
 from hixton.backtest.models import BASELINE_COSTS, ONE, ZERO, ExecutionRules
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
-from hixton.domain.models import Candle, IndicatorPoint, Signal
+from hixton.domain.models import Candle, IndicatorPoint, Signal, SignalAction
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
-from hixton.domain.strategy import HixtonStrategy
+from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 from hixton.domain.versions import StrategyDefinition
 from hixton.paper.models import (
     PaperAccount,
@@ -47,6 +47,7 @@ def initialize_paper_at_latest(
     at: datetime | None = None,
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
+    starting_cash_usdt: Decimal | None = None,
 ) -> bool:
     """Arm a new account at latest; preserve checkpoints on every later restart."""
 
@@ -63,6 +64,7 @@ def initialize_paper_at_latest(
             at=at,
             strategy_key=strategy_key,
             strategy_version=strategy_version,
+            starting_cash_usdt=starting_cash_usdt,
         )
         store.require_strategy(strategy_key, strategy_version)
         existing = store.all_checkpoints()
@@ -75,10 +77,6 @@ def initialize_paper_at_latest(
         store.ensure_soak_started(existing, at=at)
         store.ensure_execution_epoch(existing, at=at)
     return first_start
-
-
-def _signal(point: IndicatorPoint, *, is_long: bool) -> Signal | None:
-    return HixtonStrategy.signal_for(point, is_long=is_long)
 
 
 def _blocked_event(signal: Signal, reason: str) -> PaperEvent:
@@ -160,6 +158,7 @@ def process_new_closed_points(
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
     execution_candles_by_symbol: Mapping[str, list[Candle]] | None = None,
+    trade_policies_by_symbol: Mapping[str, TradePolicy] | None = None,
 ) -> tuple[PaperEvent, ...]:
     """Process every not-yet-checkpointed bar atomically and exactly once."""
 
@@ -167,6 +166,15 @@ def process_new_closed_points(
         raise ValueError("paper processing requires all ten DMS symbols")
     if set(rules_by_symbol) != set(SYMBOLS):
         raise ValueError("paper processing requires exchange rules for all symbols")
+    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(SYMBOLS):
+        raise ValueError("paper trade policies require all ten symbols")
+    if any(
+        p != TradePolicy() for p in (trade_policies_by_symbol or {}).values()
+    ) and not strategy_version.startswith("HIXTON-V6-"):
+        raise ValueError("paper policies require an explicit HIXTON-V6 version")
+    if strategy_key == "v6" and trade_policies_by_symbol is None:
+        raise ValueError("V6 paper requires its complete coin-policy map")
+    policy_gates = {s: TradePolicyGate((trade_policies_by_symbol or {}).get(s)) for s in SYMBOLS}
 
     with PaperStore(database_path) as store:
         store.initialize(
@@ -197,7 +205,19 @@ def process_new_closed_points(
             ).items()
         }
         for symbol in SYMBOLS:
+            history = [
+                p
+                for p in points_by_symbol[symbol]
+                if p.candle.close_time_utc <= checkpoints[symbol]
+            ]
+            policy = (trade_policies_by_symbol or {}).get(symbol, TradePolicy())
+            if policy.slope_bars and len(history) < policy.slope_bars:
+                raise RuntimeError(f"missing policy warmup history for {symbol}")
+            for historical in history[-max(1, policy.slope_bars) :]:
+                policy_gates[symbol].decide(historical)
             for point in points_by_symbol[symbol]:
+                if point.strategy_version != strategy_version:
+                    raise RuntimeError(f"indicator strategy mismatch for {symbol}")
                 if point.candle.close_time_utc <= checkpoints[symbol]:
                     latest_prices[symbol] = _d(point.candle.close)
                 if point.candle.close_time_utc > checkpoints[symbol]:
@@ -225,11 +245,27 @@ def process_new_closed_points(
             equity, _ = _equity(account.cash_usdt, positions, latest_prices, dust)
             account, daily_paused, _ = _risk_account(account, equity=equity, at=close_time)
 
+            decisions = {}
             for point in group:
-                if not point.flip_down or point.symbol not in positions:
-                    continue
-                signal = _signal(point, is_long=True)
-                if signal is None:
+                position = positions.get(point.symbol)
+                if position is not None and trade_policies_by_symbol:
+                    if position.entry_atr <= ZERO:
+                        raise RuntimeError(f"missing persisted entry ATR for {point.symbol}")
+                    position = replace(
+                        position, highest_close=max(position.highest_close, _d(point.candle.close))
+                    )
+                    positions[point.symbol] = position
+                decisions[point.symbol] = policy_gates[point.symbol].decide(
+                    point,
+                    entry_price=float(position.average_price) if position else None,
+                    entry_atr=float(position.entry_atr) if position else 0.0,
+                    highest_close=float(position.highest_close) if position else 0.0,
+                )
+
+            for point in group:
+                decision = decisions[point.symbol]
+                signal = decision.signal
+                if signal is None or signal.action is not SignalAction.EXIT_LONG:
                     continue
                 position = positions[point.symbol]
                 rules = rules_by_symbol[point.symbol]
@@ -255,7 +291,7 @@ def process_new_closed_points(
                         symbol=signal.symbol,
                         action=signal.action.value,
                         status=PaperEventStatus.FILLED,
-                        reason=None,
+                        reason=decision.exit_reason,
                         reference_price=reference,
                         execution_price=fill_price,
                         base_quantity=quantity,
@@ -270,10 +306,12 @@ def process_new_closed_points(
 
             candidates: list[tuple[Signal, IndicatorPoint]] = []
             for point in group:
-                if not point.flip_up or point.symbol in positions:
-                    continue
-                signal = _signal(point, is_long=False)
-                if signal is not None:
+                decision = decisions[point.symbol]
+                signal = decision.signal
+                if signal is not None and signal.action is SignalAction.ENTER_LONG:
+                    if decision.block_reason:
+                        emitted.append(_blocked_event(signal, decision.block_reason))
+                        continue
                     candidates.append((signal, point))
             order = {symbol: index for index, symbol in enumerate(SYMBOLS)}
             candidates.sort(
@@ -326,6 +364,8 @@ def process_new_closed_points(
                     updated_at_utc=boundary,
                     strategy_version=signal.strategy_version,
                     slot_count=1,
+                    entry_atr=_d(signal.atr) if trade_policies_by_symbol else ZERO,
+                    highest_close=fill_price if trade_policies_by_symbol else ZERO,
                 )
                 positions[signal.symbol] = position
                 emitted.append(
@@ -392,6 +432,7 @@ def activate_paper_strategy(
         positions = store.load_positions()
         events: list[PaperEvent] = []
         cash = account.cash_usdt
+        dust = store.load_dust()
         for position in positions:
             rule = rules_by_symbol[position.symbol]
             reference = latest_prices[position.symbol]
@@ -404,7 +445,8 @@ def activate_paper_strategy(
                 )
             fee = gross_quote * BASELINE_COSTS.fee_rate
             net_quote = gross_quote - fee
-            realized = net_quote - position.cost_basis_usdt
+            realized = net_quote - position.cost_basis_usdt * quantity / position.quantity
+            dust[position.symbol] = dust.get(position.symbol, ZERO) + position.quantity - quantity
             signal_id = hashlib.sha256(
                 (
                     f"PAPER_STRATEGY_SWITCH|{previous.strategy_version}|"
@@ -431,6 +473,7 @@ def activate_paper_strategy(
                 )
             )
             cash += net_quote
+        session_equity, _ = _equity(cash, {}, latest_prices, dust)
         activated_account = replace(
             account,
             cash_usdt=cash,
@@ -441,14 +484,20 @@ def activate_paper_strategy(
             halt_reason=None,
             updated_at_utc=moment,
         )
+        if strategy.key == "v6":
+            # A new research session must not erase an account-wide risk halt or high-water mark.
+            activated_account, _, _ = _risk_account(
+                replace(account, cash_usdt=cash), equity=session_equity, at=moment
+            )
         store.apply_strategy_activation(
             account=activated_account,
             events=tuple(events),
             checkpoints=checkpoints,
             strategy_key=strategy.key,
             strategy_version=strategy.version,
-            starting_equity_usdt=cash,
+            starting_equity_usdt=session_equity,
             at=moment,
+            dust=dust,
         )
     return tuple(events)
 
@@ -460,6 +509,7 @@ def load_paper_portfolio(
     at: datetime | None = None,
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
+    starting_cash_usdt: Decimal | None = None,
 ) -> PaperPortfolio:
     moment = (at or datetime.now(UTC)).astimezone(UTC)
     with PaperStore(database_path) as store:
@@ -467,6 +517,7 @@ def load_paper_portfolio(
             at=moment,
             strategy_key=strategy_key,
             strategy_version=strategy_version,
+            starting_cash_usdt=starting_cash_usdt,
         )
         store.require_strategy(strategy_key, strategy_version)
         account = store.load_account()

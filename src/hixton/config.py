@@ -9,7 +9,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Any
 
-from hixton.constants import SYMBOLS, TIMEFRAME
+from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
 
 
@@ -61,21 +61,7 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
     strategy = _required_mapping(root.get("strategy"), "strategy")
     strategy_key = str(strategy.get("key", "")).lower()
     definition = strategy_definition(strategy_key)
-    expected_strategy: dict[str, object] = {
-        "key": definition.key,
-        "version": definition.version,
-        "timeframe": TIMEFRAME,
-        "source": "close",
-        "vidya_length": definition.parameters.vidya_length,
-        "momentum_length": definition.parameters.momentum_length,
-        "smoothing_length": definition.parameters.smoothing_length,
-        "atr_length": definition.parameters.atr_length,
-        "band_multiplier": definition.parameters.band_multiplier,
-        "warmup_bars": definition.parameters.warmup_bars,
-        "slot_allocation": definition.slot_allocation,
-        "long_only": True,
-        "compounding": False,
-    }
+    expected_strategy = definition.config_payload()
     _reject_unknown(strategy, set(expected_strategy), "strategy")
     if strategy != expected_strategy:
         differences = sorted(
@@ -108,8 +94,11 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
         raise ValueError("isolated backtests require fixed 250.00 USDT")
 
     paper = _required_mapping(root.get("paper"), "paper")
+    allowed_starting_cash = ("250.00",) if definition.coin_profiles else ("240.00", "250.00")
+    if paper.get("starting_cash_usdt") not in allowed_starting_cash:
+        raise ValueError("paper starting cash must be 250.00 (legacy V2 also accepts 240.00)")
     expected_paper: dict[str, object] = {
-        "starting_cash_usdt": "240.00",
+        "starting_cash_usdt": paper["starting_cash_usdt"],
         "slot_count": 3,
         "target_notional_usdt": "80.00",
         "poll_seconds": 30,
@@ -117,7 +106,7 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
     }
     _reject_unknown(paper, set(expected_paper), "paper")
     if paper != expected_paper:
-        raise ValueError("paper baseline must remain 240 USDT with 3x80 USDT")
+        raise ValueError("paper baseline must match the versioned starting cash with 3x80 USDT")
 
     ui = _required_mapping(root.get("ui"), "ui")
     expected_ui: dict[str, object] = {

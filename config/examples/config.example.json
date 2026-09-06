@@ -34,7 +34,7 @@
     "run_baseline_and_stress": true
   },
   "paper": {
-    "starting_cash_usdt": "240.00",
+    "starting_cash_usdt": "250.00",
     "slot_count": 3,
     "target_notional_usdt": "80.00",
     "poll_seconds": 30,

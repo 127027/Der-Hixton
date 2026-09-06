@@ -1,5 +1,11 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## Ergänzungen 06.09.2026
+
+- **DEC-043 – BESCHLOSSEN:** Eigentümer präzisiert den Zweck: robuste einzelne Coin-Signalquellen und effiziente Nutzung von höchstens 3×80 USDT; keine Tradequoten, keine Renditegarantie, kein Overfitting. Individuelle Profile müssen durch Paper und sämtliche Backtestmodi identisch weitergegeben werden. Der vorbereitete V6-Mix ist retrospektiv kalibriert und scheitert derzeit an einer durchgängigen Portfolioverbesserung. Technische Parität allein ist keine Übernahmefreigabe; ein abweichender Paper-Experimentwechsel müsste ausdrücklich mit diesen Rückschritten bestätigt werden.
+- **DEC-044 – BESCHLOSSEN:** Eigentümer bestätigt 250 USDT für neue gemeinsame Modellkonten: 240 USDT Positionsbudgets und 10 USDT anfängliche Reserve. Kein Auffüllen/Reset des laufenden Ledgers. Isolierte Einzeltests bleiben 250 USDT pro Coin. Vergleiche nennen Startkapital; V2-Kontrolle des V6-Versuchs startet ebenfalls mit 250, alte 240-USDT-Artefakte bleiben unverändert.
+
+
 Dieses Dokument ist die einzige Sammelstelle für fachliche Entscheidungen. „Default des Frameworks“ ist keine Entscheidung. Für DMS V1.3 sind alle implementierungsrelevanten P0-/P1-Entscheidungen geschlossen. Noch fehlende Zugangsdaten, Testresultate und Betriebsnachweise sind **Nachweise**, keine offenen Produktentscheidungen.
 
 Beschlussstand: **02.09.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze benötigen eine Entscheidungs-ID, Begründung und passende Versionsanhebung.
@@ -13,9 +19,9 @@ Beschlussstand: **02.09.2026, Europe/Berlin**. Änderungen nach dem DMS-Freeze b
 | DEC-003 | Signallogik auf Binance-Spot-Kerzen mit festem Timeframe `1h`. UI-Zeiträume sind davon unabhängig. | **BESCHLOSSEN** |
 | DEC-004 | Handelsplatz und Datenquelle: Binance Spot, Quote-Asset USDT. Paper nutzt dieselben Marktdaten; Live benötigt einen eigenen Bot-Account oder Subaccount. | **BESCHLOSSEN** |
 | DEC-005 | BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE, jeweils `/USDT`; keine automatische Ersetzung. | **BESCHLOSSEN** |
-| DEC-006 | 250→500 USDT je Coin innerhalb von drei Jahren ist ein angestrebtes Optimierungsziel, kein Gewinnversprechen. Ergebnisse werden netto und vollständig berichtet; Primärziel ist robuste Nettowirkung, nicht maximale Tradezahl allein. | **BESCHLOSSEN, präzisiert 01.09.2026** |
+| DEC-006 | 250→500 USDT je Coin und genannte Tradezahlen sind illustrative Beispiele, keine festen Optimierungsquoten und kein Gewinnversprechen (DEC-043). Ergebnisse werden netto und vollständig berichtet; Primärziel ist robuste Nettowirkung, nicht maximale Tradezahl allein. | **BESCHLOSSEN, präzisiert 01.09.2026** |
 | DEC-007 | Spot long-only; Kauf öffnet Long, Verkauf schließt Long; kein Short, Margin, Futures oder Leverage. Die aktive V2 nutzt höchstens einen Slot je Coin; abweichende Mehrfachslotmodelle benötigen eine eigene Version. | **BESCHLOSSEN; Mehrfachslot-Forschung durch DEC-039 präzisiert** |
-| DEC-008 | Backtest: zehn isolierte Läufe à 250 USDT sowie Einzelmodus à 250 USDT; verpflichtender 240-USDT-Spiegellauf mit denselben Risikogates wie Paper. Paper/Live: gemeinsamer Cashpool 240 USDT, drei Slots à 80 USDT. | **BESCHLOSSEN** |
+| DEC-008 | Backtest: zehn isolierte Läufe à 250 USDT sowie Einzelmodus à 250 USDT; verpflichtender 250-USDT-Spiegellauf mit denselben Risikogates wie Paper. Neue Paperkonten: gemeinsamer Cashpool 250 USDT gemäß DEC-044, drei Slots à 80 USDT. | **BESCHLOSSEN** |
 | DEC-009 | Die erste später freigegebene Liveversion verwendet Market-Orders mit den Guards aus DMS 07. | **BESCHLOSSEN** |
 | DEC-010 | Kosten je Seite: Baseline 10 bp Gebühr + 2 bp Spread + 3 bp Slippage = 15 bp; Stress 10 + 10 + 20 = 40 bp. Kein BNB-/VIP-Rabatt. | **BESCHLOSSEN** |
 | DEC-011 | Nur geschlossene Bars; Warm-up 400 Bars; Initialzustand nach Bar 399 `DOWN`, ohne Startorder; Cross- und Fill-Regeln exakt nach DMS 03/06. | **BESCHLOSSEN** |

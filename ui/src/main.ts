@@ -76,6 +76,7 @@ interface RuntimePayload {
 interface StatusResponse {
   application_version: string;
   strategy_version: string;
+  strategy_key: string;
   runtime: RuntimePayload;
   paper: PaperPayload | null;
   server_time_utc: string;
@@ -91,6 +92,10 @@ interface Market {
   last_signal: { action: string; time_utc: string } | null;
   position_state: string;
   position: PaperPosition | null;
+  strategy_profile: {
+    parameters: { vidya_length: number; momentum_length: number; smoothing_length: number; atr_length: number; band_multiplier: number };
+    trade_policy: { cmo_floor: number; slope_bars: number; stop_atr: number; trail_atr: number };
+  };
   data: { candle_count: number; gap_count: number | null; valid: boolean; first_open_utc: string | null; last_open_utc: string | null };
 }
 interface ChartBar {
@@ -113,7 +118,7 @@ interface ChartPayload {
   display_resolution: string;
   trading_timeframe: string;
   bars: ChartBar[];
-  signals: Array<{ time: string; display_time: string; action: string; signal_id: string; price: number; strength: number | null }>;
+  signals: Array<{ time: string; display_time: string; action: string; signal_id: string; price: number; strength: number | null; reason?: string | null }>;
   paper_events: Array<{ display_time: string; action: string; status: string; event_id: string }>;
 }
 interface BacktestScenario {
@@ -195,6 +200,10 @@ function setPage(target: string, title: string): void {
 }
 
 function renderStatus(status: StatusResponse): void {
+  if (!lastStatus) {
+    required<HTMLSelectElement>("#backtest-strategy").value = status.strategy_key;
+    void refreshBacktests();
+  }
   lastStatus = status;
   const health = status.runtime.health.toLowerCase();
   const healthPill = required("#health-pill");
@@ -226,10 +235,14 @@ function renderStatus(status: StatusResponse): void {
 function marketCard(market: Market): string {
   const trendClass = market.trend.toLowerCase();
   const signal = market.position_state === "LONG" ? "Position läuft" : "Wartet auf neuen Kauf";
+  const p = market.strategy_profile.parameters;
+  const rule = market.strategy_profile.trade_policy;
+  const extras = [rule.cmo_floor ? `CMO ≥ ${rule.cmo_floor}` : "", rule.slope_bars ? `VIDYA-Steigung ${rule.slope_bars}h` : "", rule.stop_atr ? `Stop ${rule.stop_atr} ATR am Schlusskurs` : "", rule.trail_atr ? `Trail ${rule.trail_atr} ATR` : ""].filter(Boolean).join(" · ");
   return `<article class="market-card" data-symbol="${market.symbol}" tabindex="0">
     <div class="market-top"><strong>${market.display_symbol}</strong><span class="trend-tag ${trendClass}">${market.trend}</span></div>
     <div class="market-price">${formatPrice(market.price)} <small>USDT</small></div>
     <div class="market-meta"><span>${formatDate(market.price_time_utc)}</span><span class="${market.data.valid ? "good" : "warning"}">${market.data.valid ? "DATEN OK" : "PRÜFUNG"}</span></div>
+    <div class="market-meta"><span>VIDYA ${p.vidya_length} · MOM ${p.momentum_length} · SMA ${p.smoothing_length} · ATR ${p.atr_length} · Band ${p.band_multiplier}${extras ? `<br>${extras}` : ""}</span></div>
     <div class="market-foot"><span>${signal}</span><span class="${market.position_state === "LONG" ? "good" : ""}">${market.position_state}</span></div>
   </article>`;
 }
@@ -331,7 +344,7 @@ async function loadChart(background = false): Promise<void> {
         position: signal.action === "ENTER_LONG" ? "belowBar" : "aboveBar",
         color: signal.action === "ENTER_LONG" ? "#2dd4a8" : "#fb7185",
         shape: signal.action === "ENTER_LONG" ? "arrowUp" : "arrowDown",
-        text: compactMarkers ? undefined : signal.action === "ENTER_LONG" ? "KAUF" : "VERKAUF",
+        text: compactMarkers ? undefined : signal.action === "ENTER_LONG" ? "KAUF" : signal.reason ? "STOP" : "VERKAUF",
         size: compactMarkers ? 0.5 : 1,
       }));
     for (const event of payload.paper_events.filter((item) => item.status === "FILLED" && validTimes.has(timestamp(item.display_time)))) {
@@ -381,8 +394,9 @@ async function refreshBacktests(): Promise<void> {
   try {
     const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
     const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?strategy=${strategy}`);
+    if (required<HTMLSelectElement>("#backtest-strategy").value !== strategy) return;
     text("#backtest-eyebrow", `BACKTEST ${strategy.toUpperCase()}`);
-    text("#backtest-title", strategy === "v2" ? "3×80 oder 10×250 · aktives Paper" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
+    text("#backtest-title", strategy === "v6" ? "V6 · individueller Coin-Mix (Forschung)" : strategy === "v2" ? "V2 · aktives Paper / 3×80 oder 10×250" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
     const button = required<HTMLButtonElement>("#backtest-button");
     button.disabled = response.status === "RUNNING";
     button.textContent = response.status === "RUNNING" ? "Backtest läuft …" : "Backtest starten";

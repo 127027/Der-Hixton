@@ -23,7 +23,7 @@ Ein Paar darf nur aktiviert werden, wenn es beim jeweiligen Start weiterhin hand
 
 ### System 1 – Paper und später Live
 
-- Gesamtstartkapital: **240,00 USDT**.
+- Gesamtstartkapital: **250,00 USDT** für neue Konten (DEC-044). Davon höchstens 240 USDT in drei 80-USDT-Slots und 10 USDT anfängliche Cashreserve; Gewinne/Verluste verändern diesen Puffer. Bestehende Konten behalten ihren tatsächlichen Bestand und ursprünglichen Startwert.
 - Gemeinsamer Cashbestand für alle zehn beobachteten Paare.
 - Standard: **drei Positionsslots à 80,00 USDT Zielnotional**.
 - Höchstens drei gleichzeitig offene Long-Positionen.
@@ -40,8 +40,8 @@ Kapital, Slotanzahl und Zielnotional müssen wegen Gebühren und verfügbarem Ca
 - Ziel-Quote-Budget je Einstieg ist in diesen isolierten Läufen fest 250,00 USDT oder, nach Verlusten, der kleinere verfügbare Cashbetrag; Gewinne erhöhen die nächste Zielgröße nicht automatisch.
 - Jeder Test startet ohne Position und Altorder.
 - Einzeltests beeinflussen einander nicht; Ergebnisse werden je Coin und zusätzlich als Vergleichstabelle gezeigt.
-- Der verpflichtende Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT samt Risikogates nach.
-- 250→500 USDT je Coin in drei Jahren ist das angestrebte Optimierungsziel, aber keine Garantie. Zuerst wird korrekte Indikatorreaktion bewiesen; danach wird die vollständige Performance einschließlich Zielverfehlungen berichtet.
+- Der verpflichtende Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 250 USDT und 3×80 USDT samt Risikogates nach.
+- 250→500 USDT je Coin in drei Jahren ist nur ein Beispiel für einen guten Test, keine verbindliche Quote oder Garantie. Zuerst wird korrekte Indikatorreaktion bewiesen; danach wird die vollständige Performance einschließlich Zielverfehlungen berichtet.
 
 ## Positionsgröße
 
@@ -73,8 +73,8 @@ Aktive V2 belegt höchstens einen Slot je Coin. Mehrfachslots im selben Coin sin
 „So viele Trades wie möglich“ darf nicht zu sinnlosen Gebührenumsätzen führen. Rangfolge:
 
 1. korrekte Hixton-Signale und Risikoregeln;
-2. maximaler Nettogewinn nach Gebühren und Slippage;
-3. bei sonst vergleichbarer Nettoperformance höhere Tradezahl und Kapitalnutzung.
+2. robuste Nettowirkung nach Gebühren und Slippage in unterschiedlichen Marktphasen, mit ausgewiesenen Rückschritten;
+3. effiziente Slotnutzung durch gute Signale aller zehn Coins; Tradezahl allein ist kein Gütekriterium.
 
 Timeframe oder Parameter werden nicht allein verändert, um künstlich mehr Trades zu erzeugen. Varianten müssen out-of-sample und nach Kosten bewertet werden.
 

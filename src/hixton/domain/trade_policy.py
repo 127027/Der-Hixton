@@ -1,4 +1,4 @@
-"""Explicit Hixton-derived research overlays; never enabled by the Paper config."""
+"""Shared Hixton policy decisions for explicit V5 research and V6 Paper profiles."""
 
 from __future__ import annotations
 

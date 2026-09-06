@@ -6,6 +6,7 @@ import hashlib
 import json
 from dataclasses import asdict, replace
 from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from pathlib import Path
 from statistics import mean
 
@@ -25,7 +26,7 @@ from hixton.domain.models import (
 )
 from hixton.domain.strategy import evaluate_batch
 from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
-from hixton.domain.versions import V2_RESEARCH_STRATEGY
+from hixton.domain.versions import V2_RESEARCH_STRATEGY, V6_COIN_STRATEGY
 
 START = datetime(2023, 9, 1, 12, tzinfo=UTC)
 YEAR1, YEAR2, END = (START.replace(year=year) for year in (2024, 2025, 2026))
@@ -435,6 +436,120 @@ def run_coin_review(database: Path, output: Path) -> None:
             "neighbors": neighbors,
         },
     )
+    output.parent.mkdir(parents=True, exist_ok=True)
+    output.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
+    print(f"Saved {output}", flush=True)
+
+
+def run_frozen_profile_review(database: Path, output: Path) -> None:
+    """Validate frozen V6 profiles; never select parameters or change a Paper ledger."""
+    if output.exists():
+        raise ValueError("output already exists; choose a new V6 run")
+    root = Path(__file__).parents[3]
+    payload: dict[str, object] = {
+        "schema": "HIXTON-FROZEN-PROFILES-1",
+        "status": "RETROSPECTIVE_DIAGNOSTIC_NOT_HOLDOUT",
+        "strategy": V6_COIN_STRATEGY.config_payload(),
+        "selection": "Between V2 and each V5 finalist, maximize minimum ending equity across "
+        "full/recent/older stress windows; tie: more full-stress closed trades, then V2. "
+        "All these windows influenced this retrospective selection. No robustness proof.",
+        "capital": {"isolated": "250", "shared": "250", "slots": 3, "slot_notional": "80"},
+        "costs": [asdict(BASELINE_COSTS), asdict(STRESS_COSTS)],
+        "source_sha256": {
+            str(p.relative_to(root)): hashlib.sha256(p.read_bytes()).hexdigest()
+            for p in sorted((root / "src/hixton").rglob("*.py"))
+        },
+        "reference_pine_sha256": hashlib.sha256(
+            (root / "strategy/pine/Der_Hixton_Indikator_v6.pine").read_bytes()
+        ).hexdigest(),
+        "limitations": [
+            "Historical winners do not establish future profitability or all-ten robustness.",
+            "Isolated accounts use strategy-only sizing; shared account applies Paper risk gates.",
+            "Reserve is initial unallocated cash, not a guarantee against losses.",
+            "Existing Paper ledger remains unchanged; historical V2 240-USDT reports stay intact.",
+            "V2 also starts at 250 here, separating the strategy effect from added capital.",
+        ],
+    }
+    windows: dict[str, object] = {}
+    with CandleStore(database) as store:
+        rules = {}
+        for symbol in SYMBOLS:
+            rule = store.load_symbol_rules(symbol)
+            if rule is None:
+                raise ValueError(f"missing Binance filters: {symbol}")
+            rules[symbol] = ExecutionRules(
+                rule.tick_size, rule.step_size, rule.min_qty, rule.min_notional
+            )
+        payload["execution_rules"] = {s: asdict(r) for s, r in rules.items()}
+        for label, lo, hi, warmup_start in (
+            ("full", START, END, START - timedelta(hours=400)),
+            ("recent", YEAR2, END, START - timedelta(hours=400)),
+            ("older", *OLDER, OLDER[0] - timedelta(hours=400)),
+        ):
+            markets = {
+                s: store.load_candles(s, start=warmup_start, end_exclusive=hi) for s in SYMBOLS
+            }
+            for s, candles in markets.items():
+                audit_candles(
+                    candles,
+                    expected_symbol=s,
+                    expected_start=warmup_start,
+                    expected_end_exclusive=hi,
+                ).require_valid()
+            coins, portfolios = {}, {}
+            for strategy in (V2_RESEARCH_STRATEGY, V6_COIN_STRATEGY):
+                for symbol in SYMBOLS:
+                    print(f"{label}/{strategy.key}/{symbol}: baseline + stress", flush=True)
+                    for cost in (BASELINE_COSTS, STRESS_COSTS):
+                        result = run_single_backtest(
+                            symbol=symbol,
+                            candles=markets[symbol],
+                            report_start_utc=lo,
+                            report_end_utc=hi,
+                            costs=cost,
+                            execution_rules=rules[symbol],
+                            strategy_parameters=strategy.parameters_for(symbol),
+                            strategy_semantics=strategy.semantics,
+                            strategy_version=strategy.version,
+                            trade_policy=strategy.policy_for(symbol),
+                        )
+                        coins[f"{strategy.key}_{symbol}_{cost.name}"] = {
+                            "metrics": asdict(result.metrics),
+                            "diagnosis": diagnose(result, markets[symbol]),
+                        }
+                for cost in (BASELINE_COSTS, STRESS_COSTS):
+                    print(f"{label}/{strategy.key}/shared: {cost.name}", flush=True)
+                    portfolio = run_shared_portfolio_backtest(
+                        candles_by_symbol=markets,
+                        report_start_utc=lo,
+                        report_end_utc=hi,
+                        starting_cash=Decimal("250.00"),
+                        target_notional=Decimal("80.00"),
+                        slot_count=3,
+                        costs=cost,
+                        execution_rules=rules,
+                        strategy_parameters=strategy.parameters,
+                        strategy_parameters_by_symbol=strategy.parameter_map(),
+                        trade_policies_by_symbol=strategy.policy_map(),
+                        strategy_semantics=strategy.semantics,
+                        strategy_version=strategy.version,
+                        slot_allocation=strategy.slot_allocation,
+                    )
+                    portfolios[f"{strategy.key}_{cost.name}"] = {
+                        "metrics": asdict(portfolio.metrics),
+                        "halt": portfolio.risk_halted_at_utc,
+                        "max_concurrent_positions": portfolio.max_concurrent_positions,
+                        "open_symbols_at_end": portfolio.open_symbols_at_end,
+                    }
+            windows[label] = {
+                "start": lo,
+                "end_exclusive": hi,
+                "history_start": warmup_start,
+                "data_sha256": {s: candle_snapshot_sha256(c) for s, c in markets.items()},
+                "coins": coins,
+                "portfolios": portfolios,
+            }
+    payload["windows"] = windows
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(payload, indent=2, default=str) + "\n", encoding="utf-8")
     print(f"Saved {output}", flush=True)

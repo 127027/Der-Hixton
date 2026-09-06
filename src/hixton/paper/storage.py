@@ -77,8 +77,16 @@ class PaperStore:
         at: datetime | None = None,
         strategy_key: str = "v1",
         strategy_version: str = HIXTON_SPEC_VERSION,
+        starting_cash_usdt: Decimal | None = None,
     ) -> bool:
         moment = (at or _now()).astimezone(UTC)
+        # Only INSERT a new seed; never top up or reset an existing ledger.
+        seed = starting_cash_usdt
+        if seed is None:
+            seed = Decimal("250.00" if strategy_key == "v6" else "240.00")
+        if not seed.is_finite() or seed <= 0:
+            raise ValueError("initial paper cash must be finite and positive")
+        initial_cash = str(seed)
         with self._connection:
             cursor = self._connection.execute(
                 """
@@ -86,9 +94,17 @@ class PaperStore:
                     singleton, cash_text, starting_cash_text, high_water_text,
                     day_start_equity_text, day_start_date_utc, halted,
                     halt_reason, created_at_utc, updated_at_utc
-                ) VALUES (1, '240.00', '240.00', '240.00', '240.00', ?, 0, NULL, ?, ?)
+                ) VALUES (1, ?, ?, ?, ?, ?, 0, NULL, ?, ?)
                 """,
-                (moment.date().isoformat(), _time(moment), _time(moment)),
+                (
+                    initial_cash,
+                    initial_cash,
+                    initial_cash,
+                    initial_cash,
+                    moment.date().isoformat(),
+                    _time(moment),
+                    _time(moment),
+                ),
             )
             self._connection.execute(
                 """
@@ -255,6 +271,8 @@ class PaperStore:
                 updated_at_utc=_parse_time(row["updated_at_utc"]),
                 strategy_version=str(row["strategy_version"]),
                 slot_count=int(row["slot_count"]),
+                entry_atr=Decimal(str(row["entry_atr_text"])),
+                highest_close=Decimal(str(row["highest_close_text"])),
             )
             for row in rows
         )
@@ -266,8 +284,8 @@ class PaperStore:
                 INSERT INTO paper_positions (
                     symbol, quantity_text, average_price_text, cost_basis_text,
                     entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc,
-                    strategy_version, slot_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    strategy_version, slot_count, entry_atr_text, highest_close_text
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(symbol) DO UPDATE SET
                     quantity_text=excluded.quantity_text,
                     average_price_text=excluded.average_price_text,
@@ -277,7 +295,9 @@ class PaperStore:
                     entry_fee_text=excluded.entry_fee_text,
                     updated_at_utc=excluded.updated_at_utc,
                     strategy_version=excluded.strategy_version,
-                    slot_count=excluded.slot_count
+                    slot_count=excluded.slot_count,
+                    entry_atr_text=excluded.entry_atr_text,
+                    highest_close_text=excluded.highest_close_text
                 """,
                 (
                     position.symbol,
@@ -290,6 +310,8 @@ class PaperStore:
                     _time(position.updated_at_utc),
                     position.strategy_version,
                     position.slot_count,
+                    str(position.entry_atr),
+                    str(position.highest_close),
                 ),
             )
 
@@ -384,8 +406,8 @@ class PaperStore:
                 INSERT INTO paper_positions (
                     symbol, quantity_text, average_price_text, cost_basis_text,
                     entry_time_utc, entry_signal_id, entry_fee_text, updated_at_utc,
-                    strategy_version, slot_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    strategy_version, slot_count, entry_atr_text, highest_close_text
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 [
                     (
@@ -399,6 +421,8 @@ class PaperStore:
                         _time(position.updated_at_utc),
                         position.strategy_version,
                         position.slot_count,
+                        str(position.entry_atr),
+                        str(position.highest_close),
                     )
                     for position in positions.values()
                 ],
@@ -527,6 +551,7 @@ class PaperStore:
         strategy_version: str,
         starting_equity_usdt: Decimal,
         at: datetime,
+        dust: Mapping[str, Decimal] | None = None,
     ) -> None:
         """Close the old paper session and atomically start a clean strategy soak."""
 
@@ -554,6 +579,12 @@ class PaperStore:
                 ),
             )
             self._connection.execute("DELETE FROM paper_positions")
+            if dust is not None:
+                self._connection.execute("DELETE FROM paper_dust")
+                self._connection.executemany(
+                    "INSERT INTO paper_dust(symbol, quantity_text) VALUES (?, ?)",
+                    [(s, str(q)) for s, q in dust.items() if q > 0],
+                )
             self._connection.executemany(
                 """
                 INSERT INTO paper_events (
@@ -641,7 +672,7 @@ class PaperStore:
                             },
                             "starting_equity_usdt": str(starting_equity_usdt),
                             "forced_paper_exits": len(events),
-                            "decision": "DEC-037",
+                            "decision": "DEC-043" if strategy_key == "v6" else "DEC-037",
                         },
                         separators=(",", ":"),
                     ),
@@ -916,6 +947,11 @@ class PaperStore:
                 self._connection.execute(
                     "ALTER TABLE paper_positions ADD COLUMN slot_count INTEGER NOT NULL DEFAULT 1"
                 )
+            for column in ("entry_atr_text", "highest_close_text"):
+                if column not in position_columns:
+                    self._connection.execute(
+                        f"ALTER TABLE paper_positions ADD COLUMN {column} TEXT NOT NULL DEFAULT '0'"
+                    )
             self._connection.execute("PRAGMA optimize")
 
     @staticmethod

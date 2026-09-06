@@ -31,7 +31,7 @@ Bewertung: Eintritt `N/M/H`, Auswirkung `N/M/H`. Das Register beschreibt Risiken
 | R-025 | offene Position bleibt bei Bot-Ausfall unüberwacht | M | H | externer Alarm, Börsen-Schutzentscheidung, Health | Betreiberaktion nach Runbook | Betreiber |
 | R-026 | rohe Tradezahl wird über Nettoprofit gestellt und erzeugt Gebührenverluste | M/H | H | Nettoprofit nach Kosten als Primärziel | Variante verwerfen, Priorität korrigieren | Produkt/Backtest |
 | R-027 | mehr gleichzeitige Kaufsignale als drei freie Slots | H | M/H | deterministische Priorisierung und verpasste-Signale-Report | keine willkürliche Auswahl/Nachholorder | Strategie/Portfolio |
-| R-028 | Backtestkapital 10×250 wird mit Paperkapital 240 verwechselt | M | H | getrennte Run-Modi, Ledgers und UI-Badges | Run invalidieren/korrigieren | QA/UI |
+| R-028 | Backtestkapital 10×250 wird mit Paperkapital 250 (historisch 240) verwechselt | M | H | getrennte Run-Modi, Ledgers und UI-Badges | Run invalidieren/korrigieren | QA/UI |
 | R-029 | Mehrere Slots auf demselben Signal erhöhen Konzentration, aber nicht die Zahl unabhängiger Trades | H | H | eigene Strategieversion, 3×80-Risikospiegel, keine automatische Aktivierung | Challenger verwerfen; aktive Ein-Slot-Regel beibehalten | Strategie/Risiko |
 | R-030 | Paperledger und konfigurierte Strategieversion werden nach Wechsel vermischt | N | H | persistente Sessionversion, atomare Migration, Fail-closed-Startprüfung, versionierte Events | Bot gestoppt lassen, Backup einspielen oder explizite Migration wiederholen | Paper/Operations |
 

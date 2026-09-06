@@ -1,5 +1,9 @@
 # 13 – Konfiguration und Schemata
 
+Aktuelle Runtime-Quelle ist ausschließlich `config/examples/config.example.json`, geprüft gegen `StrategyDefinition.config_payload()`. Neue Modellkonten starten gemäß DEC-044 mit `paper.starting_cash_usdt: "250.00"`, drei Slots à 80 USDT. Alte V2-Configs mit 240 USDT bleiben lesbar; vorhandene Konten werden nie umgebucht. Das folgende umfangreiche YAML enthält auch zukünftige Live-Felder und ist kein Ersatz für diese streng geprüfte JSON-Datei.
+
+Für V6 enthält `strategy.profiles` exakt alle zehn Coins in DMS-Reihenfolge mit `parameters` und `trade_policy`, keine irreführenden gemeinsamen Top-Level-Indikatorparameter. Snapshot: `backtests/v6/candidate.json`; gemeinsame Formel, 1h, 400 Warm-up-Bars, long-only, `one_per_symbol`, kein Compounding. Profiländerungen erzeugen eine neue hashgebundene Version. Reports enthalten die vollständige Profilmap. Eine Config darf kein Research-Profil stillschweigend als aktive Strategie ausgeben.
+
 ## Grundregeln
 
 - Konfiguration ist schema-validiert und versioniert.
@@ -9,7 +13,7 @@
 - Aktivierte Konfiguration hat Hash, Freigabezeit und Owner.
 - Strategieänderung und Betriebsänderung sind getrennte Versionen.
 
-## Aktive Paper-Baseline V2
+## Historisches erweitertes Sollschema V2 (keine direkt ladbare Runtime-Config)
 
 ```yaml
 schema_version: 1
@@ -175,7 +179,7 @@ report_start_utc: VALUE
 report_end_utc: VALUE
 starting_usdt_per_symbol: 250.00
 run_mode: all_ten_isolated|single_symbol|paper_live_mirror
-paper_live_mirror_total_usdt: 240.00
+paper_live_mirror_total_usdt: 250.00
 paper_live_mirror_slot_count: 3
 paper_live_mirror_target_notional_usdt: 80.00
 slot_allocation: one_per_symbol

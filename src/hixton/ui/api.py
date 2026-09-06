@@ -79,6 +79,7 @@ def _paper_payload(
             _latest_prices(supervisor),
             strategy_key=supervisor.strategy.key,
             strategy_version=supervisor.strategy.version,
+            starting_cash_usdt=config.paper_starting_cash_usdt,
         )
         with PaperStore(config.database_path) as store:
             soak = store.load_soak_progress()
@@ -181,6 +182,10 @@ def _market_payloads(
             {
                 "symbol": symbol,
                 "display_symbol": symbol.removesuffix("USDT") + "/USDT",
+                "strategy_profile": {
+                    "parameters": asdict(supervisor.strategy.parameters_for(symbol)),
+                    "trade_policy": asdict(supervisor.strategy.policy_for(symbol)),
+                },
                 "available": point is not None,
                 "price": live[0].close if live else point.candle.close if point else None,
                 "price_time_utc": _iso(live[1])
@@ -277,6 +282,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             "application_version": __version__,
             "strategy_version": supervisor.strategy.version,
             "strategy_key": supervisor.strategy.key,
+            "strategy_profiles": supervisor.strategy.profiles_payload(),
             "runtime": _runtime_payload(supervisor.state.snapshot()),
             "paper": _paper_payload(supervisor, config),
             "server_time_utc": _iso(datetime.now(UTC)),
@@ -313,6 +319,9 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
                 timezone_name=timezone,
                 now=datetime.now(UTC),
                 paper_events=events,
+                trade_policy=supervisor.strategy.policy_for(normalized)
+                if supervisor.strategy.coin_profiles
+                else None,
                 live_candle=live[0] if live else None,
             )
         except (ValueError, ZoneInfoNotFoundError) as error:
@@ -324,6 +333,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             store.initialize(
                 strategy_key=supervisor.strategy.key,
                 strategy_version=supervisor.strategy.version,
+                starting_cash_usdt=config.paper_starting_cash_usdt,
             )
             store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             events = store.load_events(symbol=symbol, limit=limit)
@@ -357,6 +367,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
             store.initialize(
                 strategy_key=supervisor.strategy.key,
                 strategy_version=supervisor.strategy.version,
+                starting_cash_usdt=config.paper_starting_cash_usdt,
             )
             store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             store.save_settings(settings)

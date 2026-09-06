@@ -82,6 +82,7 @@ class RuntimeSupervisor:
             strategy_key=self.strategy.key,
             strategy_version=self.strategy.version,
             execution_candles_by_symbol=execution,
+            trade_policies_by_symbol=self.strategy.policy_map(),
         )
 
     def start(self) -> None:
@@ -199,6 +200,7 @@ class RuntimeSupervisor:
                         points,
                         strategy_key=self.strategy.key,
                         strategy_version=self.strategy.version,
+                        starting_cash_usdt=self.config.paper_starting_cash_usdt,
                     )
                     if not first_start:
                         events = await asyncio.to_thread(
@@ -338,6 +340,8 @@ class RuntimeSupervisor:
                     costs=costs,
                     execution_rules=rules,
                     strategy_parameters=strategy.parameters,
+                    strategy_parameters_by_symbol=strategy.parameter_map(),
+                    trade_policies_by_symbol=strategy.policy_map(),
                     strategy_semantics=strategy.semantics,
                     strategy_version=strategy.version,
                 )
@@ -352,6 +356,8 @@ class RuntimeSupervisor:
                     costs=costs,
                     execution_rules=rules,
                     strategy_parameters=strategy.parameters,
+                    strategy_parameters_by_symbol=strategy.parameter_map(),
+                    trade_policies_by_symbol=strategy.policy_map(),
                     strategy_semantics=strategy.semantics,
                     strategy_version=strategy.version,
                     slot_allocation=strategy.slot_allocation,
@@ -368,7 +374,8 @@ class RuntimeSupervisor:
                     target_notional=self.config.target_notional_usdt,
                     costs=costs,
                     execution_rules=rules[symbol],
-                    strategy_parameters=strategy.parameters,
+                    strategy_parameters=strategy.parameters_for(symbol),
+                    trade_policy=strategy.policy_for(symbol),
                     strategy_semantics=strategy.semantics,
                     strategy_version=strategy.version,
                 )

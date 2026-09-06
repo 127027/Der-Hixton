@@ -213,7 +213,8 @@ def _run_single_scenarios(
             target_notional=config.target_notional_usdt,
             costs=cost,
             execution_rules=rules,
-            strategy_parameters=strategy.parameters,
+            strategy_parameters=strategy.parameters_for(symbol),
+            trade_policy=strategy.policy_for(symbol),
             strategy_semantics=strategy.semantics,
             strategy_version=strategy.version,
         )
@@ -272,6 +273,8 @@ def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int
             costs=cost,
             execution_rules=rules_by_symbol,
             strategy_parameters=strategy.parameters,
+            strategy_parameters_by_symbol=strategy.parameter_map(),
+            trade_policies_by_symbol=strategy.policy_map(),
             strategy_semantics=strategy.semantics,
             strategy_version=strategy.version,
         )
@@ -314,6 +317,8 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
             costs=cost,
             execution_rules=rules_by_symbol,
             strategy_parameters=strategy.parameters,
+            strategy_parameters_by_symbol=strategy.parameter_map(),
+            trade_policies_by_symbol=strategy.policy_map(),
             strategy_semantics=strategy.semantics,
             strategy_version=strategy.version,
             slot_allocation=strategy.slot_allocation,
@@ -403,22 +408,22 @@ def build_parser() -> argparse.ArgumentParser:
     single.add_argument("--symbol", required=True)
     single.add_argument("--end", type=parse_utc)
     single.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    single.add_argument("--strategy", choices=("v1", "v2", "v3"))
+    single.add_argument("--strategy", choices=("v1", "v2", "v3", "v6"))
     all_ten = backtest_commands.add_parser("all", help="10x250-USDT-Batch testen")
     all_ten.add_argument("--end", type=parse_utc)
     all_ten.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    all_ten.add_argument("--strategy", choices=("v1", "v2", "v3"))
+    all_ten.add_argument("--strategy", choices=("v1", "v2", "v3", "v6"))
     portfolio = backtest_commands.add_parser(
-        "portfolio", help="gemeinsames 240-USDT-Konto mit 3x80-USDT-Slots testen"
+        "portfolio", help="gemeinsames Konto mit 3x80-USDT-Slots und Startcash laut Config testen"
     )
     portfolio.add_argument("--end", type=parse_utc)
     portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
-    portfolio.add_argument("--strategy", choices=("v1", "v2", "v3"))
+    portfolio.add_argument("--strategy", choices=("v1", "v2", "v3", "v6"))
     research = backtest_commands.add_parser(
-        "research", help="begrenzte V4-/V5-Pruefung ohne Paperwechsel"
+        "research", help="versionierte V4-/V5-/V6-Pruefung ohne Paperwechsel"
     )
     research.add_argument("--output", type=Path, required=True)
-    research.add_argument("--study", choices=("v4", "v5"), default="v4")
+    research.add_argument("--study", choices=("v4", "v5", "v6"), default="v4")
 
     paper = commands.add_parser("paper", help="24/7-Paper-Bot mit lokaler UI starten")
     paper.add_argument("--no-browser", action="store_true")
@@ -426,7 +431,7 @@ def build_parser() -> argparse.ArgumentParser:
         "paper-activate",
         help="versionierten Paper-Strategiewechsel kontrolliert ausfuehren",
     )
-    activate.add_argument("--strategy", choices=("v2",), required=True)
+    activate.add_argument("--strategy", choices=("v2", "v6"), required=True)
     activate.add_argument("--confirmation", required=True)
     commands.add_parser("live", help="sicher gesperrter späterer Live-Modus")
     ui = commands.add_parser("ui", help="lokale UI mit Paper-Laufzeit starten")
@@ -456,6 +461,11 @@ def main(argv: list[str] | None = None) -> int:
         if args.command == "backtest" and args.backtest_command == "portfolio":
             return command_backtest_portfolio(args, config)
         if args.command == "backtest" and args.backtest_command == "research":
+            if args.study == "v6":
+                from hixton.backtest.coin_review import run_frozen_profile_review
+
+                run_frozen_profile_review(config.database_path, args.output)
+                return 0
             if args.study == "v5":
                 from hixton.backtest.coin_review import run_coin_review
 

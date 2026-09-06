@@ -6,8 +6,10 @@ from collections.abc import Iterable
 from datetime import UTC, datetime, timedelta
 from zoneinfo import ZoneInfo
 
-from hixton.domain.models import Candle, IndicatorPoint
+from hixton.backtest.models import BASELINE_COSTS
+from hixton.domain.models import Candle, IndicatorPoint, Signal, SignalAction
 from hixton.domain.strategy import HixtonStrategy
+from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 from hixton.paper.models import PaperEvent
 
 RANGE_LABELS = {
@@ -89,11 +91,35 @@ def _bars(points: Iterable[IndicatorPoint], resolution: str) -> list[dict[str, o
     return bars
 
 
-def strategy_markers(points: Iterable[IndicatorPoint]) -> list[dict[str, object]]:
+def strategy_markers(
+    points: Iterable[IndicatorPoint], trade_policy: TradePolicy | None = None
+) -> list[dict[str, object]]:
     markers: list[dict[str, object]] = []
     is_long = False
+    gate = TradePolicyGate(trade_policy)
+    pending: Signal | None = None
+    entry_price: float | None = None
+    entry_atr, highest_close = 0.0, 0.0
     for point in points:
-        signal = HixtonStrategy.signal_for(point, is_long=is_long)
+        reason = None
+        if trade_policy is None:
+            signal = HixtonStrategy.signal_for(point, is_long=is_long)
+        else:
+            if pending is not None:
+                if pending.action is SignalAction.ENTER_LONG:
+                    entry_price = point.candle.open * (1 + float(BASELINE_COSTS.adverse_price_rate))
+                    entry_atr, highest_close = pending.atr, entry_price
+                else:
+                    entry_price = None
+                pending = None
+            if entry_price is not None:
+                highest_close = max(highest_close, point.candle.close)
+            decision = gate.decide(
+                point, entry_price=entry_price, entry_atr=entry_atr, highest_close=highest_close
+            )
+            signal = decision.signal if not decision.block_reason else None
+            reason = decision.exit_reason
+            pending = signal
         if signal is None:
             continue
         is_long = signal.action.value == "ENTER_LONG"
@@ -106,6 +132,7 @@ def strategy_markers(points: Iterable[IndicatorPoint]) -> list[dict[str, object]
                 "price": signal.close,
                 "signal_id": signal.signal_id,
                 "strength": signal.breakout_strength,
+                "reason": reason,
             }
         )
     return markers
@@ -120,12 +147,13 @@ def build_chart_payload(
     now: datetime,
     paper_events: tuple[PaperEvent, ...] = (),
     live_candle: Candle | None = None,
+    trade_policy: TradePolicy | None = None,
 ) -> dict[str, object]:
     start = range_start(range_key, now=now, timezone_name=timezone_name)
     resolution = RESOLUTION_BY_RANGE[range_key]
     selected = tuple(point for point in points if point.candle.open_time_utc >= start)
     markers = []
-    for marker in strategy_markers(points):
+    for marker in strategy_markers(points, trade_policy):
         if str(marker["time"]) < _iso(start):
             continue
         marker = dict(marker)

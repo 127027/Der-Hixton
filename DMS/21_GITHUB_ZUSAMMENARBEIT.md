@@ -64,7 +64,7 @@ Commits sollen klein, nachvollziehbar und thematisch geschlossen sein. Ein DMS-U
 
 - `DMS/` beschreibt den freigegebenen Sollzustand.
 - `DMS/03_STRATEGIE_HIXTON.md` mit `HIXTON-SPEC-1.0` definiert die historische V1-Signallogik weiterhin reproduzierbar.
-- Die Eigentümer-Pine-Datei, ihr Hash und der V2-Snapshot definieren die aktive Paper-V2, ohne V1-Artefakte oder alte Ledgerereignisse umzudeuten.
+- Die Eigentümer-Pine-Datei, ihr Hash und der jeweils ausdrücklich freigegebene Snapshot definieren die aktive Paperstrategie, ohne V1-Artefakte oder alte Ledgerereignisse umzudeuten.
 - Neue Varianten liegen geordnet unter `backtests/v3`, `v4` usw.; eine verworfene Version bleibt als kleiner kuratierter Nachweis erhalten, große Runs bleiben lokal ignoriert.
 - Konfigurationsbeispiele enthalten keine echten Schlüssel.
 - Dependency-Lock und Codecommit definieren einen Build.

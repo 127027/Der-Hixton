@@ -1,5 +1,7 @@
 # 12 – Tests und Abnahmekriterien
 
+DEC-043/044: `tests/test_coin_profiles.py` prüft vollständige Profile, strikte Config, tatsächliche Paper-/Portfolio-Fills und Equity einschließlich mehrerer Neustarts, Batch-/Einzel-/Chart-Parität, XRP-Stop am Folge-Open mit eingefrorenem Entry-ATR, vollständige API-Profilanzeige, Migrations-Dust-/Cash-/Risikohalt-Erhaltung und keine künstliche Auffüllung bestehender Konten. Technische Parität ersetzt weder Mehrfensterrobustheit noch Paper-Soak oder Live-Gate.
+
 ## Testebenen
 
 1. Unit-Tests für Mathematik, Zustände, Rundung und Gebühren.
@@ -40,7 +42,7 @@
 - Standard-Batch startet zehn isolierte Tests mit exakt 250 USDT je Coin;
 - Einzelmodus startet genau den gewählten Coin, zum Beispiel ETH, mit 250 USDT;
 - Batchvergleich summiert 2.500 USDT nur rechnerisch und vermischt die zehn Cashbestände nicht;
-- Paper-/Live-Spiegellauf startet mit 240 USDT und höchstens drei Slots à 80 USDT;
+- Paper-/Live-Spiegellauf startet neu mit 250 USDT und höchstens drei Slots à 80 USDT;
 - bei mehr Signalen als Slots ist die freigegebene Priorisierung deterministisch;
 - Next-bar-Fill ohne Look-ahead;
 - Gebühren/Slippage auf Ein- und Ausstieg korrekt;

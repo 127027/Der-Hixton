@@ -45,7 +45,7 @@ def rebuild_analysis(
                 evaluate_batch(
                     symbol,
                     candles,
-                    parameters=strategy.parameters,
+                    parameters=strategy.parameters_for(symbol),
                     semantics=strategy.semantics,
                     strategy_version=strategy.version,
                 )

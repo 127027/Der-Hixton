@@ -1,4 +1,4 @@
-# 03 – Normative Strategie: Hixton VIDYA/ATR, aktive Paper-V2 und V1-Historie
+# 03 – Hixton-Strategie: aktive V2, vorbereitete V6-Coin-Profile und V1-Historie
 
 Status: `VERBINDLICH` für Strategieversion `HIXTON-SPEC-1.0`.
 
@@ -15,6 +15,27 @@ Für V1 heißt „Hixton“ ausschließlich die nachfolgend eingefrorene VIDYA-/
 | `HIXTON-SPEC-1.0` | normative V1-Definition in diesem Dokument | 10/20/SMA15/ATR200/Band2,0 | historische Paperstrategie und reproduzierbare Referenz |
 | `HIXTON-V2-RESEARCH-CANDIDATE-1` | Eigentümer-Pine v6 | 6/20/SMA8/ATR60/Band3,8 | aktive Paperstrategie seit `DEC-037`; nicht Live |
 | `HIXTON-V3-SLOT-CANDIDATE-1` | V2-Signalparameter plus `ranked_repeat` | wie V2, aber Mehrfachslots je Coin | `VERWORFEN`; nicht Paper/Live |
+
+## V6 – vollständige Coin-Profile (nicht aktiv)
+
+Version `HIXTON-V6-COIN-PAPER-1-9734f240e873`; maßgeblich ist `backtests/v6/candidate.json`, geprüft gegen die eine Definition in `src/hixton/domain/versions.py`. Nicht als Original-Pine-Default oder aktuelle V2 ausgeben. Zahlenfolge VIDYA / Momentum / SMA / ATR / Band:
+
+| Coin | Parameter | Zusatzregel |
+|---|---|---|
+| BTC | 6/20/8/120/4,4 | abs(CMO) ≥ 0,2 |
+| ETH | 6/20/8/60/3,8 | aktuelle VIDYA > VIDYA 24 geschlossene Bars zuvor |
+| BNB | 10/20/8/60/4,4 | keine |
+| SOL | 6/20/15/60/3,8 | keine |
+| XRP | 6/20/8/120/3,2 | Schlusskurs-Stop 4 Entry-ATR |
+| ADA | 6/20/8/60/3,8 | keine; V2 beibehalten |
+| LINK | 6/20/8/60/3,8 | keine; V2 beibehalten |
+| AVAX | 6/20/8/60/4,4 | keine |
+| DOT | 6/20/8/60/3,8 | keine; V2 beibehalten |
+| DOGE | 6/20/15/120/4,4 | abs(CMO) ≥ 0,2 |
+
+Alle zehn: Pine-v6-Formelsemantik, Quelle close, 1h, 400 Warm-up-Bars, initial DOWN ohne Order. Ein frischer Flip-Up wird nur bei bestandenen Coin-Filtern zum qualifizierten BUY. Abgewiesene Flips werden nicht nachgeholt. Ein echter Hixton-Flip-Down schließt Long; sonst darf XRP bei `close <= entry_fill_price - 4 * entry_ATR` aussteigen. Entry-ATR stammt vom BUY-Signal und bleibt in der Position gespeichert. Ausführung am nächsten echten Open plus Modellkosten, niemals intrabar oder garantiert zum Stopwert. Nach Stop kein Nachkauf ohne neuen Flip. Kein Trail in diesem Snapshot.
+
+Paper, alle Backtestmodi und Chartmarker verwenden dieselbe Profilquelle und `TradePolicyGate`. Filter erzeugen keine zusätzlichen Flips. Charts zeigen qualifizierte hypothetische Coin-Trades, tatsächliche Slots/Cash/Risikogates sind nur in echten Paper-Fillmarkern abgebildet. Profilauswahl und schlechte Marktphasen sind ausdrücklich retrospektiv dokumentiert; keine Allzeitoptimalität. V6 ist technisch vorbereitet, aber nicht produktiv freigegeben (DEC-043).
 
 ## Verbindliche Defaultparameter
 

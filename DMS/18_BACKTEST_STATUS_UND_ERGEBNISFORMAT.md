@@ -1,5 +1,9 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Neuester Prüfstand 06.09.2026 – V6-Profilvergleich
+
+Vollständiger Nachweis: `backtests/v6/README.md` und `reports/profile-review-20260906.json`. Neue Einzelergebnisse und ein technisch funktionsfähiger Paperpfad sind **kein** Nachweis eines besseren gemeinsamen Kontos. V6 verbessert das volle gemeinsame Fenster, verschlechtert aber jüngstes und älteres Fenster gegenüber V2. Alle gemeinsamen Läufe halten risikobedingt vorzeitig; kein kontinuierlich profitabler 24/7-Dreijahresnachweis. Die folgenden V1–V5-Werte bleiben historische Artefakte mit ihrem ursprünglichen Kapital.
+
 ## Neueste Einzelcoin-Forschung: V5, 05.09.2026
 
 Alle zehn Coins wurden mit 250 USDT einzeln diagnostiziert; 348 begrenzte Kombinationen aus Hixton-Parametern und expliziten Forschungsfiltern/-Stops wurden ausschließlich anhand der ersten zwei Trainingsjahre ausgewählt. Alle zehn V2-Kurztradegruppen unter 72 Stunden verlieren in Summe, während wenige lange Gewinner das Ergebnis tragen. ETH liefert einen interessanten 24-Bar-VIDYA-Steigungsfilter (jüngstes Stressjahr 213,63→278,47 USDT), aber einen älteren Rückschritt. XRP verbessert allein alle sechs Einzel-Endwerte und Drawdowns, besteht jedoch die gemeinsame Konto- und Nachbarprüfung nicht. Details für **jeden** Coin, einschließlich ADA-/DOT-Rückschritten, stehen zentral in `backtests/v5/README.md` und `backtests/v5/reports/coin-review-20260905.json`.

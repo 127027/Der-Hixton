@@ -6,7 +6,7 @@ Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
-Prüfstand 05.09.2026 (DMS 1.5): Paper-Ausführung und Charts wurden korrigiert, die aktive V2-Strategie bleibt unverändert. Der [V5-Einzelcoinbericht](backtests/v5/README.md) untersucht nun die Schwächen aller zehn Coins, individuelle Hixton-Filter/Stops und ihre Wirkung auf das gemeinsame Konto. V4 bleibt unveränderte Forschungshistorie. **Noch nicht live-reif.**
+Prüfstand 06.09.2026 (DMS 1.6 / Anwendung 0.3.0): Individuelle Coin-Profile sind durch die bestehende Analyse, Paper-Ausführung, Backtests und Charts technisch vorbereitet und getestet. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster; deshalb bleibt V2 aktiv und V6 gesperrter Forschungskandidat. Neue gemeinsame Modellkonten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve. Das laufende Konto und seine Positionen bleiben erhalten. **Noch nicht live-reif.**
 
 Im Repository existiert genau ein menschlicher Programmstarter:
 
@@ -23,15 +23,17 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Binance Spot für BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT.
 - Versionierte V1- und V2-Strategien: VIDYA/CMO, SMA-Nachglättung, Wilder-ATR, Bänder und ausschließlich geschlossene `1h`-Bars.
 - Vom Eigentümer bereitgestellte Pine-v6-Referenz mit eigenem Hash und Golden-Test; der kontrollierte V1→V2-Wechsel bewahrt das alte Ledger und startet einen neuen V2-Soak.
-- 24/7-Paper-Ledger mit gemeinsamem Startcash 240 USDT, drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
+- 24/7-Paper-Ledger mit gemeinsamem Startcash 250 USDT für neue Konten (10 USDT Anfangsreserve; bestehende Ledger bleiben unverändert), drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
 - WebSocket-Livestream mit REST-Gap-Recovery, Startup-Prüfung und täglichem Audit um 00:05 UTC.
 - Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
-- Backtest: gemeinsames 240-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
+- Backtest: gemeinsames 250-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung; V2 ist für Paper freigegeben, wegen früher Risikohalts aber ausdrücklich nicht für Live.
 - Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V2 verteilt höchstens einen Slot je Coin.
 - Backtest v4/v5: begrenzte Coin-Parametersuche, Verlustdiagnose, getrennte Trainings-/Prüffenster, Original-Pine-Kontrolle und explizit versionierte Forschungsregeln; keine automatische Paperumschaltung.
+- V6: zehn explizite Coin-Profile, deterministische Zusatzfilter/Schlusskurs-Stops und Paper-/Backtest-/Restart-Parität; derzeit keine Paperfreigabe wegen Mehrfenster-Portfoliorückschritten.
+- Ziel sind gute Signalquellen und effiziente Nutzung von höchstens drei Slots. 250→500 USDT und genannte Tradezahlen sind Beispiele, keine Optimierungsquoten; kein Overfitting und keine erzwungenen Trades.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
 ## Sichere Grenzen
@@ -58,6 +60,9 @@ py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py backtest portfolio --strategy v3
 py -3 src/main.py backtest research --output backtests/v4/runs/mein-neuer-review/research.json
 py -3 src/main.py backtest research --study v5 --output backtests/v5/runs/mein-neuer-review/research.json
+py -3 src/main.py backtest all --strategy v6
+py -3 src/main.py backtest portfolio --strategy v6
+py -3 src/main.py backtest research --study v6 --output backtests/v6/runs/mein-neuer-review/research.json
 py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
@@ -70,7 +75,7 @@ Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Pa
 
 Paper verwendet seit der Ausführungskorrektur `NEXT_BAR_OPEN_V1`: Signal ausschließlich auf geschlossener Kerze, modellierter Fill mit dem tatsächlichen nächsten Kerzen-Open plus Kosten. Der echte Verarbeitungszeitpunkt wird zusätzlich gespeichert. Das ist ein deterministischer Ausführungssimulator, noch kein Nachweis realer Binance-Fills oder realistisch gemessener Orderlatenz. Alte Ereignisse bleiben als Legacy erhalten; der technische Soak startet einmalig neu, Cash und Positionen bleiben bestehen.
 
-Die Backtestseite besitzt die eindeutige Auswahl `V2 · aktives Paper`, `V1 · Historie` oder `V3 · verworfener Mehrfachslot-Test` sowie `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
+Die Backtestseite besitzt die eindeutige Auswahl `V2 · aktives Paper`, `V1 · Historie` oder `V3 · verworfener Mehrfachslot-Test` sowie `V6 · Coin-Mix / Forschung`, `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
 
 ## Entwicklung und Prüfung
 

@@ -114,9 +114,11 @@ def run_single_backtest(
     if (
         trade_policy is not None
         and trade_policy != TradePolicy()
-        and not (strategy_version or "").startswith("HIXTON-V5-")
+        and not (strategy_version or "").startswith(("HIXTON-V5-", "HIXTON-V6-"))
     ):
-        raise ValueError("research policy requires an explicit HIXTON-V5 strategy version")
+        raise ValueError(
+            "trade policy requires an explicit HIXTON-V5 or HIXTON-V6 strategy version"
+        )
     warmup_start = report_start_utc - parameters.warmup_bars * TIMEFRAME_DELTA
     selected = [
         candle for candle in candles if warmup_start <= candle.open_time_utc < report_end_utc
@@ -328,11 +330,19 @@ def run_isolated_batch(
     costs: CostModel = BASELINE_COSTS,
     execution_rules: dict[str, ExecutionRules] | None = None,
     strategy_parameters: StrategyParameters | None = None,
+    strategy_parameters_by_symbol: dict[str, StrategyParameters] | None = None,
+    trade_policies_by_symbol: dict[str, TradePolicy] | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
 ) -> BatchResult:
     if len(candles_by_symbol) != len(SYMBOLS) or set(candles_by_symbol) != set(SYMBOLS):
         raise ValueError("batch input must contain all ten symbols in the fixed DMS order")
+    if strategy_parameters_by_symbol is not None and set(strategy_parameters_by_symbol) != set(
+        SYMBOLS
+    ):
+        raise ValueError("per-coin parameters require all ten symbols")
+    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(SYMBOLS):
+        raise ValueError("trade policies require all ten symbols")
     rules = execution_rules or {}
     results = tuple(
         run_single_backtest(
@@ -342,7 +352,10 @@ def run_isolated_batch(
             report_end_utc=report_end_utc,
             costs=costs,
             execution_rules=rules.get(symbol),
-            strategy_parameters=strategy_parameters,
+            strategy_parameters=(strategy_parameters_by_symbol or {}).get(
+                symbol, strategy_parameters
+            ),
+            trade_policy=(trade_policies_by_symbol or {}).get(symbol),
             strategy_semantics=strategy_semantics,
             strategy_version=strategy_version,
         )

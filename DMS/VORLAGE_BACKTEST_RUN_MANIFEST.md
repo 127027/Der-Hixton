@@ -36,7 +36,7 @@
 - Zielnotional je isoliertem Einstieg: 250,00 USDT bzw. kleinerer verfügbarer Cashbetrag
 - Run-Modus: `all_ten_isolated / single_symbol / paper_live_mirror`
 - Einzeltest-Symbol (falls zutreffend):
-- Spiegelportfolio: 240,00 USDT / 3 Slots / 80,00 USDT Zielnotional
+- Spiegelportfolio: 250,00 USDT (historische 240,00-USDT-Läufe explizit kennzeichnen) / 3 Slots / 80,00 USDT Zielnotional
 - Positionsgröße:
 - Compounding: `false`
 - Fillmodell: `next_bar_open`

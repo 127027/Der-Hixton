@@ -97,8 +97,10 @@ def run_shared_portfolio_backtest(
         raise ValueError("trade policies require all ten symbols")
     if any(p != TradePolicy() for p in (trade_policies_by_symbol or {}).values()) and not (
         strategy_version or ""
-    ).startswith("HIXTON-V5-"):
-        raise ValueError("research policies require an explicit HIXTON-V5 strategy version")
+    ).startswith(("HIXTON-V5-", "HIXTON-V6-")):
+        raise ValueError(
+            "trade policies require an explicit HIXTON-V5 or HIXTON-V6 strategy version"
+        )
     policy_gates = {
         symbol: TradePolicyGate((trade_policies_by_symbol or {}).get(symbol)) for symbol in SYMBOLS
     }

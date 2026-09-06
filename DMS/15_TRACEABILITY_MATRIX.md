@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-043/044 → STR-009/CAP-009/CAP-001/BKT-010/UI-Profilanzeige: `tests/test_coin_profiles.py`, `StrategyDefinition`, `TradePolicyGate`, `PaperStore`, `backtests/v6/candidate.json` und `backtests/v6/README.md`. Alle zehn Profile, Kapitaltrennung, Neustart-/Fill-/Chart-Parität und erhaltene Altledger sind technisch geprüft. Die Mehrfenster-Portfoliorückschritte sind ein offener fachlicher Eignungsnachweis, keine grüne Robustheitsabnahme.
+
 Zusätzlicher Nachweis ab 05.09.2026: `tests/test_runtime_parity.py` deckt DEC-040, DAT-006 (provisional), Folge-Open-Ausführung, Slot-/Cash-/Dust-Parität, Restart und Markerzeit ab. DEC-041 wird durch `backtests/v4/README.md` und den reproduzierbaren Befehl `backtest research` belegt. V4 ist keine aktive Strategie.
 
 V5/DEC-042: `tests/test_trade_policy.py` belegt Identitäts-, Kausalitäts-, Versionssperr- und Einzel-/Portfolio-Parität der Forschungsregeln (STR-008, BKT-002/003/007). `backtests/v5/README.md` und sein kuratierter JSON-Nachweis ordnen alle zehn Coin-Schwächen, trainierte Finalisten, Original-Pine-Kontrolle und Rückschritte zu. Aktive V2-Konfiguration, Positionsbestand und Paper-Regeln bleiben unverändert; eine V5-Paperparität wird nicht behauptet.
@@ -19,7 +21,7 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | MKT-001 genau zehn Paare | Nutzerauftrag | Config/Dashboard | Schema- und UI-Test |
 | MKT-002 Coinliste | DMS 04; DEC-005 | Config/Data | Symbolmetadatenprüfung |
 | MKT-003 keine automatische Coinrotation | DMS 04/22; DEC-005 | Config/Data/Release | Delisting pausiert statt Ersatz zu wählen |
-| CAP-001 Paper/Live 240 USDT | Nutzerauftrag | Paper-/Live-Ledger, UI | Startsaldo-/Cash-Test |
+| CAP-001 neue Paperkonten 250 USDT / 10 USDT Reserve | DEC-044 | Paper-/Live-Ledger, UI | Startsaldo-/Cash-/Bestandsschutztest |
 | CAP-002 drei Slots à 80 USDT | Nutzerauftrag | Portfolio/Execution/UI | Slotlimit- und Notionaltest |
 | CAP-003 UI-änderbare Slotgröße | Nutzerauftrag | Settings/Config/Audit | Validierungs-/Vorwärtswirkungstest |
 | CAP-004 250→500 als Wunsch, nicht Garantie | Nutzerklärung | Backtestreport | Zielerreichung und -verfehlung je Coin sichtbar |
@@ -31,7 +33,7 @@ Diese Matrix verhindert, dass eine Anforderung nur im Text existiert, aber spät
 | RSK-004 kein Auto-Compounding | DMS 04; DEC-030 | Backtest/Portfolio/Config/UI | Gewinn verändert weder 250- noch 80-USDT-Zielnotional |
 | BKT-008 10×250 USDT | Nutzerauftrag | Backtest Batch | zehn isolierte Ledger-Fixtures |
 | BKT-009 Einzeltest 250 USDT | Nutzerauftrag | Backtest UI/Engine | ETH-only-Test ohne andere Coins |
-| BKT-010 240-USDT-Spiegellauf | DMS 04/06 | Backtest Portfolio | Parität zu Paper-Slotmodell |
+| BKT-010 250-USDT-Spiegellauf | DMS 04/06 | Backtest Portfolio | Parität zu Paper-Slotmodell; historische 240-USDT-Runs unverändert |
 | BKT-011 Baseline-/Stresskosten | DMS 06; DEC-010 | Backtest/Report | 15/40-bps-je-Seite-Fixtures |
 | BKT-012 versionierte Strategieverbesserung | DMS 06; DEC-035 | Backtest/Report | Suchraum-, Mehrfenster-, Stress- und Nachbarnachweis |
 | RSK-001 kein Leverage/Margin/Futures | DMS 04/11 | Config/Execution | Startblockade/Permissionscheck |

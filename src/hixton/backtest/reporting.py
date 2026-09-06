@@ -59,8 +59,7 @@ def _metrics_payload(result: RunResult) -> dict[str, object]:
                 if field.name != "results"
             },
             "per_symbol": {
-                single.symbol: _primitive(single.metrics)
-                for single in _single_results(result)
+                single.symbol: _primitive(single.metrics) for single in _single_results(result)
             },
         }
     if isinstance(result, PortfolioBacktestResult):
@@ -123,10 +122,7 @@ def write_report_bundle(
         for single in _single_results(result):
             data_hashes[single.symbol] = single.data_snapshot_sha256
 
-    metrics_payload = {
-        scenario: _metrics_payload(result)
-        for scenario, result in scenarios.items()
-    }
+    metrics_payload = {scenario: _metrics_payload(result) for scenario, result in scenarios.items()}
     (run_directory / "metrics.json").write_text(
         json.dumps(metrics_payload, ensure_ascii=False, indent=2, sort_keys=True) + "\n",
         encoding="utf-8",
@@ -146,7 +142,8 @@ def write_report_bundle(
             "version": strategy.version,
             "reference": strategy.reference,
             "semantics": strategy.semantics.value,
-            "parameters": _primitive(strategy.parameters),
+            "parameters": None if strategy.coin_profiles else _primitive(strategy.parameters),
+            "profiles": strategy.profiles_payload(),
             "paper_approved": strategy.paper_approved,
             "slot_allocation": strategy.slot_allocation,
             "code_commit": code_commit,

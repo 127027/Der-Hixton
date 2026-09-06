@@ -1,5 +1,13 @@
 # DMS-Changelog
 
+## 1.6.0 – 06.09.2026
+
+- Zielpräzisierung: Signalqualität und robuste Slotnutzung statt Trade-/Gewinnquoten; neue Konten 250 USDT einschließlich 10 USDT Anfangsreserve, laufende Konten unverändert.
+- Vollständige hashgebundene V6-Coin-Profile durch Analyse, Paper, Einzel-/Batch-/Portfolioengine und Charts geführt; Entry-ATR/High-Close restartfest gespeichert.
+- Technische Parität und Migrations-Restmengen-/Risikohalterhaltung geprüft; Profilwerte in vorhandener UI, aktive Strategie als Backtest-Vorauswahl.
+- V6 gegen V2 in drei Fenstern mit Baseline/Stress und gleichem gemeinsamen 250-USDT-Kapital geprüft. Retrospektive Auswahl offen gelegt; schlechtere jüngste/ältere gemeinsame Ergebnisse verhindern eine allgemeine Robustheitsfreigabe.
+- Startpfad und Ordnerdisziplin unverändert; Live weiterhin deaktiviert.
+
 ## 1.5.0 – 05.09.2026
 
 - V5: alle zehn Coins mit unveränderter Pine-Referenz, aktiver V2 und 348 begrenzten Hixton-Parameter-/Filter-/Stopkombinationen geprüft; Auswahl nur im Training.

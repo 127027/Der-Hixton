@@ -1,5 +1,7 @@
 # 23 – Ordnerstruktur und einziger Einstiegspunkt
 
+Ergänzung DMS 1.6: `backtests/v6/` enthält nur `README.md`, den unveränderlichen `candidate.json`, einen kompakten kuratierten Nachweis unter `reports/` und ignorierte reproduzierbare Rohartefakte unter `runs/`. Keine neue Startdatei, keine zweite Handelsengine, keine großen Kerzendaten in Git. Der einzige Starter bleibt `Startbot.bat`.
+
 ## Verbindliches Prinzip
 
 Das Projekt besitzt genau **eine zentrale menschliche Lesestartdatei**: `/README.md`, und genau **einen ausführbaren Windows-Starter**: `/Startbot.bat`.

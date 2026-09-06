@@ -1,5 +1,11 @@
 # 20 – Betriebsrunbook
 
+## Ergänzung 06.09.2026
+
+Zuerst `backtests/v6/README.md` lesen: individueller Mix technisch durchgängig vorbereitet, jüngster/älterer Portfoliotest jedoch schlechter. Vor jedem Strategieumstieg muss der tatsächliche Freigabestatus geprüft werden; kein automatisches Übernehmen eines hohen Dreijahres-Endwerts. 250 USDT gelten für neue Konten und neue Vergleichsläufe, niemals als Kontoreset oder Gewinnbuchung im alten Ledger. Forschungsbefehl: `py -3 src/main.py backtest research --study v6 --output backtests/v6/runs/EIN_NEUER_NAME/research.json`.
+
+Ein ausdrücklich freigegebener Wechsel benötigt gestoppten einzelnen Paperprozess, geprüftes SQLite-Backup und `paper-activate --strategy v6 --confirmation AKTIVIEREN`. Dieser Befehl schließt alte Paperpositionen zu dokumentierten Modellkosten, bewahrt Ereignisse, Dust, tatsächliches Cash, globale High-Water-Mark und Risikohalts und startet einen getrennten Strategie-Soak. Keine historischen Einstiege nachholen. Ohne Freigabe den Befehl nicht ausführen.
+
 ## Aktueller Übergabestand 05.09.2026
 
 Anwendung 0.2.1 läuft auf dem Laptop über die einzige `Startbot.bat`; Strategie bleibt V2, drei Slots à 80 USDT, Live gesperrt. DMS 18 enthält Backup, Neustartnachweis und die beiden frisch aus der UI gestarteten Run-IDs. Der technische Soak startete wegen der Ausführungskorrektur einmalig neu. Alte Positionen und Trades dürfen dafür **nicht** gelöscht oder zu besseren Kursen umgebucht werden.
