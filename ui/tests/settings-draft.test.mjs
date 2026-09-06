@@ -30,3 +30,13 @@ test("save blocks polling and discard until response is confirmed", () => {
   draft.edit(); draft.discard();
   assert.equal(draft.acceptsPolling, true);
 });
+
+test("confirmations work without native browser prompt/confirm support", () => {
+  for (const file of ["main.ts", "live-preparation.ts"]) {
+    const source = readFileSync(new URL(`../src/${file}`, import.meta.url), "utf8");
+    assert.doesNotMatch(source, /window\.(prompt|confirm|alert)\s*\(/);
+  }
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  assert.match(html, /id="settings-confirmation"/);
+  assert.match(html, /id="live-confirmation"/);
+});

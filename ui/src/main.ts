@@ -247,7 +247,7 @@ function renderSettingsInputs(settings: PaperPayload["settings"]): void {
 
 function renderSettingsEditState(): void {
   text("#settings-edit-state", settingsDraft.saving ? "Wird gespeichert …" : settingsDraft.dirty ? "Ungespeicherte Änderung — ANWENDEN oder verwerfen." : "Keine ungespeicherten Änderungen.");
-  for (const selector of ["#slot-input", "#notional-input", "#emergency-input", "#settings-button", "#settings-discard"]) {
+  for (const selector of ["#slot-input", "#notional-input", "#emergency-input", "#settings-button", "#settings-discard", "#settings-confirmation"]) {
     required<HTMLInputElement | HTMLButtonElement>(selector).disabled = settingsDraft.saving;
   }
 }
@@ -510,11 +510,17 @@ function initializeControls(): void {
     finally { button.disabled = false; }
   });
   for (const selector of ["#slot-input", "#notional-input", "#emergency-input"]) {
-    required<HTMLInputElement>(selector).addEventListener("input", () => { settingsDraft.edit(); renderSettingsEditState(); });
+    required<HTMLInputElement>(selector).addEventListener("input", () => {
+      settingsDraft.edit(); renderSettingsEditState();
+      required<HTMLInputElement>("#settings-confirmation").value = "";
+      required("#settings-confirmation-panel").classList.add("hidden");
+    });
   }
   required<HTMLButtonElement>("#settings-discard").addEventListener("click", () => {
     settingsDraft.discard();
     if (lastStatus?.paper) renderSettingsInputs(lastStatus.paper.settings);
+    required<HTMLInputElement>("#settings-confirmation").value = "";
+    required("#settings-confirmation-panel").classList.add("hidden");
     renderSettingsEditState();
   });
   required<HTMLButtonElement>("#settings-button").addEventListener("click", async () => {
@@ -523,18 +529,22 @@ function initializeControls(): void {
     if (!slots.reportValidity() || !notional.reportValidity()) return;
     const settings = { slot_count: Number(slots.value), target_notional_usdt: notional.value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked };
     if (settings.slot_count * Number(settings.target_notional_usdt) > 240) { showToast("Positionsbudget darf aktuell 240 USDT nicht überschreiten.", true); return; }
+    const confirmation = required<HTMLInputElement>("#settings-confirmation");
+    if (confirmation.value !== "ANWENDEN") {
+      text("#settings-confirmation-message", `Paper: ${settings.slot_count} × ${settings.target_notional_usdt} USDT · ${settings.emergency_stop ? "Not-Aus EIN" : "Not-Aus AUS"}. ANWENDEN eingeben und erneut bestätigen.`);
+      required("#settings-confirmation-panel").classList.remove("hidden");
+      confirmation.focus(); return;
+    }
     if (!settingsDraft.beginSave()) return;
     renderSettingsEditState();
-    // Capture the draft BEFORE the modal; delayed polls must not change the submitted values.
-    if (window.prompt(`Paper auf ${settings.slot_count} × ${settings.target_notional_usdt} USDT ändern? Zum Speichern ANWENDEN eingeben:`) !== "ANWENDEN") {
-      settingsDraft.finishSave(false); renderSettingsEditState(); return;
-    }
     try {
       const result = await api<{ settings: PaperPayload["settings"] }>("/api/paper/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", ...settings }) });
       ++coreLoadGeneration;
       settingsDraft.finishSave(true);
       if (lastStatus?.paper) lastStatus.paper.settings = result.settings;
       renderSettingsInputs(result.settings);
+      confirmation.value = "";
+      required("#settings-confirmation-panel").classList.add("hidden");
       showToast("Paper-Einstellungen wurden für neue Entries gespeichert.");
       await refreshCore();
     } catch (error) { settingsDraft.finishSave(false); showToast(error instanceof Error ? error.message : String(error), true); }

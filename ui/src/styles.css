@@ -141,6 +141,7 @@ td.mono { font-family: var(--mono); }
 .live-heading { margin-top: 32px; }
 .live-controls, #live-auth-panel { display: grid; gap: 14px; }
 .live-controls.hidden, #live-auth-panel.hidden { display: none; }
+.settings-card label.hidden { display: none; }
 #live-blockers { margin: 0; padding-left: 20px; color: var(--muted); font-size: .8rem; }
 #live-blockers li { margin: 8px 0; overflow-wrap: anywhere; }
 .danger-toggle { color: var(--red); border: 1px solid rgba(251,113,133,.24); background: rgba(251,113,133,.05); border-radius: 8px; padding: 12px; }

@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Der Hixton</title>
-    <script type="module" crossorigin src="/assets/index-5Xw-4SGL.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-BXLDlmC4.css">
+    <script type="module" crossorigin src="/assets/index-bFAVu7KH.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-BPsVTouW.css">
   </head>
   <body>
     <div id="app-shell">
@@ -147,6 +147,7 @@
             <label>Zielnotional je neuem Entry (USDT)<input id="notional-input" type="number" min="5" step="0.01" value="80.00" /></label>
             <label class="danger-toggle"><input id="emergency-input" type="checkbox" /> Not-Aus: neue Entries blockieren</label>
             <p>Maximal drei Slots und zusammen 240 USDT Positionsbudget. Neue Konten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve. Änderungen gelten nur für neue Einstiege und setzen das Konto nicht zurück.</p>
+            <label id="settings-confirmation-panel" class="hidden"><span id="settings-confirmation-message">Zum Speichern ANWENDEN eingeben</span><input id="settings-confirmation" type="text" autocomplete="off" placeholder="ANWENDEN" /></label>
             <button id="settings-button" class="button primary">Mit „ANWENDEN“ bestätigen</button>
             <p id="settings-saved">Gespeicherte Einstellungen werden geladen …</p>
             <p id="settings-edit-state" role="status">Keine ungespeicherten Änderungen.</p>
@@ -168,6 +169,8 @@
               <label>Binance Secret-Key<input id="live-api-secret" type="password" autocomplete="off" maxlength="256" spellcheck="false" /></label>
               <p>Nur hier lokal eingeben, niemals im Chat. Ablage im Windows-Anmeldedatenspeicher dieses Benutzers und PCs — nicht im Projekt, in OneDrive oder GitHub. Kein absoluter Schutz gegen Administratoren oder Schadsoftware unter deinem Windows-Konto.</p>
               <p>Eigener Bot-Account/Subaccount, Lesen und Spot-Handel; keine Auszahlungen, Transfers, Margin oder Futures. IP-Beschränkung aktivieren. Bestehende Bestände werden weder verkauft noch als Paper-Positionen übernommen.</p>
+              <label>Für Schlüsseländerungen SPEICHERN oder ENTFERNEN eingeben<input id="live-confirmation" type="text" autocomplete="off" placeholder="SPEICHERN / ENTFERNEN" /></label>
+              <p>Speichern ersetzt den bisherigen lokalen Key. Entfernen widerruft ihn nicht bei Binance.</p>
               <button id="live-save-key" class="button secondary">Schlüssel sicher speichern / ersetzen</button>
               <button id="live-delete-key" class="button secondary">Gespeicherten Schlüssel entfernen</button>
               <button id="live-check" class="button secondary">Binance-Konto prüfen — keine Orders</button>

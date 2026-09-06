@@ -22,7 +22,7 @@ export function initializeLivePreparation(): void {
   const controls = ["live-unlock", "live-save-key", "live-delete-key", "live-check", "live-request", "live-off", "live-lock"];
   const message = (value: string): void => { element("live-result").textContent = value; };
   const clearSecrets = (): void => {
-    for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret"]) element<HTMLInputElement>(id).value = "";
+    for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret", "live-confirmation"]) element<HTMLInputElement>(id).value = "";
   };
   const render = (status: LiveStatus): void => {
     if (last?.authenticated && !status.authenticated) clearSecrets();
@@ -92,14 +92,20 @@ export function initializeLivePreparation(): void {
   action("live-save-key", async () => {
     const api_key = element<HTMLInputElement>("live-api-key").value;
     const secret_key = element<HTMLInputElement>("live-api-secret").value;
-    if (!window.confirm("Binance-Key im Windows-Anmeldedatenspeicher speichern? Ein vorhandener Key wird ersetzt. Live bleibt aus.")) return;
+    if (element<HTMLInputElement>("live-confirmation").value !== "SPEICHERN") {
+      message("Zum Speichern/Ersetzen zuerst SPEICHERN in das Bestätigungsfeld eingeben. Live bleibt aus.");
+      element<HTMLInputElement>("live-confirmation").focus(); return;
+    }
     try {
       await request("credentials", { api_key, secret_key, confirmation: "SCHLUESSEL SPEICHERN" });
       message("Schlüssel sicher im Windows-Anmeldedatenspeicher gespeichert. Als Nächstes Konto prüfen; kein automatischer Live-Start.");
     } finally { clearSecrets(); }
   });
   action("live-delete-key", async () => {
-    if (!window.confirm("Gespeicherten Binance-Key lokal entfernen? Das widerruft ihn NICHT bei Binance.")) return;
+    if (element<HTMLInputElement>("live-confirmation").value !== "ENTFERNEN") {
+      message("Zum lokalen Entfernen zuerst ENTFERNEN eingeben. Dies widerruft den Key nicht bei Binance.");
+      element<HTMLInputElement>("live-confirmation").focus(); return;
+    }
     await request("credentials/delete", { confirmation: "SCHLUESSEL ENTFERNEN" }); clearSecrets();
     message("Lokalen Key entfernt. Falls nötig zusätzlich in Binance widerrufen. Lokales Hixton-Passwort bleibt erhalten.");
   });
