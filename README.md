@@ -8,7 +8,7 @@ Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
-Prüfstand 06.09.2026 (DMS 1.7 / Anwendung 0.3.1): V6 wird auf Eigentümerwunsch mit einem sauberen neuen 250-USDT-Paperkonto betrieben. 3×80 USDT können gleichzeitig eingesetzt werden; 10 USDT sind die Anfangsreserve. Alte Paperhistorie wird gesichert, nicht als neuer Erfolg mitgezählt. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster. **Paper-Experiment, nicht nachgewiesen optimal und nicht live-reif.**
+Prüfstand 06.09.2026 (DMS 1.7.1 / Anwendung 0.3.2): V6 wird auf Eigentümerwunsch mit einem sauberen neuen 250-USDT-Paperkonto betrieben. 3×80 USDT können gleichzeitig eingesetzt werden; 10 USDT sind die Anfangsreserve. Alte Paperhistorie wird gesichert, nicht als neuer Erfolg mitgezählt. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster. **Paper-Experiment, nicht nachgewiesen optimal und nicht live-reif.**
 
 Im Repository existiert genau ein menschlicher Programmstarter:
 
@@ -77,7 +77,7 @@ Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Pa
 
 Paper verwendet seit der Ausführungskorrektur `NEXT_BAR_OPEN_V1`: Signal ausschließlich auf geschlossener Kerze, modellierter Fill mit dem tatsächlichen nächsten Kerzen-Open plus Kosten. Der echte Verarbeitungszeitpunkt wird zusätzlich gespeichert. Das ist ein deterministischer Ausführungssimulator, noch kein Nachweis realer Binance-Fills oder realistisch gemessener Orderlatenz. Alte Ereignisse bleiben als Legacy erhalten; der technische Soak startet einmalig neu, Cash und Positionen bleiben bestehen.
 
-Die Backtestseite besitzt die eindeutige Auswahl `V6 · Paper-Experiment / Coin-Mix`, `V2 · vorherige Referenz`, `V1 · Historie` oder `V3 · Mehrfachslot verworfen`, `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
+Die Backtestseite besitzt die eindeutige Auswahl `V6 · Paper-Experiment / Coin-Mix`, `V2 · vorherige Referenz`, `V1 · Historie` oder `V3 · Mehrfachslot verworfen`, `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Version und Testart filtern gemeinsam: Nur der neueste passende Run steht direkt sichtbar, ältere Läufe sind eingeklappt. Diese Auswahl ändert niemals die aktive Paperstrategie.
 
 ## Entwicklung und Prüfung
 

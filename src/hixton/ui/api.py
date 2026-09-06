@@ -211,16 +211,15 @@ def _market_payloads(
     return payloads
 
 
-def _list_backtests(output_root: Path) -> list[dict[str, object]]:
+def _list_backtests(
+    output_root: Path, *, mode: str | None = None, symbol: str | None = None,
+) -> list[dict[str, object]]:
     if not output_root.exists():
         return []
     entries: list[dict[str, object]] = []
-    directories = sorted(
-        (item for item in output_root.iterdir() if item.is_dir()),
-        key=lambda item: item.stat().st_mtime,
-        reverse=True,
-    )
-    for directory in directories[:25]:
+    for directory in output_root.iterdir():
+        if not directory.is_dir():
+            continue
         manifest_path = directory / "manifest.json"
         metrics_path = directory / "metrics.json"
         if not manifest_path.exists() or not metrics_path.exists():
@@ -230,8 +229,32 @@ def _list_backtests(output_root: Path) -> list[dict[str, object]]:
             metrics = json.loads(metrics_path.read_text(encoding="utf-8"))
         except (OSError, json.JSONDecodeError):
             continue
+        if not isinstance(manifest, dict) or not isinstance(metrics, dict):
+            continue
+        baseline = metrics.get("baseline", {})
+        if not isinstance(baseline, dict):
+            continue
+        run_mode = manifest.get("run_mode") or (
+            "portfolio" if "portfolio" in baseline else "batch" if "batch" in baseline else "single"
+        )
+        if mode is not None and run_mode != ("batch" if mode == "all" else mode):
+            continue
+        if symbol is not None and set(baseline.get("per_symbol", {})) != {symbol}:
+            continue
         entries.append({"manifest": manifest, "metrics": metrics})
-    return entries
+
+    def created_at(entry: dict[str, object]) -> datetime:
+        manifest = entry["manifest"]
+        assert isinstance(manifest, dict)
+        try:
+            moment = datetime.fromisoformat(str(manifest.get("created_at_utc", "")))
+            return moment.astimezone(UTC) if moment.tzinfo else datetime.min.replace(tzinfo=UTC)
+        except ValueError:
+            return datetime.min.replace(tzinfo=UTC)
+
+    # Copying/reproducing folders must not make an older run look like the newest.
+    # Apply the 25-run display cap only AFTER filtering by selected test model.
+    return sorted(entries, key=created_at, reverse=True)[:25]
 
 
 def _origin_is_local(request: Request) -> bool:
@@ -400,7 +423,17 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
         }
 
     @app.get("/api/backtests")
-    def backtests(strategy: str = Query(default=config.strategy_key)) -> dict[str, object]:
+    def backtests(
+        strategy: str = Query(default=config.strategy_key),
+        mode: str | None = None, symbol: str | None = None,
+    ) -> dict[str, object]:
+        if mode not in {None, "portfolio", "all", "single"}:
+            raise HTTPException(status_code=400, detail="Unbekannte Backtestart")
+        normalized = symbol.replace("/", "").upper() if symbol else None
+        if mode == "single" and normalized not in SYMBOLS:
+            raise HTTPException(status_code=400, detail="Einzeltest benoetigt ein DMS-Symbol")
+        if normalized is not None and mode != "single":
+            raise HTTPException(status_code=400, detail="Coinfilter gilt nur fuer Einzeltests")
         try:
             definition = strategy_definition(strategy)
         except ValueError as error:
@@ -412,7 +445,7 @@ def create_app(config: ProjectConfig, supervisor: RuntimeSupervisor) -> FastAPI:
                 "version": definition.version,
                 "paper_approved": definition.paper_approved,
             },
-            "runs": _list_backtests(output_root),
+            "runs": _list_backtests(output_root, mode=mode, symbol=normalized),
             "status": supervisor.state.snapshot().backtest_status,
         }
 

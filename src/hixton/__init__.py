@@ -3,4 +3,4 @@
 from hixton.constants import HIXTON_SPEC_VERSION
 
 __all__ = ["HIXTON_SPEC_VERSION"]
-__version__ = "0.3.1"
+__version__ = "0.3.2"

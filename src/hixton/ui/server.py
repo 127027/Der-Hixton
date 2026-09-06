@@ -14,7 +14,7 @@ from hixton.ui.api import create_app
 
 def run_local_dashboard(config: ProjectConfig, *, open_browser: bool = True) -> int:
     if config.ui_bind not in {"127.0.0.1", "localhost"}:
-        raise ValueError("V1 UI may bind only to localhost")
+        raise ValueError("UI may bind only to localhost")
     supervisor = RuntimeSupervisor(config)
     app = create_app(config, supervisor)
     url = f"http://{config.ui_bind}:{config.ui_port}/"

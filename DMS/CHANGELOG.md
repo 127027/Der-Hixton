@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.7.1 – 06.09.2026 / Anwendung 0.3.2
+
+- Eigentümerwunsch UI-Bereinigung: Strategie, 3×80-/10×250-/Einzeltest gemeinsam filtern; neuester passender Lauf sichtbar, ältere Nachweise eingeklappt, nichts gelöscht.
+- Run-Reihenfolge nach Manifestzeit statt Kopierdatum; Testfenster und Erstellungszeit getrennt, Baseline und historischer Risikohalt eindeutig bezeichnet; lange Kartenmetadaten umbrechen.
+- Veraltete V1-Festtexte auf Dokumentationsseite durch tatsächliche Runtimeversion ersetzt, GitHub-DMS-Links auf aktuellen Projektbranch korrigiert, 250/240/10-Kapitaltrennung erläutert.
+- Reines UI-/Listenupdate: V6-Profile, Kosten, Slots, Risikogates und das neue Paperkonto samt Soak unverändert.
+
 ## 1.7.0 – 06.09.2026 / Anwendung 0.3.1
 
 - DEC-045: Eigentümer verlangt V6-Aktivierung und ausdrücklich einen frischen Paperstart mit 250 USDT / 3×80; als Paper-Experiment trotz unverändert dokumentierter schlechterer Verlustfenster.

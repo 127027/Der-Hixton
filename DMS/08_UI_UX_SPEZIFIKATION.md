@@ -1,5 +1,7 @@
 # 08 – UI-/UX-Spezifikation
 
+Ergänzung 1.7.1 / Anwendung 0.3.2: Backtestliste und Ergebnistabelle filtern gemeinsam nach gewählter Strategie UND Testart (3×80, 10×250 oder exakt ein Coin). Standardmäßig erscheint nur der neueste passende Lauf; bis zu 24 weitere bleiben eingeklappt erreichbar. Sortierung nach Manifest-Erstellungszeit, nicht Datei-Kopierdatum; Filter vor Anzeigegrenze. Bei einem Auswahlwechsel werden alte Werte sofort entfernt und verspätete Antworten verworfen. Kein Löschen von Runartefakten. Karten nennen Testfenster, Erstellungszeit, ausdrücklich Baseline und historischen Risikohalt; dieser ist kein aktueller Paperstatus. Dokumentationskarte bezieht die tatsächliche Strategie aus der Status-API, GitHub-Verweise nutzen den aktuellen Projektbranch `codex/build-foundation-v1`, nicht den alten `main`-Stand. Optik bleibt erhalten; lange Metadaten umbrechen lesbar.
+
 Ergänzung 06.09.2026: Optik und Navigation bleiben bestehen. Jede Marktkarte zeigt ihre tatsächlichen VIDYA-/Momentum-/SMA-/ATR-/Bandwerte und Zusatzfilter. Die Backtestauswahl wird beim Laden aus der aktiven Paperstrategie vorbelegt; ein manuell gewählter Vergleich verändert Paper nicht. V6 ist gemäß DEC-045 als Paper-Experiment aktiv, nicht durch Auswahl eines Backtests. Qualifizierte hypothetische Coin-Signale und echte Ledger-Fills sind getrennt: Slots, Cash und Risikogates können ein Signal blockieren; Stopmarker heißen STOP. Der grüne Trend allein ist keine erneute Kaufaufforderung.
 
 ## UI-Grundsätze

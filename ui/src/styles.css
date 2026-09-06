@@ -128,8 +128,14 @@ td.mono { font-family: var(--mono); }
 .action-card > div { flex: 1; }.action-card p, .settings-card p { color: var(--muted); font-size: .78rem; margin-top: 5px; }
 .run-list { display: grid; gap: 10px; margin-top: 16px; }
 .backtest-detail, .system-log-table { margin-top: 18px; }
-.run-card { padding: 16px; display: grid; grid-template-columns: 1fr auto; gap: 8px; }
-.run-card small { color: var(--muted); }
+.run-card { padding: 16px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, auto); gap: 16px; }
+.run-card strong, .run-card small { display: block; overflow-wrap: anywhere; }
+.run-card small { color: var(--muted); margin-top: 6px; }
+.run-card > span { text-align: right; }
+.backtest-note { margin-top: 14px; color: var(--muted); font-size: .78rem; }
+.backtest-history { margin-top: 16px; }
+.backtest-history summary { color: var(--muted); cursor: pointer; }
+@media (max-width: 820px) { .run-card { grid-template-columns: 1fr; }.run-card > span { text-align: left; } }
 .settings-card { max-width: 620px; padding: 22px; display: grid; gap: 17px; }
 .settings-card label:not(.danger-toggle) { display: grid; gap: 7px; color: var(--muted); font-size: .78rem; }
 .danger-toggle { color: var(--red); border: 1px solid rgba(251,113,133,.24); background: rgba(251,113,133,.05); border-radius: 8px; padding: 12px; }

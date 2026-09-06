@@ -163,6 +163,7 @@ const formatUtc = (value: string | null): string => value
   ? `${new Intl.DateTimeFormat("de-DE", { dateStyle: "short", timeStyle: "medium", timeZone: "UTC" }).format(new Date(value))} UTC`
   : "—";
 const timestamp = (value: string): UTCTimestamp => Math.floor(new Date(value).getTime() / 1000) as UTCTimestamp;
+const escapeHtml = (value: unknown): string => String(value ?? "—").replace(/[&<>"']/g, (char) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[char]!));
 
 async function api<T>(url: string, options?: RequestInit): Promise<T> {
   const response = await fetch(url, { ...options, headers: { "Content-Type": "application/json", "X-Hixton-Action": "local-ui-v1", ...(options?.headers ?? {}) } });
@@ -182,6 +183,8 @@ let vidyaSeries: ISeriesApi<"Line"> | null = null;
 let upperSeries: ISeriesApi<"Line"> | null = null;
 let lowerSeries: ISeriesApi<"Line"> | null = null;
 let chartLoadGeneration = 0;
+let backtestLoadGeneration = 0;
+let backtestViewKey = "";
 let chartMarkers: ISeriesMarkersPluginApi<Time> | null = null;
 
 function showToast(message: string, error = false): void {
@@ -218,6 +221,7 @@ function renderStatus(status: StatusResponse): void {
   text("#connection-label", status.runtime.stream_connected ? "Binance Stream" : status.runtime.feed_mode);
   text("#active-strategy-label", `BINANCE SPOT · 1H · ${status.strategy_version}`);
   text("#doc-app-version", status.application_version);
+  text("#doc-strategy-version", status.strategy_version);
   if (!status.paper) return;
   text("#metric-equity", formatNumber(status.paper.equity_usdt));
   text("#metric-cash", formatNumber(status.paper.cash_usdt));
@@ -391,16 +395,31 @@ async function refreshEvents(): Promise<void> {
 }
 
 async function refreshBacktests(): Promise<void> {
+  const generation = ++backtestLoadGeneration;
   try {
     const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
-    const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?strategy=${strategy}`);
-    if (required<HTMLSelectElement>("#backtest-strategy").value !== strategy) return;
+    const selection = required<HTMLSelectElement>("#backtest-symbol").value;
+    const mode = selection === "PORTFOLIO" ? "portfolio" : selection === "ALL" ? "all" : "single";
+    const viewKey = `${strategy}:${selection}`;
+    const history = required<HTMLDetailsElement>("#backtest-history");
+    if (backtestViewKey !== viewKey) {
+      backtestViewKey = viewKey;
+      required("#backtest-runs").textContent = "Passende Läufe werden geladen …";
+      required("#backtest-detail-body").innerHTML = `<tr><td colspan="7">Auswahl wird geladen …</td></tr>`;
+      text("#backtest-detail-title", "Ausgewählter Test · Baseline");
+      history.open = false;
+      history.classList.add("hidden");
+    }
+    const query = new URLSearchParams({ strategy, mode });
+    if (mode === "single") query.set("symbol", selection);
+    const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?${query}`);
+    if (generation !== backtestLoadGeneration || required<HTMLSelectElement>("#backtest-strategy").value !== strategy || required<HTMLSelectElement>("#backtest-symbol").value !== selection) return;
     text("#backtest-eyebrow", `BACKTEST ${strategy.toUpperCase()}`);
     text("#backtest-title", strategy === "v6" ? "V6 · Coin-Mix / Paper-Experiment" : strategy === "v2" ? "V2 · vorherige Referenz / 3×80 oder 10×250" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
     const button = required<HTMLButtonElement>("#backtest-button");
     button.disabled = response.status === "RUNNING";
     button.textContent = response.status === "RUNNING" ? "Backtest läuft …" : "Backtest starten";
-    required("#backtest-runs").innerHTML = response.runs.length ? response.runs.map((run) => {
+    const cards = response.runs.map((run) => {
       const manifest = run.manifest;
       const baseline = run.metrics.baseline;
       const firstMetric = baseline ? Object.values(baseline.per_symbol ?? {})[0] : undefined;
@@ -409,11 +428,17 @@ async function refreshBacktests(): Promise<void> {
         ? `${formatNumber(summary.ending_equity as string)} USDT · ${formatNumber(summary.return_pct as string)} %`
         : "Kennzahlen nicht verfügbar";
       const version = (manifest.strategy as Record<string, unknown> | undefined)?.version ?? strategy.toUpperCase();
-      const runMode = String(manifest.run_mode ?? (baseline?.portfolio ? "portfolio" : baseline?.batch ? "batch" : "single")).toUpperCase();
+      const runMode = baseline?.portfolio ? "3×80-Portfolio" : baseline?.batch ? "10×250 isoliert" : `Einzeltest ${Object.keys(baseline?.per_symbol ?? {}).join(", ")}`;
       const riskHalt = baseline?.portfolio?.risk_halted_at_utc;
-      const riskLabel = riskHalt ? `<br><strong class="negative">RISIKOHALT · ${formatDate(String(riskHalt), true)}</strong>` : "";
-      return `<article class="run-card"><div><strong>${runMode} · Run ${String(manifest.run_id ?? "—")}</strong><small>${String(version)} · ${String(manifest.created_at_utc ?? "")} · ${String(manifest.status ?? "")}</small></div><span>${result}${riskLabel}<br>${Array.isArray(manifest.scenarios) ? manifest.scenarios.join(" + ") : ""}</span></article>`;
-    }).join("") : `<article class="run-card"><div><strong>Noch kein realer Backtestlauf</strong><small>Nach vollständiger Synchronisation hier starten.</small></div></article>`;
+      const riskLabel = riskHalt ? `<strong class="negative">RISIKOHALT im Test · ${formatDate(String(riskHalt), true)}</strong>` : "";
+      const window = manifest.data as Record<string, unknown> | undefined;
+      const runId = String(manifest.run_id ?? "—");
+      return `<article class="run-card"><div><strong title="${escapeHtml(runId)}">${escapeHtml(runMode)} · Run ${escapeHtml(runId.slice(0, 8))}</strong><small>${escapeHtml(version)}</small><small>Testfenster: ${formatDate(window?.report_start_utc ? String(window.report_start_utc) : null)} – ${formatDate(window?.report_end_utc ? String(window.report_end_utc) : null)} (Ende exklusiv)</small><small>Erstellt: ${formatDate(manifest.created_at_utc ? String(manifest.created_at_utc) : null, true)} · ${escapeHtml(manifest.status)}</small></div><span>Baseline: ${result}${riskLabel}<small>${Array.isArray(manifest.scenarios) ? escapeHtml(manifest.scenarios.join(" + ")) : ""}</small></span></article>`;
+    });
+    required("#backtest-runs").innerHTML = cards[0] ?? `<article class="run-card"><div><strong>Noch kein Backtest für diese Auswahl</strong><small>Version und Testart sind getrennt. Einen passenden Lauf hier starten.</small></div></article>`;
+    required("#backtest-history-runs").innerHTML = cards.slice(1).join("");
+    text("#backtest-history-label", `${Math.max(0, cards.length - 1)} frühere Läufe dieser Auswahl anzeigen (maximal 25 insgesamt)`);
+    history.classList.toggle("hidden", cards.length < 2);
     const latestRun = response.runs[0];
     const perSymbol = latestRun?.metrics.baseline?.per_symbol ?? {};
     const portfolioMetric = latestRun?.metrics.baseline?.portfolio?.metrics;
@@ -423,7 +448,13 @@ async function refreshBacktests(): Promise<void> {
       : Object.keys(perSymbol).length
       ? Object.entries(perSymbol).map(([symbol, metric]) => `<tr><td class="mono">${symbol}</td><td>${formatNumber(metric.starting_equity as string)}</td><td>${formatNumber(metric.ending_equity as string)}</td><td class="${Number(metric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(metric.return_pct as string)} %</td><td>${String(metric.completed_trades ?? "—")}</td><td>${formatNumber(metric.max_drawdown_pct as string)} %</td><td>${formatNumber(metric.buy_and_hold_ending_equity as string)}</td></tr>`).join("")
       : `<tr><td colspan="7">Noch kein auswertbarer Run vorhanden.</td></tr>`;
-  } catch { /* Read view remains available while startup runs. */ }
+  } catch {
+    if (generation === backtestLoadGeneration) {
+      required("#backtest-runs").textContent = "Backtestliste derzeit nicht erreichbar. Anzeige wird erneut geladen.";
+      required("#backtest-history").classList.add("hidden");
+      required("#backtest-detail-body").innerHTML = `<tr><td colspan="7">Keine aktuelle Antwort für diese Auswahl.</td></tr>`;
+    }
+  }
 }
 
 async function refreshRuntimeLogs(): Promise<void> {
@@ -447,6 +478,7 @@ function initializeControls(): void {
   }));
   required<HTMLSelectElement>("#coin-select").addEventListener("change", (event) => { selectedSymbol = (event.target as HTMLSelectElement).value as SymbolName; void loadChart(); });
   required<HTMLSelectElement>("#backtest-strategy").addEventListener("change", () => void refreshBacktests());
+  required<HTMLSelectElement>("#backtest-symbol").addEventListener("change", () => void refreshBacktests());
   required<HTMLSelectElement>("#timezone-select").addEventListener("change", () => void loadChart());
   required<HTMLInputElement>("#overlay-toggle").addEventListener("change", (event) => {
     const visible = (event.target as HTMLInputElement).checked;

@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+import os
 from datetime import UTC, datetime
 from decimal import Decimal
 from pathlib import Path
@@ -147,3 +149,61 @@ def test_backtest_api_keeps_v1_and_v2_run_views_separate(tmp_path: Path) -> None
     assert v2.json()["strategy"]["version"] == "HIXTON-V2-RESEARCH-CANDIDATE-1"
     assert v2.json()["strategy"]["paper_approved"] is True
     assert invalid.status_code == 400
+
+
+def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+
+    def write_run(key: str, mode: str, day: int, symbols: tuple[str, ...]) -> None:
+        path = config.run_output_root / key
+        path.mkdir(parents=True)
+        (path / "manifest.json").write_text(json.dumps({
+            "run_id": key, "run_mode": mode,
+            "created_at_utc": f"2026-09-{day:02}T12:00:00+00:00",
+        }), encoding="utf-8")
+        (path / "metrics.json").write_text(json.dumps({
+            "baseline": {"per_symbol": {symbol: {} for symbol in symbols}},
+        }), encoding="utf-8")
+        # Copied older directories look newer on disk; creation time must win.
+        os.utime(path, (1_800_000_000 - day * 100, 1_800_000_000 - day * 100))
+
+    write_run("portfolio-old", "portfolio", 1, ())
+    write_run("portfolio-new", "portfolio", 6, ())
+    write_run("single-eth", "single", 2, ("ETHUSDT",))
+    write_run("single-btc", "single", 3, ("BTCUSDT",))
+    # >25 other runs must not make the selected old portfolio disappear.
+    for index in range(30):
+        write_run(f"batch-{index}", "batch", 5, SYMBOLS)
+    broken = config.run_output_root / "incomplete"
+    broken.mkdir()
+    (broken / "manifest.json").write_text("[invalid", encoding="utf-8")
+    client = TestClient(
+        create_app(config, RuntimeSupervisor(config)), base_url="http://127.0.0.1:8765",
+    )
+    for query, expected in (
+        ("mode=portfolio", ["portfolio-new", "portfolio-old"]),
+        ("mode=single&symbol=eth/usdt", ["single-eth"]),
+        ("mode=single&symbol=BTCUSDT", ["single-btc"]),
+        ("strategy=v6&mode=portfolio", []),
+    ):
+        response = client.get(f"/api/backtests?{query}")
+        assert response.status_code == 200
+        assert [r["manifest"]["run_id"] for r in response.json()["runs"]] == expected
+    assert len(client.get("/api/backtests?mode=all").json()["runs"]) == 25
+    for query in ("mode=unknown", "mode=single", "mode=single&symbol=FAKE", "symbol=ETHUSDT"):
+        assert client.get(f"/api/backtests?{query}").status_code == 400
+    assert len(list(config.run_output_root.iterdir())) == 35  # Nothing deleted.
+
+
+def test_ui_documentation_uses_runtime_strategy_and_current_branch(tmp_path: Path) -> None:
+    config = _config(tmp_path)
+    client = TestClient(
+        create_app(config, RuntimeSupervisor(config)), base_url="http://127.0.0.1:8765",
+    )
+    html = client.get("/").text
+    assert 'id="doc-strategy-version"' in html
+    assert 'id="backtest-history"' in html
+    assert 'aria-label="Backtestart"' in html
+    assert "/blob/main/" not in html
+    assert "BACKTEST V1" not in html
+    assert "<strong>HIXTON-SPEC-1.0</strong>" not in html

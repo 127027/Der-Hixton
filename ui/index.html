@@ -105,14 +105,19 @@
         </section>
 
         <section id="backtests" class="page">
-          <div class="section-heading"><div><p id="backtest-eyebrow" class="eyebrow">BACKTEST V1</p><h2 id="backtest-title">10×250 USDT oder Einzeltest</h2></div></div>
+          <div class="section-heading"><div><p id="backtest-eyebrow" class="eyebrow">BACKTEST</p><h2 id="backtest-title">Aktive Strategie wird geladen</h2></div></div>
           <article class="action-card">
             <div><strong>Historischer Test</strong><p>Drei Jahre, 400 Warm-up-Bars, Baseline und Stress, Next-Bar-Open.</p></div>
-            <select id="backtest-strategy"><option value="v6">V6 · Paper-Experiment / Coin-Mix</option><option value="v2">V2 · vorherige Referenz</option><option value="v1">V1 · Historie</option><option value="v3">V3 · Mehrfachslot verworfen</option></select>
-            <select id="backtest-symbol"><option value="PORTFOLIO">Gemeinsames 3×80-Portfolio</option><option value="ALL">10×250 isoliert</option></select>
+            <select id="backtest-strategy" aria-label="Backteststrategie"><option value="v6">V6 · Paper-Experiment / Coin-Mix</option><option value="v2">V2 · vorherige Referenz</option><option value="v1">V1 · Historie</option><option value="v3">V3 · Mehrfachslot verworfen</option></select>
+            <select id="backtest-symbol" aria-label="Backtestart"><option value="PORTFOLIO">Gemeinsames 3×80-Portfolio</option><option value="ALL">10×250 isoliert</option></select>
             <button id="backtest-button" class="button primary">Backtest starten</button>
           </article>
+          <p class="backtest-note">Historische Simulation, kein bisheriger Papergewinn. RISIKOHALT betrifft den jeweiligen Test. Die Auswahl ändert den laufenden Bot nicht.</p>
           <div id="backtest-runs" class="run-list"></div>
+          <details id="backtest-history" class="backtest-history hidden">
+            <summary id="backtest-history-label">Frühere Läufe dieser Auswahl</summary>
+            <div id="backtest-history-runs" class="run-list"></div>
+          </details>
           <article class="table-card backtest-detail">
             <h3><span id="backtest-detail-title">Letzter Run · Baseline</span> <small>Netto nach Kosten</small></h3>
             <div class="table-scroll"><table><thead><tr><th>Coin</th><th>Start</th><th>Ende</th><th>Rendite</th><th>Trades</th><th>Max. Drawdown</th><th>Buy & Hold Ende</th></tr></thead><tbody id="backtest-detail-body"></tbody></table></div>
@@ -139,7 +144,7 @@
             <label>Positionsslots<input id="slot-input" type="number" min="1" max="3" value="3" /></label>
             <label>Zielnotional je neuem Entry (USDT)<input id="notional-input" type="number" min="5" step="0.01" value="80.00" /></label>
             <label class="danger-toggle"><input id="emergency-input" type="checkbox" /> Not-Aus: neue Entries blockieren</label>
-            <p>Slots × Zielnotional darf 240 USDT nicht überschreiten. Änderungen gelten nur für neue Einstiege.</p>
+            <p>Maximal drei Slots und zusammen 240 USDT Positionsbudget. Neue Konten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve. Änderungen gelten nur für neue Einstiege und setzen das Konto nicht zurück.</p>
             <button id="settings-button" class="button primary">Mit „ANWENDEN“ bestätigen</button>
           </article>
         </section>
@@ -147,12 +152,12 @@
         <section id="documentation" class="page">
           <div class="section-heading"><div><p class="eyebrow">VERSIONEN & WAHRHEIT</p><h2>Dokumentation</h2></div></div>
           <div class="doc-grid">
-            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/00_DOKUMENTENLENKUNG_UND_START.md" target="_blank"><strong>DMS Einstieg</strong><span>Dokumentenlenkung und Lesereihenfolge</span></a>
-            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/03_STRATEGIE_HIXTON.md" target="_blank"><strong>HIXTON-SPEC-1.0</strong><span>Formeln, Warm-up und Signale</span></a>
-            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/08_UI_UX_SPEZIFIKATION.md" target="_blank"><strong>UI-Spezifikation</strong><span>Ansichten und Akzeptanz</span></a>
-            <a href="https://github.com/127027/Der-Hixton/blob/main/DMS/20_BETRIEBSRUNBOOK.md" target="_blank"><strong>Betriebsrunbook</strong><span>Start, Recovery und Not-Aus</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/codex/build-foundation-v1/DMS/00_DOKUMENTENLENKUNG_UND_START.md" target="_blank" rel="noopener"><strong>DMS Einstieg</strong><span>Aktueller Projektbranch · Dokumentenlenkung</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/codex/build-foundation-v1/DMS/03_STRATEGIE_HIXTON.md" target="_blank" rel="noopener"><strong>Hixton-Strategie & Coin-Profile</strong><span>Aktueller Stand und versionierte Historie</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/codex/build-foundation-v1/DMS/08_UI_UX_SPEZIFIKATION.md" target="_blank" rel="noopener"><strong>UI-Spezifikation</strong><span>Ansichten und Akzeptanz</span></a>
+            <a href="https://github.com/127027/Der-Hixton/blob/codex/build-foundation-v1/DMS/20_BETRIEBSRUNBOOK.md" target="_blank" rel="noopener"><strong>Betriebsrunbook</strong><span>Start, Recovery und Not-Aus</span></a>
           </div>
-          <article class="version-card"><span>Bot</span><strong id="doc-app-version">—</strong><span>Strategie</span><strong>HIXTON-SPEC-1.0</strong><span>Live</span><strong class="negative">DEAKTIVIERT</strong></article>
+          <article class="version-card"><span>Bot</span><strong id="doc-app-version">—</strong><span>Aktive Paperstrategie</span><strong id="doc-strategy-version">—</strong><span>Live</span><strong class="negative">DEAKTIVIERT</strong></article>
         </section>
       </main>
     </div>

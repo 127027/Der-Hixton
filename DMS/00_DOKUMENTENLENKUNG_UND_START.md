@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Aktueller Ergänzungsstand: **DMS 1.7, 06.09.2026 / Anwendung 0.3.1**. DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe. Historische Abnahmen unten bleiben datierte Nachweise.
+Aktueller Ergänzungsstand: **DMS 1.7.1, 06.09.2026 / Anwendung 0.3.2**. DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe. Historische Abnahmen unten bleiben datierte Nachweise.
 
 Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
