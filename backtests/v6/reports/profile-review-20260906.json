@@ -2474,5 +2474,24 @@
       }
     }
   },
-  "raw_report_sha256": "50546F0A3458A33DF2D2A23FE509D3313A86C1249813759001F10DF76682AE6A"
+  "raw_report_sha256": "50546F0A3458A33DF2D2A23FE509D3313A86C1249813759001F10DF76682AE6A",
+  "verified_reproduction": {
+    "code_commit": "f633f389ae9e74480ab024d0934d90b5e53c1ea7",
+    "exact_against_review": "20 isolated ending values/trade counts and 2 portfolio ending values",
+    "byte_identical_artifacts": ["metrics.json", "trades.csv", "equity.csv"],
+    "batch": {
+      "run_id": "20bc2a48-cc79-4761-9e49-8ca5fffde150",
+      "metrics_sha256": "1A114493DF66BBFF8EC2B52940D8D546C0676B6948709B6050F1E7318C1C28A8",
+      "trades_sha256": "BC8C3C723E0D1710937761B52E3AA0A7D1B3B29BCE4330DDC7C2C3CEAE2DE408",
+      "equity_sha256": "8AAEDEDC32B4706291C42F352A263A99E2730AEF13877D337017175B9998F4EB",
+      "first_run_with_incomplete_commit_metadata": "e85192ad-1cce-467c-a1a0-19dc3afadd1e"
+    },
+    "portfolio": {
+      "run_id": "95c0ca16-7385-4b57-9dd1-2cc1dc3ed047",
+      "metrics_sha256": "48BE540813643FC7A40C354810112B27E13F00C8691E7C0BF7554472DBCE26FC",
+      "trades_sha256": "F59DB41F5C65B8F8494B9A8ED614710C1B35F1A870FF7E5CB683CDF00E3B6C02",
+      "equity_sha256": "9CBC29B92A16C4F491BB5DB8172A712466B114370E81D3C45C0FFF8187E0C50A",
+      "first_run_with_incomplete_commit_metadata": "56a34f10-58fa-4968-9b24-59e430196c6d"
+    }
+  }
 }

@@ -4,7 +4,18 @@
 
 Vollständiger Nachweis: `backtests/v6/README.md` und `reports/profile-review-20260906.json`. Neue Einzelergebnisse und ein technisch funktionsfähiger Paperpfad sind **kein** Nachweis eines besseren gemeinsamen Kontos. V6 verbessert das volle gemeinsame Fenster, verschlechtert aber jüngstes und älteres Fenster gegenüber V2. Alle gemeinsamen Läufe halten risikobedingt vorzeitig; kein kontinuierlich profitabler 24/7-Dreijahresnachweis. Die folgenden V1–V5-Werte bleiben historische Artefakte mit ihrem ursprünglichen Kapital.
 
-## Neueste Einzelcoin-Forschung: V5, 05.09.2026
+### Auslieferung und Laptop-Abnahme 06.09.2026
+
+- Ausgelieferter Code: `f633f389ae9e74480ab024d0934d90b5e53c1ea7`, Anwendung **0.3.0**, bestehender Branch `codex/build-foundation-v1` / PR 2. Kein Merge fremder Arbeit und keine neue Startdatei.
+- **98 Tests** auf Arbeitskopie und Laptop bestanden; Ruff und mypy (37 Source-Dateien), TypeScript und Produktionsbuild ohne Befund. Auch bei kleineren UI-Ordergrößen bleiben drei Slots die Obergrenze.
+- Vor dem Fast-forward wurde nur der identifizierte Hixton-Paperprozess gestoppt. Backup: `backups/hixton-before-v030-20260906.sqlite3`, SQLite-Integrität `ok`, SHA-256 `688D93CF1C7DEB0C731AE58EC1EC03BC939D4D995A260B095C36D97F58E32689`. Backup und Kerzendaten bleiben lokal.
+- Neustart ausschließlich über `Startbot.bat`. Danach `HEALTHY / PAPER / LIVE_DISABLED`, zehn valide Märkte. **Keine V6-Aktivierung.** Alle sechs Ledgerereignisse, drei Positionen (ADA/DOGE/ETH), Einstellungen und Strategie-Session wurden gegen das Backup auf Identität geprüft. Cash bleibt `0,04279731558 USDT`, historische Startbasis 240 USDT. Die neue 250-USDT-Config schenkt dem bestehenden Konto keine 10 USDT.
+- Soak-Beginn bleibt 05.09.2026 13:19:05 UTC, kein Soak-Reset. Snapshot nach Neustart: rund 244,75 USDT Equity, rund +7,30 USDT offene Bewertung seit V2-Start; kein neu abgeschlossener V2-Gewinn. Kein Zukunfts- oder Tagesprofitnachweis.
+- Alle **50 API-Kombinationen** aus zehn Coins und Heute/Woche/Monat/Jahr/3 Jahre lieferten Kerzen. Sichtbar geprüft: Marktprofile, V2 als aktive Backtest-Vorauswahl, V6 ausdrücklich als Forschung, Risikohalt im V6-Bericht sowie ETH-Wochenchart mit Kauf/Verkauf und Paper-Fill. Browserkonsole ohne Warnungen/Fehler; kein Redesign.
+- V6-Produktionsreproduktion: Batch `20bc2a48-cc79-4761-9e49-8ca5fffde150`, Portfolio `95c0ca16-7385-4b57-9dd1-2cc1dc3ed047`, jeweils mit Code-Commit `f633f38…` im Manifest. Alle 20 Einzel-Endwerte/Tradezahlen und beide gemeinsamen Endwerte bestätigen den Review; `metrics.json`, `trades.csv` und `equity.csv` jeweils bytegleich zum ersten Durchlauf. Hashes im V6-Nachweis.
+- Die ersten Reproduktionen (`e85192ad…`, `56a34f10…`) hatten wegen fehlender Git-Verzeichnisfreigabe `code_commit: UNKNOWN`. Sie bleiben unverändert, gelten aber nicht als vollständiger Provenienznachweis. Neue Runs beheben ausschließlich diese Metadatenlücke; alte Manifeste werden nicht umgeschrieben.
+
+## Historische Einzelcoin-Forschung: V5, 05.09.2026
 
 Alle zehn Coins wurden mit 250 USDT einzeln diagnostiziert; 348 begrenzte Kombinationen aus Hixton-Parametern und expliziten Forschungsfiltern/-Stops wurden ausschließlich anhand der ersten zwei Trainingsjahre ausgewählt. Alle zehn V2-Kurztradegruppen unter 72 Stunden verlieren in Summe, während wenige lange Gewinner das Ergebnis tragen. ETH liefert einen interessanten 24-Bar-VIDYA-Steigungsfilter (jüngstes Stressjahr 213,63→278,47 USDT), aber einen älteren Rückschritt. XRP verbessert allein alle sechs Einzel-Endwerte und Drawdowns, besteht jedoch die gemeinsame Konto- und Nachbarprüfung nicht. Details für **jeden** Coin, einschließlich ADA-/DOT-Rückschritten, stehen zentral in `backtests/v5/README.md` und `backtests/v5/reports/coin-review-20260905.json`.
 

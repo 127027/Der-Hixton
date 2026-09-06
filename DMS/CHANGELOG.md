@@ -2,6 +2,9 @@
 
 ## 1.6.0 – 06.09.2026
 
+- Auslieferungsabnahme ergänzt: Anwendung 0.3.0 über Startbot.bat gestartet, 98 Tests auf beiden Kopien, 50 Chart-API-Kombinationen, sichtbarer ETH-Chart-/Paper-Fill, Browserkonsole fehlerfrei. Backup geprüft; Konto, drei Positionen, sechs Ledgerereignisse und Soak erhalten. V2 aktiv, V6 nicht freigegeben.
+- Produktions-Batch und -Portfolio mit vollständigem Commitnachweis reproduziert; Metrik-, Trade- und Equitydateien bytegleich. Erste unvollständige Metadatenläufe ausdrücklich gekennzeichnet, nicht umgeschrieben.
+
 - Zielpräzisierung: Signalqualität und robuste Slotnutzung statt Trade-/Gewinnquoten; neue Konten 250 USDT einschließlich 10 USDT Anfangsreserve, laufende Konten unverändert.
 - Vollständige hashgebundene V6-Coin-Profile durch Analyse, Paper, Einzel-/Batch-/Portfolioengine und Charts geführt; Entry-ATR/High-Close restartfest gespeichert.
 - Technische Parität und Migrations-Restmengen-/Risikohalterhaltung geprüft; Profilwerte in vorhandener UI, aktive Strategie als Backtest-Vorauswahl.
