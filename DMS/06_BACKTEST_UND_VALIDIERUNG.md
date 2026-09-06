@@ -1,5 +1,7 @@
 # 06 – Backtest und Validierung
 
+Aktivierung DEC-045: Backtests ohne `--strategy` spiegeln jetzt den V6-Paper-Coin-Mix; UI und CLI verwenden dieselben Profile. Historische Vergleichsdateien und deren damaliges `paper_approved: false` bleiben unverändert. Der explizite neue Paperlauf ist ein Vorwärtsversuch, kein nachträgliches Bestehen der Mehrfenstertests.
+
 V6-Prüfstand (06.09.2026): `backtest research --study v6` bewertet eingefrorene Coin-Profile und V2 mit identischen Produktionsengines, Börsenfiltern, Kosten und Fenstern. Für einen fairen gemeinsamen Vergleich starten beide bei 250 USDT; alte 240-USDT-Nachweise bleiben unverändert. Auswahl zwischen V2 und V5-Finalist nutzt den höchsten schlechtesten Stress-Endwert aus allen drei bereits betrachteten Zeiträumen. Deshalb sind diese Zeiträume Kalibrierung/retrospektive Diagnose, **kein unangetasteter Holdout**. Keine nachträgliche Umwahl nach Portfoliobefund. Ergebnisse und Rückschritte: `backtests/v6/README.md`.
 
 ## Ziel

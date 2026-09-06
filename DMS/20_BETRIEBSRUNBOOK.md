@@ -1,14 +1,30 @@
 # 20 – Betriebsrunbook
 
-## Ergänzung 06.09.2026
+## Aktuell: V6-Paperexperiment und ausdrücklicher Neuanfang (DEC-045)
 
-Ausgeliefert und gestartet: Anwendung 0.3.0 / Code `f633f38`, **V2 weiterhin aktiv**, V6 nur Forschung. 98 Tests, 50 Chart-API-Kombinationen, sichtbare UI-/Chartabnahme und Erhaltung von Konto/Positionen/Soak bestätigt; Backup und Nachweise in DMS 18. Kein weiterer Neustart für reine DMS-Ergänzungen nötig.
+DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe.
 
-V6 hat derzeit `paper_approved=False`: Ein CLI-Befehl allein kann diese Sperre nicht aufheben. Erst nach einer ausdrücklich dokumentierten Freigabe samt geprüftem Versionsstand wäre der folgende Wechselablauf zulässig.
+### Genau ein Starter, kein automatischer Reset
 
-Zuerst `backtests/v6/README.md` lesen: individueller Mix technisch durchgängig vorbereitet, jüngster/älterer Portfoliotest jedoch schlechter. Vor jedem Strategieumstieg muss der tatsächliche Freigabestatus geprüft werden; kein automatisches Übernehmen eines hohen Dreijahres-Endwerts. 250 USDT gelten für neue Konten und neue Vergleichsläufe, niemals als Kontoreset oder Gewinnbuchung im alten Ledger. Forschungsbefehl: `py -3 src/main.py backtest research --study v6 --output backtests/v6/runs/EIN_NEUER_NAME/research.json`.
+Normal starten: `Startbot.bat`. Backtestauswahl verändert Paper nicht. Neues Paperkonto nur auf ausdrücklichen Auftrag:
 
-Ein ausdrücklich freigegebener Wechsel benötigt gestoppten einzelnen Paperprozess, geprüftes SQLite-Backup und `paper-activate --strategy v6 --confirmation AKTIVIEREN`. Dieser Befehl schließt alte Paperpositionen zu dokumentierten Modellkosten, bewahrt Ereignisse, Dust, tatsächliches Cash, globale High-Water-Mark und Risikohalts und startet einen getrennten Strategie-Soak. Keine historischen Einstiege nachholen. Ohne Freigabe den Befehl nicht ausführen.
+1. `backtests/v6/README.md` einschließlich Verlustfenstern und Risikohalts lesen.
+2. Den identifizierten einzelnen Hixton-Prozess stoppen; Port 8765 muss frei sein. Während der Wartung nicht parallel starten.
+3. Geprüften Code und V6-Config installieren. Über denselben technischen Einstieg einmalig ausführen:
+
+```powershell
+py -3 src/main.py paper-fresh-start --archive backups/paper-v2-archive-20260906/hixton.sqlite3 --confirmation NEUSTART
+```
+
+4. Befehl reserviert den UI-Port, sperrt SQLite-Schreibzugriffe, erzeugt ein nicht überschreibbares Vollarchiv, prüft Integrität und SHA-256 und setzt ausschließlich bekannte `paper_*`-Tabellen in einer Transaktion zurück. Ein Fehler beim Reset rollt vollständig zurück; vorhandene Archive werden nie überschrieben. Fehlgeschlagene Archivversuche können eine unvollständige Datei hinterlassen: nicht als gültiges Backup verwenden.
+5. Neues Konto: 250 USDT Cash/Startbasis/High-Water-Mark, 3×80, keine Positionen, Trades oder Dust. Audit `PAPER_FRESH_START` enthält Zeitpunkt, Archivpfad/-hash und alte Zeilenzahlen. Das ist keine simulierte Liquidation und keine Gewinnbuchung.
+6. `Startbot.bat` starten und Startup-Sync für alle zehn Märkte abwarten. Neue Checkpoints auf letzte geschlossene Bars; Soak startet neu. Alte Signale werden nicht nachgehandelt.
+7. `HEALTHY / PAPER / LIVE_DISABLED`, V6-Version, zehn tatsächliche Profile, 250 USDT, drei freie Slots, null alte Paperfills und fünf Chartzeiträume prüfen. Historische Indikatorsignale bleiben für Charts vorhanden.
+8. Pfad/Hash/Zeit und Prüfungen in DMS 18 festhalten. Das Archiv bleibt unter ignoriertem `backups/`; Marktdaten bleiben in `data/hixton.sqlite3`.
+
+Für einen späteren Strategiewechsel **ohne** Kontoneuanfang bleibt `paper-activate --strategy v6 --confirmation AKTIVIEREN` ein anderer Wartungsvorgang: Er bewahrt Ledger, Cash und Risikohistorie und modelliert gegebenenfalls alte Positionsschließungen. Nicht mit dem Reset verwechseln.
+
+Historische Abnahme der Anwendung 0.3.0 (`f633f38`) mit unverändertem V2-Konto steht in DMS 18; sie wurde erst durch den neuen ausdrücklichen DEC-045-Auftrag abgelöst.
 
 ## Historischer Übergabestand 05.09.2026
 

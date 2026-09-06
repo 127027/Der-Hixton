@@ -1,4 +1,6 @@
-# 03 – Hixton-Strategie: aktive V2, vorbereitete V6-Coin-Profile und V1-Historie
+# 03 – Hixton-Strategie: aktive V6-Coin-Profile, V2-Referenz und V1-Historie
+
+DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe.
 
 Status: `VERBINDLICH` für Strategieversion `HIXTON-SPEC-1.0`.
 
@@ -13,12 +15,12 @@ Für V1 heißt „Hixton“ ausschließlich die nachfolgend eingefrorene VIDYA-/
 | Version | Formelreferenz | Parameter | Betriebsstatus |
 |---|---|---|---|
 | `HIXTON-SPEC-1.0` | normative V1-Definition in diesem Dokument | 10/20/SMA15/ATR200/Band2,0 | historische Paperstrategie und reproduzierbare Referenz |
-| `HIXTON-V2-RESEARCH-CANDIDATE-1` | Eigentümer-Pine v6 | 6/20/SMA8/ATR60/Band3,8 | aktive Paperstrategie seit `DEC-037`; nicht Live |
+| `HIXTON-V2-RESEARCH-CANDIDATE-1` | Eigentümer-Pine v6 | 6/20/SMA8/ATR60/Band3,8 | vorherige Paperreferenz (`DEC-037`); nicht Live |
 | `HIXTON-V3-SLOT-CANDIDATE-1` | V2-Signalparameter plus `ranked_repeat` | wie V2, aber Mehrfachslots je Coin | `VERWORFEN`; nicht Paper/Live |
 
-## V6 – vollständige Coin-Profile (nicht aktiv)
+## V6 – vollständige Coin-Profile (aktives Paper-Experiment)
 
-Version `HIXTON-V6-COIN-PAPER-1-9734f240e873`; maßgeblich ist `backtests/v6/candidate.json`, geprüft gegen die eine Definition in `src/hixton/domain/versions.py`. Nicht als Original-Pine-Default oder aktuelle V2 ausgeben. Zahlenfolge VIDYA / Momentum / SMA / ATR / Band:
+Version `HIXTON-V6-COIN-PAPER-1-9734f240e873`; maßgeblich ist `backtests/v6/candidate.json`, geprüft gegen die eine Definition in `src/hixton/domain/versions.py`. Nicht als Original-Pine-Default oder V2 ausgeben. Zahlenfolge VIDYA / Momentum / SMA / ATR / Band:
 
 | Coin | Parameter | Zusatzregel |
 |---|---|---|
@@ -35,7 +37,7 @@ Version `HIXTON-V6-COIN-PAPER-1-9734f240e873`; maßgeblich ist `backtests/v6/can
 
 Alle zehn: Pine-v6-Formelsemantik, Quelle close, 1h, 400 Warm-up-Bars, initial DOWN ohne Order. Ein frischer Flip-Up wird nur bei bestandenen Coin-Filtern zum qualifizierten BUY. Abgewiesene Flips werden nicht nachgeholt. Ein echter Hixton-Flip-Down schließt Long; sonst darf XRP bei `close <= entry_fill_price - 4 * entry_ATR` aussteigen. Entry-ATR stammt vom BUY-Signal und bleibt in der Position gespeichert. Ausführung am nächsten echten Open plus Modellkosten, niemals intrabar oder garantiert zum Stopwert. Nach Stop kein Nachkauf ohne neuen Flip. Kein Trail in diesem Snapshot.
 
-Paper, alle Backtestmodi und Chartmarker verwenden dieselbe Profilquelle und `TradePolicyGate`. Filter erzeugen keine zusätzlichen Flips. Charts zeigen qualifizierte hypothetische Coin-Trades, tatsächliche Slots/Cash/Risikogates sind nur in echten Paper-Fillmarkern abgebildet. Profilauswahl und schlechte Marktphasen sind ausdrücklich retrospektiv dokumentiert; keine Allzeitoptimalität. V6 ist technisch vorbereitet, aber nicht produktiv freigegeben (DEC-043).
+Paper, alle Backtestmodi und Chartmarker verwenden dieselbe Profilquelle und `TradePolicyGate`. Filter erzeugen keine zusätzlichen Flips. Charts zeigen qualifizierte hypothetische Coin-Trades, tatsächliche Slots/Cash/Risikogates sind nur in echten Paper-Fillmarkern abgebildet. Profilauswahl und schlechte Marktphasen sind ausdrücklich retrospektiv dokumentiert; keine Allzeitoptimalität. V6 ist durch DEC-045 ausdrücklich als Paper-Experiment freigegeben; die fehlende Mehrfensterrobustheit bleibt offen.
 
 ## Verbindliche Defaultparameter
 
@@ -217,7 +219,7 @@ Nur Werte größer als `0` sind zulässig. Sortierung:
 2. Bei gleichem `rank_strength` gilt diese feste Reihenfolge:
    `BTCUSDT, ETHUSDT, BNBUSDT, SOLUSDT, XRPUSDT, ADAUSDT, LINKUSDT, AVAXUSDT, DOTUSDT, DOGEUSDT`.
 
-Die aktive V2 vergibt höchstens einen Slot an jeden Kandidaten. Es werden nur so viele Kandidaten angenommen, wie freie Slots vorhanden sind. Abgewiesene Kandidaten werden als `NO_FREE_SLOT` gespeichert und nicht mitten im laufenden Uptrend nachgeholt.
+Die aktive V6 vergibt höchstens einen Slot an jeden Kandidaten. Es werden nur so viele Kandidaten angenommen, wie freie Slots vorhanden sind. Abgewiesene Kandidaten werden als `NO_FREE_SLOT` gespeichert und nicht mitten im laufenden Uptrend nachgeholt.
 
 V3 testete zusätzlich: jeder gleichzeitige Kandidat erhält zunächst einen Slot; verbleibende Slots gehen an den stärksten Kandidaten. Damit ergaben ein Kandidat `3×80` und zwei Kandidaten `2×80 + 1×80`. Diese Konzentration erhöhte nicht die Zahl unabhängiger Signale und führte bereits im ersten aktuellen Dreijahres-Risikospiegel zu einem frühen Halt. Sie bleibt deshalb in `backtests/v3` dokumentiert, aber in Paper gesperrt.
 
@@ -261,6 +263,6 @@ Die V2-Engine bildet die Eigentümerquelle ausdrücklich ab:
 - `flipUp`/`flipDn` sind tatsächliche Wechsel des Trendzustands, nicht beliebig wiederholte Bandkreuzungen im selben Zustand;
 - Orders bleiben trotz Pine-Berechnung erst nach 400 lückenlosen Warm-up-Bars handelbar und werden im Backtest frühestens am nächsten Bar-Open gefüllt.
 
-Mit den Pine-Defaultparametern 10/20/SMA15/ATR200/Band2,0 ergab der aktuelle Drei-Jahres-Produktionslauf dieselben Trades und dieselbe Performance wie V1. Die Pine-Startsemantik erklärt die schwachen V1-Coins deshalb nicht. Die aktive Paper-V2 6/20/SMA8/ATR60/Band3,8 reduziert kurze Fehlausbrüche durch deutlich weitere Bänder. Auswahl, Ergebnisse, ältere Segmente und verworfene Varianten stehen in `backtests/v2/README.md`.
+Mit den Pine-Defaultparametern 10/20/SMA15/ATR200/Band2,0 ergab der aktuelle Drei-Jahres-Produktionslauf dieselben Trades und dieselbe Performance wie V1. Die Pine-Startsemantik erklärt die schwachen V1-Coins deshalb nicht. Die vorherige Paper-V2 6/20/SMA8/ATR60/Band3,8 reduziert kurze Fehlausbrüche durch deutlich weitere Bänder. Auswahl, Ergebnisse, ältere Segmente und verworfene Varianten stehen in `backtests/v2/README.md`.
 
 Der Eigentümer hat den kontrollierten Paperwechsel am 02.09.2026 ausdrücklich angeordnet. Die Umschaltung schließt vorhandene V1-Paperpositionen zum aktuellen geschlossenen Referenzpreis nach Baselinekosten, bewahrt sämtliche Ereignisse mit ihrer Strategieversion, setzt Checkpoints auf den letzten geschlossenen Bar und startet den V2-Soak neu. Dieser Paperentscheid ersetzt weder den vorgeschriebenen Soak noch das separate Live-Gate.

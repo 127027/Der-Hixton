@@ -1,6 +1,8 @@
 # 23 – Ordnerstruktur und einziger Einstiegspunkt
 
-Ergänzung DMS 1.6: `backtests/v6/` enthält nur `README.md`, den unveränderlichen `candidate.json`, einen kompakten kuratierten Nachweis unter `reports/` und ignorierte reproduzierbare Rohartefakte unter `runs/`. Keine neue Startdatei, keine zweite Handelsengine, keine großen Kerzendaten in Git. Der einzige Starter bleibt `Startbot.bat`.
+Aktiver Stand: V6 unter `backtests/v6/`. Ein einziges Laufzeitkonto bleibt unter `data/hixton.sqlite3`; abgelöste Paperkonten und alte Startlogs werden unter `backups/paper-v2-archive-20260906/` gesammelt. Keine `Startbot-neu.bat`, keine zweite aktive Datenbank, kein Löschen wissenschaftlicher Gegenbelege. Wartung ist ein Unterbefehl von `src/main.py`, nicht ein weiterer Starter.
+
+Ergänzung DMS 1.7: `backtests/v6/` enthält nur `README.md`, den unveränderlichen `candidate.json`, einen kompakten kuratierten Nachweis unter `reports/` und ignorierte reproduzierbare Rohartefakte unter `runs/`. Keine neue Startdatei, keine zweite Handelsengine, keine großen Kerzendaten in Git. Der einzige Starter bleibt `Startbot.bat`.
 
 ## Verbindliches Prinzip
 
@@ -28,7 +30,7 @@ Der-Hixton/
 │   │   ├── reports/                  # freigegebene Berichte
 │   │   ├── trades/                   # kleine/sanitisierte Tradeexports
 │   │   └── data_quality/             # Qualitätsnachweise
-│   ├── v2/                           # aktive Paper-V2: README, Snapshot, lokale Runs
+│   ├── v2/                           # vorherige V2: README, Snapshot, lokale Runs
 │   ├── v3/                           # verworfener Mehrfachslot-Versuch, lokale Runs
 │   ├── v4/                           # coinindividuelle Parameterprüfung, nicht aktiv
 │   └── v5/                           # Verlustdiagnose/Hixton-Schutzregeln, nicht aktiv
@@ -66,7 +68,7 @@ Alle Befehle führen intern über denselben Einstieg und dieselbe Konfigurations
 ## Backtestversionierung
 
 - `backtests/v1`: erste freigegebene Backtestmethodik.
-- `backtests/v2`: aktive Pine-v6-Paperstrategie; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält lokale unveränderliche Läufe.
+- `backtests/v2`: vorherige Pine-v6-Paperreferenz; `README.md` ist der kuratierte Wahrheitsstand, `candidate.json` der maschinenlesbare Snapshot und `runs/` enthält lokale unveränderliche Läufe.
 - `backtests/v3`: verworfener Mehrfachslot-Versuch mit eigener README und eigenem Snapshot; lokale Runs werden nicht eingecheckt.
 - `backtests/v4` und `backtests/v5`: getrennte Forschungsberichte, jeweils ein README, ein kompakter Nachweis unter `reports/`, große lokale Rohberichte unter ignoriertem `runs/`. Keine aktivierbare Paperstrategie.
 - Reine Wiederholung mit gleichen Regeln erhält innerhalb derselben Version eine neue unveränderliche Run-ID unter `runs/`.

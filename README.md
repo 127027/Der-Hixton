@@ -1,12 +1,14 @@
 # Der Hixton Trading Bot
 
-Der Hixton ist ein lokales Binance-Spot-System mit einer gemeinsamen, deterministischen Strategieengine für Backtest und 24/7-Paperbetrieb. Aktive Paperstrategie ist seit der ausdrücklichen Eigentümerentscheidung `DEC-037` die V2 `HIXTON-V2-RESEARCH-CANDIDATE-1`; der Name bleibt aus Gründen unveränderlicher Historie bestehen. V1 bleibt vollständig reproduzierbar. Echte Live-Orders bleiben bis zum dokumentierten Live-Gate technisch deaktiviert.
+Ein normaler Doppelklick auf `Startbot.bat` setzt **nichts** zurück. Der nur ausdrücklich beauftragte Offline-Neuanfang ist unter [DMS 20](DMS/20_BETRIEBSRUNBOOK.md) dokumentiert. Nach einem frischen Start sind zunächst drei Slots frei: Es wird auf neue qualifizierte Signale gewartet, nicht in alte grüne Trends hineingekauft.
+
+Der Hixton ist ein lokales Binance-Spot-System mit einer gemeinsamen, deterministischen Strategieengine für Backtest und 24/7-Paperbetrieb. Aktiver Paperstand gemäß `DEC-045` ist V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` mit zehn ausdrücklich definierten Coin-Profilen. V2 bleibt die vorherige Vergleichsreferenz. Echte Live-Orders bleiben technisch deaktiviert.
 
 Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
-Prüfstand 06.09.2026 (DMS 1.6 / Anwendung 0.3.0): Individuelle Coin-Profile sind durch die bestehende Analyse, Paper-Ausführung, Backtests und Charts technisch vorbereitet und getestet. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster; deshalb bleibt V2 aktiv und V6 gesperrter Forschungskandidat. Neue gemeinsame Modellkonten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve. Das laufende Konto und seine Positionen bleiben erhalten. **Noch nicht live-reif.**
+Prüfstand 06.09.2026 (DMS 1.7 / Anwendung 0.3.1): V6 wird auf Eigentümerwunsch mit einem sauberen neuen 250-USDT-Paperkonto betrieben. 3×80 USDT können gleichzeitig eingesetzt werden; 10 USDT sind die Anfangsreserve. Alte Paperhistorie wird gesichert, nicht als neuer Erfolg mitgezählt. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster. **Paper-Experiment, nicht nachgewiesen optimal und nicht live-reif.**
 
 Im Repository existiert genau ein menschlicher Programmstarter:
 
@@ -30,9 +32,9 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
 - Backtest: gemeinsames 250-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung; V2 ist für Paper freigegeben, wegen früher Risikohalts aber ausdrücklich nicht für Live.
-- Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V2 verteilt höchstens einen Slot je Coin.
+- Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V6 verteilt höchstens einen Slot je Coin.
 - Backtest v4/v5: begrenzte Coin-Parametersuche, Verlustdiagnose, getrennte Trainings-/Prüffenster, Original-Pine-Kontrolle und explizit versionierte Forschungsregeln; keine automatische Paperumschaltung.
-- V6: zehn explizite Coin-Profile, deterministische Zusatzfilter/Schlusskurs-Stops und Paper-/Backtest-/Restart-Parität; derzeit keine Paperfreigabe wegen Mehrfenster-Portfoliorückschritten.
+- V6: zehn explizite Coin-Profile, deterministische Zusatzfilter/Schlusskurs-Stops und Paper-/Backtest-/Restart-Parität; ausdrückliche Paper-Experimentfreigabe trotz dokumentierter Mehrfenster-Portfoliorückschritte.
 - Ziel sind gute Signalquellen und effiziente Nutzung von höchstens drei Slots. 250→500 USDT und genannte Tradezahlen sind Beispiele, keine Optimierungsquoten; kein Overfitting und keine erzwungenen Trades.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 
@@ -67,7 +69,7 @@ py -3 src/main.py start --no-browser
 py -3 src/main.py live
 ```
 
-Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Paperstrategie V2. V1 und V3 müssen für historische beziehungsweise verworfene Vergleichsläufe ausdrücklich gewählt werden.
+Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Paperstrategie V6. V1 und V3 müssen für historische beziehungsweise verworfene Vergleichsläufe ausdrücklich gewählt werden.
 
 `live` beendet sich absichtlich mit einer Sperrmeldung.
 
@@ -75,7 +77,7 @@ Ohne `--strategy` verwendet ein Backtest automatisch die konfigurierte aktive Pa
 
 Paper verwendet seit der Ausführungskorrektur `NEXT_BAR_OPEN_V1`: Signal ausschließlich auf geschlossener Kerze, modellierter Fill mit dem tatsächlichen nächsten Kerzen-Open plus Kosten. Der echte Verarbeitungszeitpunkt wird zusätzlich gespeichert. Das ist ein deterministischer Ausführungssimulator, noch kein Nachweis realer Binance-Fills oder realistisch gemessener Orderlatenz. Alte Ereignisse bleiben als Legacy erhalten; der technische Soak startet einmalig neu, Cash und Positionen bleiben bestehen.
 
-Die Backtestseite besitzt die eindeutige Auswahl `V2 · aktives Paper`, `V1 · Historie` oder `V3 · verworfener Mehrfachslot-Test` sowie `V6 · Coin-Mix / Forschung`, `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
+Die Backtestseite besitzt die eindeutige Auswahl `V6 · Paper-Experiment / Coin-Mix`, `V2 · vorherige Referenz`, `V1 · Historie` oder `V3 · Mehrfachslot verworfen`, `Gemeinsames 3×80-Portfolio`, `10×250 isoliert` und jeden Einzelcoin. Diese Auswahl ändert niemals die aktive Paperstrategie.
 
 ## Entwicklung und Prüfung
 

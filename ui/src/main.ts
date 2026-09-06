@@ -396,7 +396,7 @@ async function refreshBacktests(): Promise<void> {
     const response = await api<{ runs: BacktestRun[]; status: string }>(`/api/backtests?strategy=${strategy}`);
     if (required<HTMLSelectElement>("#backtest-strategy").value !== strategy) return;
     text("#backtest-eyebrow", `BACKTEST ${strategy.toUpperCase()}`);
-    text("#backtest-title", strategy === "v6" ? "V6 · individueller Coin-Mix (Forschung)" : strategy === "v2" ? "V2 · aktives Paper / 3×80 oder 10×250" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
+    text("#backtest-title", strategy === "v6" ? "V6 · Coin-Mix / Paper-Experiment" : strategy === "v2" ? "V2 · vorherige Referenz / 3×80 oder 10×250" : strategy === "v3" ? "3×80 · Mehrfachslot-Challenger (verworfen)" : "3×80, 10×250 oder Einzeltest");
     const button = required<HTMLButtonElement>("#backtest-button");
     button.disabled = response.status === "RUNNING";
     button.textContent = response.status === "RUNNING" ? "Backtest läuft …" : "Backtest starten";

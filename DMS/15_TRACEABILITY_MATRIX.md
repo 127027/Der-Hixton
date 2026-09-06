@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-045 → CAP-010/OPS-010: `paper/maintenance.py`, CLI `paper-fresh-start`, `tests/test_paper_maintenance.py`, aktive V6-Config und UI-Beschriftung. Vollarchiv, neues separates 250-USDT-Konto, ausschließlich neue Paperereignisse/Soak und unveränderte Marktdaten; Auslieferungsnachweis DMS 18.
+
 DEC-043/044 → STR-009/CAP-009/CAP-001/BKT-010/UI-Profilanzeige: `tests/test_coin_profiles.py`, `StrategyDefinition`, `TradePolicyGate`, `PaperStore`, `backtests/v6/candidate.json` und `backtests/v6/README.md`. Alle zehn Profile, Kapitaltrennung, Neustart-/Fill-/Chart-Parität und erhaltene Altledger sind technisch geprüft. Die Mehrfenster-Portfoliorückschritte sind ein offener fachlicher Eignungsnachweis, keine grüne Robustheitsabnahme.
 
 Zusätzlicher Nachweis ab 05.09.2026: `tests/test_runtime_parity.py` deckt DEC-040, DAT-006 (provisional), Folge-Open-Ausführung, Slot-/Cash-/Dust-Parität, Restart und Markerzeit ab. DEC-041 wird durch `backtests/v4/README.md` und den reproduzierbaren Befehl `backtest research` belegt. V4 ist keine aktive Strategie.

@@ -1,5 +1,7 @@
 # 14 – Build-Plan und Definition of Done
 
+DMS 1.7 / Anwendung 0.3.1: DEC-045 ergänzt ausdrücklich autorisierte V6-Paperaktivierung und gesicherten Offline-Neuanfang; kein neuer Indikator, kein neuer Optimierungslauf. Die Aussage „alle zehn robust / optimal / live-reif“ bleibt NICHT ERFÜLLT. Aktueller Betriebsnachweis: DMS 18.
+
 Ergänzung DMS 1.6 / Anwendung 0.3.0: Coin-Profilweitergabe durch alle bestehenden Engines, restartfeste Zusatzregeln, sichtbare Profilwerte und 250-USDT-Startmodell sind implementiert. V6 ist im Einzeltest technisch konsistent, aber in jüngstem/älterem gemeinsamen Portfolio schlechter als V2. Deshalb ist die Produktaussage „alle zehn robust / optimal / live-reif“ weiterhin **NICHT ERFÜLLT**. Aktueller Aktivierungs- und Laptopnachweis steht in DMS 18; die Tabelle vom 02.09. bleibt historische Abnahme.
 
 Dieses Dokument beschreibt Reihenfolge und tatsächlichen Nachweisstand. Der Eigentümer hat nach dem DMS-Freeze die Implementierung ausdrücklich beauftragt.

@@ -2,7 +2,7 @@
 
 ## Zweck
 
-Aktueller Ergänzungsstand: **DMS 1.6, 06.09.2026**. V2 bleibt aktiv. V6-Coin-Profile sind technisch durchgängig implementiert, aber wegen schlechterer jüngster/älterer Portfolioergebnisse nicht zur Übernahme freigegeben. Maßgeblich: DEC-043/044, DMS 18 und `backtests/v6/README.md`. Neue Modellkonten 250 USDT einschließlich 10 USDT Anfangsreserve; bestehender Kontostand und Historie unverändert. Live weiterhin gesperrt. Historische Abnahmen unten sind datierte Nachweise, keine Behauptung durchgängiger Profitabilität.
+Aktueller Ergänzungsstand: **DMS 1.7, 06.09.2026 / Anwendung 0.3.1**. DEC-045 (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe. Historische Abnahmen unten bleiben datierte Nachweise.
 
 Dieses DMS ist die maßgebliche Produktspezifikation für den **Hixton-Indikator Trading Bot**. Es beschreibt, was gebaut, getestet, angezeigt und betrieben wird. Der aktuelle Implementierungs- und Nachweisstand steht ergänzend in Dokument 14 und 18; auch ein valider historischer Test ist kein Nachweis zukünftiger Profitabilität.
 
@@ -24,7 +24,7 @@ Die Dokumentation deckt ab:
 Bei einem Widerspruch gilt diese Reihenfolge:
 
 1. schriftlich vom Eigentümer freigegebene Entscheidung im Entscheidungslog;
-2. für den aktiven Paperbetrieb die in `DEC-037` freigegebene V2 samt unveränderlichem Snapshot in Dokument 03 und `backtests/v2/candidate.json`;
+2. für den aktiven Paperbetrieb die in `DEC-045` ausdrücklich gewählte V6 samt Profilen in Dokument 03 und `backtests/v6/candidate.json`;
 3. diese DMS-Dokumente mit Status `VERBINDLICH`;
 4. die am 01.09.2026 vom Eigentümer bereitgestellte Pine-v6-Quelle samt Hash; sie überschreibt historische V1-Nachweise nicht;
 5. vorhandene Analyse `Der Hixton Indikator.md`;
@@ -42,7 +42,7 @@ Eine spätere Implementierung darf nicht stillschweigend von einer höher priori
 | NACHWEIS AUSSTEHEND | Vorgabe ist definiert, aber noch nicht durch Test/Artefakt belegt |
 | VERWORFEN | Darf nicht implementiert werden |
 
-Aktueller Paketstatus: **DMS V1.6; V2 aktiv, V1 historisch, V3 verworfen, V4/V5 historische Forschung, V6 geprüfter Coin-Mix ohne Paperfreigabe.** Die bestehenden fachlichen Produktentscheidungen bleiben verbindlich, aber ihr Nachweis bedeutet keine zuverlässige Profitabilität. Golden-/Unit-/API-Tests, echte Binance-Daten, reproduzierbare Backtests und frühere Browser-Abnahme liegen vor. Der neu gestartete 30- bis 90-tägige V2-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Live-Freigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist auf ausdrücklichen Eigentümerwunsch kein Pflichtkanal.
+Aktueller Paketstatus: **DMS V1.7; V6 aktives Paper-Experiment, V2 vorherige Referenz, V1 historisch, V3 verworfen, V4/V5 historische Forschung.** V6-Paper-Soak, externes Backup/Restore, dedizierter Live-Account und Livefreigabe bleiben `NACHWEIS AUSSTEHEND`; `LIVE_DISABLED` bleibt technisch erzwungen. Telegram ist kein Pflichtkanal.
 
 ## Arbeitsübergabe vom 02.09.2026
 
@@ -62,7 +62,7 @@ Aktueller Paketstatus: **DMS V1.6; V2 aktiv, V1 historisch, V3 verworfen, V4/V5 
 | Datei | Umfang | SHA-256 | Bewertung |
 |---|---:|---|---|
 | `Der Hixton Indikator.md` | 7.226 Bytes / 27 Zeilen | `3577700EAFA4738D8941769F8275024BEDE86B6D8CB344C7B1EA8E60E7E4E117` | Analyse/Beschreibung, kein Pine-Quellcode |
-| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Formelreferenz der aktiven Paper-V2, nicht rückwirkend für V1 |
+| `Der_Hixton_Indikator_v6.pine` | Eigentümerquelle vom 01.09.2026 | `8AF8E9A1E6C73DC66307271B7FD1141EAAE02BC1FE88E8BA97B96E7A861263DD` | verbindliche Formelreferenz von V2 und V6, nicht rückwirkend für V1 |
 
 Die ursprüngliche Markdown-Analyse bleibt als unverändertes Eingangsmaterial erhalten. Der später vom Eigentümer vollständig übermittelte Pine-v6-Code liegt einmalig unter `strategy/pine/` und ist die Referenz für V2. Die selbstständige V1-Projektdefinition in Dokument 03 und sämtliche V1-Runs bleiben unverändert erhalten.
 

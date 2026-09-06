@@ -1,5 +1,7 @@
 # 04 – Märkte, Kapital und Risiko
 
+DEC-045: Der ausdrücklich beauftragte neue V6-Paperaccount beginnt separat mit 250 USDT. Die alte 240-USDT-Kontohistorie bleibt archiviert, nicht umgebucht. 3×80, höchstens ein Slot je Coin, Baselinekosten sowie 5-%-Tagespause und 20-%-Drawdown-Halt bleiben unverändert. Die 10 USDT sind eine Anfangsreserve, kein dauerhaft garantierter Mindestbetrag.
+
 ## Initiales Marktuniversum
 
 Für DMS V1 festgelegte Binance-Spot-Paare:

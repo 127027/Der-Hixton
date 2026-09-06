@@ -1,5 +1,7 @@
 # 12 – Tests und Abnahmekriterien
 
+DEC-045: `tests/test_paper_maintenance.py` prüft Vollarchiv/Hash/Integrität, ausschließlich gelöschte Paperdaten bei erhaltenen Marktdaten, neuen 250-USDT-Account, fehlende Bestätigung, belegten Port, vorhandenes/außerhalb liegendes Archiv, unbekanntes Schema, atomaren Rollback und unveränderte normale Neustarts. Unfreigegebene Profile bleiben weiterhin technisch gesperrt; V6 besitzt nur die Eigentümer-Paperfreigabe.
+
 DEC-043/044: `tests/test_coin_profiles.py` prüft vollständige Profile, strikte Config, tatsächliche Paper-/Portfolio-Fills und Equity einschließlich mehrerer Neustarts, Batch-/Einzel-/Chart-Parität, XRP-Stop am Folge-Open mit eingefrorenem Entry-ATR, vollständige API-Profilanzeige, Migrations-Dust-/Cash-/Risikohalt-Erhaltung und keine künstliche Auffüllung bestehender Konten. Technische Parität ersetzt weder Mehrfensterrobustheit noch Paper-Soak oder Live-Gate.
 
 ## Testebenen

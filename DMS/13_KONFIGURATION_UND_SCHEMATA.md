@@ -1,6 +1,8 @@
 # 13 – Konfiguration und Schemata
 
-Aktuelle Runtime-Quelle ist ausschließlich `config/examples/config.example.json`, geprüft gegen `StrategyDefinition.config_payload()`. Neue Modellkonten starten gemäß DEC-044 mit `paper.starting_cash_usdt: "250.00"`, drei Slots à 80 USDT. Alte V2-Configs mit 240 USDT bleiben lesbar; vorhandene Konten werden nie umgebucht. Das folgende umfangreiche YAML enthält auch zukünftige Live-Felder und ist kein Ersatz für diese streng geprüfte JSON-Datei.
+DEC-045: aktive JSON-Config `strategy.key=v6`, vollständige unveränderte Profilmap aus `candidate.json`, Runziel `backtests/v6/runs`, Paperstart 250 USDT / 3×80. Die Paperfreigabe gilt dem Experiment, nicht einer Live-Ausführung.
+
+Aktuelle Runtime-Quelle ist ausschließlich `config/examples/config.example.json`, geprüft gegen `StrategyDefinition.config_payload()`. Neue Modellkonten starten gemäß DEC-044 mit `paper.starting_cash_usdt: "250.00"`, drei Slots à 80 USDT. Alte V2-Configs mit 240 USDT bleiben lesbar; vorhandene Konten werden bei normalen Starts nie umgebucht. Ein separater Offline-Neuanfang nach DEC-045 archiviert stattdessen das alte Konto. Das folgende umfangreiche YAML enthält auch zukünftige Live-Felder und ist kein Ersatz für diese streng geprüfte JSON-Datei.
 
 Für V6 enthält `strategy.profiles` exakt alle zehn Coins in DMS-Reihenfolge mit `parameters` und `trade_policy`, keine irreführenden gemeinsamen Top-Level-Indikatorparameter. Snapshot: `backtests/v6/candidate.json`; gemeinsame Formel, 1h, 400 Warm-up-Bars, long-only, `one_per_symbol`, kein Compounding. Profiländerungen erzeugen eine neue hashgebundene Version. Reports enthalten die vollständige Profilmap. Eine Config darf kein Research-Profil stillschweigend als aktive Strategie ausgeben.
 
@@ -143,7 +145,7 @@ ui:
 
 In `chart_ranges` und `default_range` steht `1m` für **einen Monat**. Es bezeichnet niemals einen 1-Minuten-Timeframe. Der native Daten- und Signaltimeframe bleibt `1h`; nur lange UI-Ansichten werden wie angegeben deterministisch aggregiert.
 
-Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die aktive V2-Konfiguration oben ist verbindlich und darf nicht durch Frameworkdefaults ersetzt werden. V1 bleibt als historische, reproduzierbare Konfiguration in ihrer Strategieversion erhalten. Telegram ist nicht erforderlich.
+Runtimewerte wie Secret-Referenzen und konkrete Account-ID werden bei der Installation gesetzt. Die aktive V6-JSON-Konfiguration ist verbindlich; das obige V2-YAML ist historisch und und darf nicht durch Frameworkdefaults ersetzt werden. V1 bleibt als historische, reproduzierbare Konfiguration in ihrer Strategieversion erhalten. Telegram ist nicht erforderlich.
 
 ## Strategie-Snapshot
 
@@ -216,4 +218,4 @@ Start muss fehlschlagen bzw. Live deaktiviert bleiben bei:
 
 ## Freigabestatus
 
-Binance Spot, Coinliste, 10×250-USDT-Batch, 250-USDT-Einzeltest, 3×80-USDT-Paperbetrieb, aktive V2 auf 1h, Long-only, kein Compounding, höchstens ein Slot je Coin, Slotpriorisierung, Kostenbaseline und 00:05-UTC-Audit sind fachlich beschlossen. Ein Strategiewechsel benötigt eine explizite Bestätigung und persistiert Strategieversion, Aktivierungszeit, Start-Equity und Audit. Live bleibt bis zu Tests, Secrets, Accountabgleich und Gate D deaktiviert.
+Binance Spot, Coinliste, 10×250-USDT-Batch, 250-USDT-Einzeltest, 3×80-USDT-Paperbetrieb, aktive V6 mit zehn Profilen auf 1h, Long-only, kein Compounding, höchstens ein Slot je Coin, Slotpriorisierung, Kostenbaseline und 00:05-UTC-Audit sind fachlich beschlossen. Ein Strategiewechsel benötigt eine explizite Bestätigung und persistiert Strategieversion, Aktivierungszeit, Start-Equity und Audit. Live bleibt bis zu Tests, Secrets, Accountabgleich und Gate D deaktiviert.

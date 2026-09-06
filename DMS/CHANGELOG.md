@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.7.0 – 06.09.2026 / Anwendung 0.3.1
+
+- DEC-045: Eigentümer verlangt V6-Aktivierung und ausdrücklich einen frischen Paperstart mit 250 USDT / 3×80; als Paper-Experiment trotz unverändert dokumentierter schlechterer Verlustfenster.
+- V6-Profilmap unverändert; Config, Backtest-Vorauswahl und UI-Beschriftung synchronisiert. Kein UI-Redesign, keine Lockerung von Risiken, Live gesperrt.
+- Gesicherter Offline-Befehl `paper-fresh-start`: exklusives Vollarchiv mit Integritäts-/Hashprüfung, atomarer Paperreset, Marktdaten erhalten; normales Startverhalten weiter ohne Reset.
+- Tests für Sicherheitsbedingungen, Rollback und Wiederanlauf ergänzt; konkrete Laptop-Abnahme und Archivnachweis in DMS 18.
+
 ## 1.6.0 – 06.09.2026
 
 - Auslieferungsabnahme ergänzt: Anwendung 0.3.0 über Startbot.bat gestartet, 98 Tests auf beiden Kopien, 50 Chart-API-Kombinationen, sichtbarer ETH-Chart-/Paper-Fill, Browserkonsole fehlerfrei. Backup geprüft; Konto, drei Positionen, sechs Ledgerereignisse und Soak erhalten. V2 aktiv, V6 nicht freigegeben.

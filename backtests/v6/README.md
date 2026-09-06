@@ -1,12 +1,12 @@
 # Backtest V6 – eingefrorene Coin-Profile
 
-Stand: 06.09.2026. **Technisch durchgängig vorbereitet, nicht für Paper/Live freigegeben. Aktiver Bot bleibt V2.**
+Stand: 06.09.2026. **Aktives Paper-Experiment gemäß DEC-045. Keine Robustheits-/Livefreigabe. V2 bleibt Vergleichsreferenz.**
 
 ## Zweck und faire Einordnung
 
-Das Ziel ist effizientes 3×80-Papertrading mit guten Signalen aus zehn Coins. Einzeltests à 250 USDT prüfen jede Signalquelle, der zusätzliche gemeinsame Test prüft Kapital, Konkurrenz und Risikogates. Rendite- und Tradezahlen aus Eigentümerbeispielen sind keine Quoten. Neue gemeinsame Vergleichskonten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve; das laufende frühere 240-USDT-Ledger wird weder erhöht noch zurückgesetzt.
+Das Ziel ist effizientes 3×80-Papertrading mit guten Signalen aus zehn Coins. Einzeltests à 250 USDT prüfen jede Signalquelle, der zusätzliche gemeinsame Test prüft Kapital, Konkurrenz und Risikogates. Rendite- und Tradezahlen aus Eigentümerbeispielen sind keine Quoten. Neue gemeinsame Vergleichskonten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve; das frühere 240-USDT-Ledger wird beim ausdrücklich beauftragten Neuanfang nach DEC-045 vollständig archiviert, nicht als Gewinn im neuen Konto verbucht.
 
-V6 verbessert den gemeinsamen Dreijahres-Endwert gegenüber V2, verschlechtert jedoch das jüngste und das ältere Fenster. Deshalb **keine automatische Übernahme** und kein Nachweis „alle zehn robust / optimal“. Ein gesonderter Paper-Versuch müsste ausdrücklich trotz dieser Rückschritte freigegeben werden. Es gibt keine Gewinnerwartung pro Tag. Mehr Tradezahl ist kein Ersatz für Qualität.
+V6 verbessert den gemeinsamen Dreijahres-Endwert gegenüber V2, verschlechtert jedoch das jüngste und das ältere Fenster. Deshalb **keine automatische Übernahme** und kein Nachweis „alle zehn robust / optimal“. Genau diesen gesonderten Paper-Versuch hat der Eigentümer anschließend mit DEC-045 ausdrücklich beauftragt; dadurch werden die Rückschritte nicht behoben. Es gibt keine Gewinnerwartung pro Tag. Mehr Tradezahl ist kein Ersatz für Qualität.
 
 ## Vor der Messung eingefrorene Auswahl
 
@@ -86,7 +86,7 @@ Kuratierter Nachweis: `reports/profile-review-20260906.json` mit allen Einzel-/P
 
 ## Nächster fachlicher Schritt
 
-Abnahme: 98 Tests auf Arbeitskopie und Laptop; Anwendung 0.3.0 / Code `f633f389ae9e74480ab024d0934d90b5e53c1ea7`. Geprüftes Backup, Neustart über Startbot.bat, 50 Chart-API-Kombinationen und sichtbare UI-Abnahme stehen in DMS 18. V2 bleibt aktiv; keine Positionsschließung, Kontoauffüllung oder Soak-Neustart.
+Historische Abnahme vor DEC-045: 98 Tests auf Arbeitskopie und Laptop; Anwendung 0.3.0 / Code `f633f389ae9e74480ab024d0934d90b5e53c1ea7`. Geprüftes Backup, Neustart über Startbot.bat, 50 Chart-API-Kombinationen und sichtbare UI-Abnahme stehen in DMS 18. V2 bleibt aktiv; keine Positionsschließung, Kontoauffüllung oder Soak-Neustart.
 
 Vollständig zugeordnete Produktionsruns: Batch `20bc2a48-cc79-4761-9e49-8ca5fffde150`, Portfolio `95c0ca16-7385-4b57-9dd1-2cc1dc3ed047`. `metrics.json`, `trades.csv` und `equity.csv` sind jeweils bytegleich zu den ersten Reproduktionen; Details unter `verified_reproduction` im kuratierten JSON. Die ersten Runs `e85192ad…`/`56a34f10…` behalten ihr unvollständiges `code_commit: UNKNOWN` und sind keine vollständigen Herkunftsnachweise. Für die Wiederholung war nur eine pro Prozess auf den verifizierten Projektpfad begrenzte Git-Verzeichnisfreigabe nötig, keine globale Wildcard-Freigabe.
 

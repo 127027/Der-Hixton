@@ -1,5 +1,11 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## Neueste Eigentümerentscheidung – DMS 1.7
+
+DEC-045 – BESCHLOSSEN (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe.
+
+Dies ist die ausdrücklich angeordnete Ausnahme zu DEC-043/044 für diesen frischen Paper-Versuch, keine allgemeine automatische Gewinnerübernahme und keine Lockerung von Risikogates. Wiederholte Resets erfordern jeweils einen neuen ausdrücklichen Auftrag. Historische V2/V6-Backtestergebnisse, Git-Versionen und heruntergeladene Kerzen werden nicht gelöscht.
+
 ## Ergänzungen 06.09.2026
 
 - **DEC-043 – BESCHLOSSEN:** Eigentümer präzisiert den Zweck: robuste einzelne Coin-Signalquellen und effiziente Nutzung von höchstens 3×80 USDT; keine Tradequoten, keine Renditegarantie, kein Overfitting. Individuelle Profile müssen durch Paper und sämtliche Backtestmodi identisch weitergegeben werden. Der vorbereitete V6-Mix ist retrospektiv kalibriert und scheitert derzeit an einer durchgängigen Portfolioverbesserung. Technische Parität allein ist keine Übernahmefreigabe; ein abweichender Paper-Experimentwechsel müsste ausdrücklich mit diesen Rückschritten bestätigt werden.
@@ -76,11 +82,11 @@ Ergänzende technische Entscheidungen vom 05.09.2026 im Auftrag der Fehlerkorrek
 - Zehn Kryptowährungen auf Binance Spot/USDT.
 - Backtest-Batch: zehn isolierte Tests à 250 USDT; Einzeltest für einen wählbaren Coin ebenfalls 250 USDT.
 - 24/7-Paperbetrieb als Pflichtvorbereitung für Live.
-- Paper-/Live-Start: 240 USDT als drei Positionen à 80 USDT; spätere Positionsgröße über UI änderbar.
+- Neuer Paperstart: 250 USDT als drei Positionsbudgets à 80 USDT plus 10 USDT Anfangsreserve; Echtgeldfreigabe separat.
 - Dreijähriger Primärbacktest und lokale Historie.
 - UI-Charts Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Startup-Vollprüfung aller zehn Coins und tägliches Nachziehen.
-- Die Strategie basiert ausschließlich auf der dokumentierten Hixton-Logik; aktive Paperparameter sind V2, V1 bleibt historische Referenz.
+- Die Strategie basiert ausschließlich auf der dokumentierten Hixton-Logik; aktive Paperparameter sind die V6-Coin-Profile, V2 und V1 bleiben historische Referenzen.
 - Die bestbelegte geprüfte Verbesserung soll im Paperbetrieb übernommen werden; eine Backtestwahl oder ein einzelner Spitzenwert schaltet nie automatisch um.
 - Mehrere Slots im selben Coin dürfen erforscht werden, bleiben aber gesperrt, solange sie den risikogleichen Vergleich nicht gewinnen.
 - GitHub ist die zentrale Projektablage; übersichtliche Struktur, ein technischer Einstiegspunkt, Backtestversionen in getrennten Versionsordnern.

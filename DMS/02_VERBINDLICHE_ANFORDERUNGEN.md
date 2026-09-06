@@ -1,5 +1,7 @@
 # 02 – Verbindliche Anforderungen
 
+CAP-010 / OPS-010 (DEC-045, VERBINDLICH): Nur ausdrücklich bestätigter Offline-Neuanfang darf nach geprüftem Vollarchiv das aktive Paperledger zurücksetzen. Kapital 250 USDT, maximal drei Slots à 80; kein Übertrag alter Gewinne/Verluste oder Soak-Tage. Normale Starts und Backtests dürfen keinen Reset auslösen.
+
 Ergänzung STR-009 / CAP-009 (DEC-043/044, VERBINDLICH): Ein Coin-Profil besteht aus versionierten Hixton-Parametern und expliziten Zusatzregeln. Paper, Einzeltest, Batch und Portfolio müssen dieselbe ausgewählte Definition verwenden; Charts zeigen qualifizierte Signale getrennt von tatsächlichen Paper-Fills. Eine gemeinsame Einstellung darf je Coin beibehalten werden, wenn sie im begrenzten Vergleich besser belegt ist. Profilindividualisierung ist kein Gewinnnachweis. Schlechtere Portfolio-/Stress-/Altfenster werden berichtet, nicht durch mehr Trades oder gelockerte Risikogates verdeckt.
 
 Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umnummerieren versteckt.
@@ -31,7 +33,7 @@ Die IDs bleiben über die Entwicklung stabil. Änderungen werden nicht durch Umn
 | CAP-005 | Bei mehr Kaufkandidaten als freien Slots gewinnt der auf 12 Dezimalstellen Half-Even gerundete größte Wert `(close-upper)/ATR`; Gleichstand folgt der festen Coinreihenfolge aus DMS 03. | VERBINDLICH |
 | CAP-006 | Primärziel der Portfolioauswahl ist maximaler Nettogewinn nach Kosten; hohe Tradezahl ist nur Sekundärziel. | VERBINDLICH |
 | CAP-007 | Die bestbelegte zulässige Strategieverbesserung wird nach bestandenem Vergleich und ausdrücklicher Entscheidung vorwärtsgerichtet als Paperstandard übernommen. „Bestbelegt“ verlangt Reproduzierbarkeit, Kosten-Stress, Altfenster und den risikogleichen 3×80-Spiegel; ein höchster Einzelwert genügt nicht. Live bleibt ein separates Gate. | VERBINDLICH |
-| CAP-008 | Mehrere Slots im selben Coin sind als versionierter Challenger erlaubt, aber nicht automatisch aktiv. Der V3-Test `ranked_repeat` ist wegen früher Konzentrationsverluste verworfen; aktive V2 nutzt weiterhin höchstens einen Slot je Coin. | VERBINDLICH |
+| CAP-008 | Mehrere Slots im selben Coin sind als versionierter Challenger erlaubt, aber nicht automatisch aktiv. Der V3-Test `ranked_repeat` ist wegen früher Konzentrationsverluste verworfen; aktive V6 nutzt weiterhin höchstens einen Slot je Coin. | VERBINDLICH |
 | RSK-001 | Kein Leverage, keine Margin, keine Futures und keine API-Auszahlungsrechte. | VERBINDLICH |
 | RSK-002 | Börsenfilter wie Mindestnotional, Schrittweite und Präzision werden vor jeder Order geprüft. | VERBINDLICH |
 | RSK-003 | Tagesverlust ab 5 % der Start-of-Day-Equity pausiert neue Entries bis zum nächsten UTC-Tag; Drawdown ab 20 % vom Live-High-Water-Mark setzt global `HALTED`. | VERBINDLICH |

@@ -261,8 +261,8 @@ V6_COIN_STRATEGY = StrategyDefinition(
     reference="strategy/pine/Der_Hixton_Indikator_v6.pine",
     semantics=StrategySemantics.PINE_V6,
     parameters=V2_RESEARCH_STRATEGY.parameters,
-    # Technical parity is proven; worse recent/older portfolios fail promotion.
-    paper_approved=False,
+    # DEC-045: owner-authorized Paper experiment, not a robustness or live approval.
+    paper_approved=True,
     slot_allocation=ONE_PER_SYMBOL,
     coin_profiles=_V6_PROFILES,
 )

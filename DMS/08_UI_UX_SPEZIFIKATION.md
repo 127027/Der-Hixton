@@ -1,6 +1,6 @@
 # 08 – UI-/UX-Spezifikation
 
-Ergänzung 06.09.2026: Optik und Navigation bleiben bestehen. Jede Marktkarte zeigt ihre tatsächlichen VIDYA-/Momentum-/SMA-/ATR-/Bandwerte und Zusatzfilter. Die Backtestauswahl wird beim Laden aus der aktiven Paperstrategie vorbelegt; ein manuell gewählter Vergleich verändert Paper nicht. V6 ist ein Vergleichskandidat, nicht aufgrund seiner Anzeige automatisch aktiv. Qualifizierte hypothetische Coin-Signale und echte Ledger-Fills sind getrennt: Slots, Cash und Risikogates können ein Signal blockieren; Stopmarker heißen STOP. Der grüne Trend allein ist keine erneute Kaufaufforderung.
+Ergänzung 06.09.2026: Optik und Navigation bleiben bestehen. Jede Marktkarte zeigt ihre tatsächlichen VIDYA-/Momentum-/SMA-/ATR-/Bandwerte und Zusatzfilter. Die Backtestauswahl wird beim Laden aus der aktiven Paperstrategie vorbelegt; ein manuell gewählter Vergleich verändert Paper nicht. V6 ist gemäß DEC-045 als Paper-Experiment aktiv, nicht durch Auswahl eines Backtests. Qualifizierte hypothetische Coin-Signale und echte Ledger-Fills sind getrennt: Slots, Cash und Risikogates können ein Signal blockieren; Stopmarker heißen STOP. Der grüne Trend allein ist keine erneute Kaufaufforderung.
 
 ## UI-Grundsätze
 
@@ -15,7 +15,7 @@ Ergänzung 06.09.2026: Optik und Navigation bleiben bestehen. Jede Marktkarte ze
 
 Die am 01.09.2026 abgenommene Desktop- und Mobiloptik ist gemäß `DEC-033` eingefroren. Funktionale Ergänzungen dürfen Inhalte in den bestehenden Ansichten präzisieren, aber keine neue Designsprache, parallele Navigation, zusätzlichen Starter oder unverbundene Sonderseite einführen. Neue Statuswerte nutzen die vorhandenen Karten-, Tabellen-, Badge- und Typografieregeln.
 
-Der Header und die Systemkarte zeigen immer die tatsächlich konfigurierte Paperstrategie samt Aktivierungszeit und PnL seit diesem Strategiewechsel. Seit `DEC-037` lautet sie `V2 · aktives Paper`. Die Backtestauswahl kennzeichnet V1 als Historie und V3 als verworfenen Versuch; eine Backtestauswahl schaltet Paper niemals um.
+Der Header und die Systemkarte zeigen immer die tatsächlich konfigurierte Paperstrategie samt Aktivierungszeit und PnL seit diesem Strategiewechsel. Seit `DEC-045` ist V6 aktiv; die Backtestauswahl nennt sie `V6 · Paper-Experiment / Coin-Mix` und V2 die vorherige Referenz. Die Backtestauswahl kennzeichnet V1 als Historie und V3 als verworfenen Versuch; eine Backtestauswahl schaltet Paper niemals um.
 
 ## Hauptnavigation
 

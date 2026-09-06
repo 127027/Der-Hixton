@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import sqlite3
 import subprocess
 import sys
 from datetime import UTC, datetime, timedelta
@@ -433,6 +434,11 @@ def build_parser() -> argparse.ArgumentParser:
     )
     activate.add_argument("--strategy", choices=("v2", "v6"), required=True)
     activate.add_argument("--confirmation", required=True)
+    fresh = commands.add_parser(
+        "paper-fresh-start", help="offline: altes Paperkonto archivieren und neu mit 250 starten",
+    )
+    fresh.add_argument("--archive", type=Path, required=True)
+    fresh.add_argument("--confirmation", required=True)
     commands.add_parser("live", help="sicher gesperrter späterer Live-Modus")
     ui = commands.add_parser("ui", help="lokale UI mit Paper-Laufzeit starten")
     ui.add_argument("--no-browser", action="store_true")
@@ -450,6 +456,15 @@ def main(argv: list[str] | None = None) -> int:
             return command_start(args, config)
         if args.command == "paper-activate":
             return command_paper_activate(args, config)
+        if args.command == "paper-fresh-start":
+            from hixton.paper.maintenance import fresh_start_paper
+
+            archive = args.archive if args.archive.is_absolute() else PROJECT_ROOT / args.archive
+            result = fresh_start_paper(
+                config, project_root=PROJECT_ROOT, archive=archive, confirmation=args.confirmation,
+            )
+            print(json.dumps(result, ensure_ascii=False, indent=2))
+            return 0
         if args.command == "data" and args.data_command == "sync":
             return command_data_sync(args, config)
         if args.command == "data" and args.data_command == "audit":
@@ -477,7 +492,7 @@ def main(argv: list[str] | None = None) -> int:
             return 0
         if args.command == "live":
             return _not_ready(args.command.upper())
-    except (BinanceApiError, OSError, ValueError) as error:
+    except (BinanceApiError, OSError, ValueError, sqlite3.Error) as error:
         print(f"FEHLER: {error}", file=sys.stderr)
         return 2
     parser.error("unhandled command")

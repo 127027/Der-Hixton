@@ -55,10 +55,7 @@ def test_profiles_are_complete_individual_and_strictly_configured(
     payload["paper"]["starting_cash_usdt"] = "250.00"
     path = tmp_path / "config.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
-    with pytest.raises(ValueError, match="not approved"):
-        load_project_config(path, project_root=tmp_path)
-    # Exercise the fully wired configuration without granting production approval.
-    monkeypatch.setitem(STRATEGY_DEFINITIONS, V6.key, replace(V6, paper_approved=True))
+    assert V6.paper_approved  # DEC-045: Paper experiment only.
     assert load_project_config(path, project_root=tmp_path).strategy_key == "v6"
     payload["strategy"]["profiles"]["BTCUSDT"]["parameters"]["atr_length"] = 60
     path.write_text(json.dumps(payload), encoding="utf-8")
@@ -325,12 +322,15 @@ def test_new_v6_account_has_reserve_but_reinitialization_never_gifts_cash(tmp_pa
         assert store.load_account().cash_usdt == Decimal("231")
 
 
-def test_unapproved_mix_cannot_activate_or_start_paper(tmp_path: Path) -> None:
-    assert V6.paper_approved is False
+def test_unapproved_mix_cannot_activate_or_start_paper(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    unapproved = replace(V6, paper_approved=False)
+    monkeypatch.setitem(STRATEGY_DEFINITIONS, V6.key, unapproved)
     with pytest.raises(ValueError, match="not approved"):
         RuntimeSupervisor(replace(_config(tmp_path), strategy_key=V6.key))
     with pytest.raises(ValueError, match="not approved"):
-        activate_paper_strategy(str(tmp_path / "denied.sqlite3"), {}, {}, V6)
+        activate_paper_strategy(str(tmp_path / "denied.sqlite3"), {}, {}, unapproved)
     assert not (tmp_path / "denied.sqlite3").exists()
 
 
