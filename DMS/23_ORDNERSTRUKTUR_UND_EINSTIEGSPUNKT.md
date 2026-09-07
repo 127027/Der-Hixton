@@ -1,5 +1,7 @@
 # 23 – Ordnerstruktur und einziger Einstiegspunkt
 
+Ergänzung 0.4.1: Der isolierte Orderjournal-Kern liegt ebenfalls unter `src/hixton/live/orders.py`, seine Tests unter `tests/test_live_orders.py`. Er ist nicht angeschlossen und legt im normalen Betrieb keine weitere Datenbank an. Kein zusätzlicher Testtrade-Starter und keine duplizierte Strategieengine.
+
 Aktiver Stand: V6 unter `backtests/v6/`. Ein einziges Paper-Handelskonto bleibt unter `data/hixton.sqlite3`; abgelöste Paperkonten und alte Startlogs werden unter `backups/paper-v2-archive-20260906/` gesammelt. Ab 0.4.0 enthält `data/live-preparation.sqlite3` ausschließlich getrennten Sicherheits-/Vorbereitungs-Audit, **kein** zweites Paperkonto, keine Marktduplikate, keine Secrets. `src/hixton/live/` bündelt Schlüsselablage, Read-only-Binance-Prüfung und Vorbereitung. Keine `Startbot-neu.bat`, kein Löschen wissenschaftlicher Gegenbelege. Wartung ist ein Unterbefehl von `src/main.py`, nicht ein weiterer Starter.
 
 Ergänzung DMS 1.7: `backtests/v6/` enthält nur `README.md`, den unveränderlichen `candidate.json`, einen kompakten kuratierten Nachweis unter `reports/` und ignorierte reproduzierbare Rohartefakte unter `runs/`. Keine neue Startdatei, keine zweite Handelsengine, keine großen Kerzendaten in Git. Der einzige Starter bleibt `Startbot.bat`.

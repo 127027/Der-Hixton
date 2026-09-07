@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-046, Ergänzung 0.4.1 → `src/hixton/live/orders.py` / `tests/test_live_orders.py`: isolierte Intent-/Submit-Beanspruchungs-/Teilfill-/Reconciliation-Primitiven mit Fake-Börse getestet. Kein produktiver Adapter und keine Verbindung zum UI oder Runtime; vollständige unten genannte Live-Nachweise bleiben offen.
+
 DEC-046 → UI-Settings/SEC/Live-Vorbereitung: `ui/src/settings-draft.ts`, `ui/src/live-preparation.ts`, `src/hixton/live/`, `src/hixton/ui/live.py`, `tests/test_live_preparation.py` und `ui/tests/settings-draft.test.mjs`. Entwurf/gespeicherter Stand, Windows-Vault, Passwortsession, Read-only-Prüfung und fail-closed Live-Anforderung implementiert. **Order-Intent/Submit/Fill-/Reconciliation-/Live-aus mit offenen Echtgeldpositionen weiterhin OFFEN**; nicht durch positive UI-/Vault-Tests als abgenommen markieren. Umfang/Grenzen DMS 07/11/12/20.
 
 DEC-045 → CAP-010/OPS-010: `paper/maintenance.py`, CLI `paper-fresh-start`, `tests/test_paper_maintenance.py`, aktive V6-Config und UI-Beschriftung. Vollarchiv, neues separates 250-USDT-Konto, ausschließlich neue Paperereignisse/Soak und unveränderte Marktdaten; Auslieferungsnachweis DMS 18.

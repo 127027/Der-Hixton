@@ -1,5 +1,13 @@
 # DMS-Changelog
 
+## 1.8.1 – 07.09.2026 / Anwendung 0.4.1
+
+- Browser-Abnahme fand nicht unterstützte native Dialoge im eingebetteten Browser: Anwenden sowie Schlüssel-Speichern/-Entfernen verwenden jetzt Inline-Bestätigungen. Neue Text-/Passwortfelder verwenden die bestehende Optik. Kein vorzeitiges Speichern beim Öffnen der Bestätigung.
+- Isolierter Orderjournal-Kern: unveränderliche 50-USDT-Kaufintents, atomare Sendebeanspruchung vor Netzwerkzugriff, nach unklarem Ausgang ausschließlich Statusabfrage, kein blinder Neuversand. Teilfills, Gebührenwährung, unveränderliche Endzustände und numerisch identische Duplikate geprüft.
+- **Nur Fake-Börse, nicht an Binance oder UI angeschlossen.** Globale Testbudget-/Bestandsfreigabe, frischer Ordervorcheck, tatsächlicher Adapter und Live-/Testfreigabe bleiben offen. Ein Modulname oder ein grüner Unit-Test ist kein Echtgeldnachweis.
+- 158 Python-Tests bestanden, ein Windows-Vault-Integrationstest im Standardlauf bewusst übersprungen; dieser wurde zuvor separat mit künstlichem, anschließend entferntem Eintrag bestanden. Drei UI-Tests, TypeScript, Ruff und mypy erfolgreich. Deployment-/Betriebsnachweis in DMS 18.
+- Aktives V6-Paperkonto, Parameter, Risikogates und Soak bleiben erhalten. Keine Strategieoptimierung oder neue Backtestergebnisse in dieser Lieferung.
+
 ## 1.8.0 – 06.09.2026 / Anwendung 0.4.0
 
 - DEC-046: Paper-Formular vor überschreibenden 5-Sekunden-Polls geschützt, Entwurf/Speicherstand getrennt, Anwenden/Verwerfen und Fehlererhaltung. Ganze Slots und endliche positive Beträge serverseitig validiert; 1×50 ohne Konto-/Soak-Reset geprüft.

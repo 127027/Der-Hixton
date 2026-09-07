@@ -1,5 +1,14 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Live-Vorbereitung und unveränderter Paperbetrieb – 06./07.09.2026
+
+- Anwendung 0.4.0 (`34f52f2`, danach UI-Korrektur `27c5a73`): Paper-Entwürfe werden nicht durch Statuspolling überschrieben; persistentes 1×50 samt Neustart ohne Kontoveränderung in isolierten API-Tests bestätigt. Laptop wurde nicht auf 1×50 umgestellt. Eigener Passwort-/Windows-Key-Bereich und ausschließlich lesender Binance-Vorcheck; weiterhin `LIVE_DISABLED` ohne echten Dispatcher.
+- Vor dem normalen Neustart: `backups/hixton-before-v040-20260906.sqlite3`, Integrität `ok`, SHA-256 `ca38093ba7147d8eb66a425efc0e868114cde3c0a29ff5c672ffff0182a844c6`. Anschließend alle elf `paper_*`-Tabellen gegen diesen Snapshot identisch geprüft. Ein Starter, keine neue Paper-Session und kein erneuter Fresh-Start.
+- 137 Python-Tests auf Arbeitskopie und Laptop bestanden; ein opt-in Windows-Vault-Test im normalen Lauf übersprungen. Der native Vault-Rundlauf wurde separat mit genau einem künstlichen, anschließend entfernten Eintrag bestanden. Kein echter Binance-Key wurde durch den Entwicklungsagenten eingerichtet und keine private Konto-/Orderabfrage ausgeführt.
+- Sichtprüfung entdeckte, dass der eingebettete Browser `window.prompt()` nicht unterstützt. Ab `27c5a73` erfolgt Bestätigung direkt im Formular; Entwurf 1×50 blieb nach mehreren Polls erhalten, Anwenden zeigte die richtige Zusammenfassung ohne vorzeitigen Schreibzugriff. Die drei UI-Tests sichern auch den Verzicht auf native Prompt-/Confirm-Dialoge ab.
+- Betrieb am **07.09.2026 um 08:02 Europe/Berlin**: `HEALTHY / PAPER / LIVE_DISABLED`, V6, 250 USDT Cash/Equity, PnL 0, null offene Positionen und abgeschlossene Trades. Weiterhin 3×80, Aktivierung 06.09. 15:14:58, Soak seit 15:16:26; mittlerweile 17 neue geschlossene Bars je Coin. Nächtlicher Daten-Audit um 02:06 abgeschlossen. Das ist ein Betriebsnachweis, noch kein Profit- oder Live-Nachweis.
+- Entwicklung 0.4.1: 21 zusätzliche Offline-Orderjournal-Tests, insgesamt **158 bestanden / ein opt-in Test übersprungen**; Ruff, mypy (44 Source-Dateien), drei UI-Tests, TypeScript und Produktionsbuild bestanden. Fake-Börse prüft Doppelstart, Timeout, Neustart, Teilfills, Gebührenwährung, fehlende Filldetails und unveränderliche Identitäten/Endzustände. **Keine Binance-Testnet-/Echtgeld-Ausführungsabnahme.** Neue UI-Text-/Passwortfelder behalten die bestehende Optik. Kein neuer Backtest und keine Strategieänderung in dieser Lieferung.
+
 ## UI-Bereinigung abgenommen – 06.09.2026, Anwendung 0.3.2
 
 - Code `2b8611a5d510f1236037bcf6f0e9c61924469251`: Liste und Tabelle gemeinsam nach Version/Testart/Einzelcoin gefiltert, neuester passender Lauf sichtbar, Historie eingeklappt. Keine historischen Dateien gelöscht und keine Handelsparameter geändert.

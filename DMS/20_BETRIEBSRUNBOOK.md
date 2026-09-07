@@ -14,6 +14,10 @@
 
 ### Noch vor einem tatsächlichen 1×50-Liveversuch zu bauen und abzunehmen
 
+Stand 07.09.2026 / 0.4.1: Der Eigentümer wünscht zusätzlich einen begrenzten 50-USDT-Test von Kauf bis Verkauf. Noch zu klären ist, ob damit ein zeitnaher technischer Kauf-/Verkaufszyklus oder ein Warten auf echte Hixton-Ein-/Ausstiegssignale gemeint ist. Letzteres garantiert keinen Abschluss bis zum nächsten Morgen. Ein technischer Rundlauf wäre kein Strategienachweis und kein Ersatz für die normale Live-Abnahme. Kein Coin und kein vorgezogener Kauf wurden vom Entwicklungsagenten ausgewählt oder ausgeführt.
+
+Bereits offline implementiert: `src/hixton/live/orders.py` mit dauerhaftem Auftrag, atomarer Sendebeanspruchung, Abgleich nach unklarer Antwort/Neustart und idempotenten Teilfills. `tests/test_live_orders.py` prüft 21 Fälle mit einer künstlichen Börse, einschließlich Kauf/Verkauf nur der netto erhaltenen Menge. **Nicht angeschlossen und kein vollständiges Livekonto.** Jeder separat angelegte Intent benötigt später eine gemeinsame wirksame Einmal-/Budget-/Besitzprüfung; „50 pro Intent“ allein begrenzt nicht die Gesamtausgaben. Das Orderjournal wird im normalen Botstart nicht angelegt. Die nachfolgenden produktiven Arbeiten bleiben offen.
+
 - Gemeinsame frische Order-Intents für Paper/Live, aber getrennte Konten, Positions-/Order-/Fill-Ledger und Checkpoints. Kein Weiterleiten historischer Paper-Replay-Fills; kein spontaner Kauf beim Moduswechsel.
 - Binance-Submit mit persistenter Client-ID **vor** Netzwerkzugriff, echte Teilfills/Gebühren (einschließlich BNB), Filter-/Saldo-/Slippagekontrolle, UNKNOWN-Behandlung und Neustart-Reconciliation ohne Doppelorder. Getestete Fremdorder-/Saldoerkennung und BNB-Gebührenreserve dürfen keine fremden Assets vereinnahmen.
 - Geprüfte Live-aus-Semantik: keine neuen Entries, reale offene Positionen sichtbar weiter überwachen/regelkonform aussteigen lassen; vollständiges Schließen nur separat bestätigt. Kein stiller Wechsel ins Paperkonto bei noch existierenden Echtgeldpositionen. Neustart beginnt gesperrt und verlangt Reconciliation.

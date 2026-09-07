@@ -90,7 +90,7 @@ h2 { font-size: 1.25rem; }
 
 .chart-heading { align-items: center; }
 .chart-controls, .range-bar { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
-select, input[type="number"] { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
+select, input[type="number"], input[type="text"], input[type="password"] { color: var(--text); background: var(--panel-2); border: 1px solid var(--border); border-radius: 8px; padding: 9px 11px; }
 .toggle { color: var(--muted); font-size: .76rem; display: flex; align-items: center; gap: 7px; }
 .toggle input { accent-color: var(--green); }
 .range-bar { margin-bottom: 12px; }

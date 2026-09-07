@@ -1,6 +1,6 @@
 # 00 – Dokumentenlenkung und Start
 
-Aktueller Stand **DMS 1.8.0 / Anwendung 0.4.0, DEC-046**: Paper-Eingabefehler korrigiert; gesonderter Live-Vorbereitungsbereich mit Windows-Schlüsselablage und Read-only-Kontoprüfung. **Keine Echtgeldfreigabe und kein fertiger Orderadapter.** Die datierten Stände darunter bleiben Historie. Keine Änderung von V6-Profilen oder laufendem Paperkonto; aktive UI-Settings sind aus der API zu lesen, nicht aus dem Standardwert 3×80 abzuleiten.
+Aktueller Stand **DMS 1.8.1 / Anwendung 0.4.1, DEC-046**: Paper-Eingabefehler korrigiert; gesonderter Live-Vorbereitungsbereich mit Windows-Schlüsselablage und Read-only-Kontoprüfung. Orderjournal mit Timeout-/Restart-/Teilfill-/Konkurrenztests ergänzt, ausschließlich offline und ohne Runtime-Verbindung. **Keine Echtgeldfreigabe und kein fertiger Orderadapter.** Die datierten Stände darunter bleiben Historie. Keine Änderung von V6-Profilen oder laufendem Paperkonto; aktive UI-Settings sind aus der API zu lesen, nicht aus dem Standardwert 3×80 abzuleiten.
 
 ## Zweck
 
