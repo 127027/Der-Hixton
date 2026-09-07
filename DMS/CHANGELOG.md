@@ -2,6 +2,7 @@
 
 ## 1.9.0 – 07.09.2026 / Anwendung 0.4.2
 
+- Laptop-Abnahme ergänzt in DMS 18: Neustart über den bestehenden Starter, elf Paper-Tabellen unverändert, 190 Python-Tests auch im Laptop-Projekt, 50/50 Chartabfragen und sichtbare gesperrte Key-/Test-/Live-Bereiche geprüft. Keine Echtgeldfreigabe.
 - DEC-048 umgesetzt als weiterer Teilstand: Binance-Key-/Secret-Felder immer sichtbar, bis zur lokalen Entsperrung deaktiviert. Erklärung des dreistufigen Ablaufs; kein neues Design oder neuer Starter. Bei Statusfehler/Sitzungsende Eingaben leeren und sperren.
 - Getrennte 50-USDT-Test-/Stopp- und Live-an/aus-Bedienelemente; tatsächliche gespeicherte Paper-Slots als spätere Live-Vorlage anzeigen. Authentifizierte Testanforderung validiert genau 50 und die Bestätigung, lehnt zusätzliche/manipulierte Felder ab und bleibt ohne produktive Anbindung 409. Kein automatischer Start nach Key-Eingabe/Kontoprüfung.
 - `live/trial.py`: persistente globale Einmalberechtigung, frische gleichzeitige Zehn-Coin-Auswahl nach bestehender Rangfolge, echte Wiederverwendung von `TradePolicyGate`, eingefrorener Profilsnapshot, Restart ohne Neukauf, Exit nach Entry-Stopp, keine Freigabe eines weiteren Tests nach Abschluss. Unbekannte Orders werden weiter abgefragt, verpasste Ausstiegssignale nicht als historische Modellfills verbucht.
