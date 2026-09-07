@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-047 → DMS 07/08/12/13/20: signalgesteuerter 50-USDT-Einmaltest und echter Abschlussbericht verbindlich spezifiziert. **Globale Einmalbudget-Freigabe, Runtime-/UI-Anbindung, echter Binance-Adapter und Ausführungsabnahme weiterhin OFFEN.** Vorhandene `live/orders.py`-Tests decken nur die isolierten Orderprimitiven ab, nicht diesen vollständigen Einmaltest. Keine Strategieänderung und kein Teststart durch Dokumentationsfreigabe.
+
 DEC-046, Ergänzung 0.4.1 → `src/hixton/live/orders.py` / `tests/test_live_orders.py`: isolierte Intent-/Submit-Beanspruchungs-/Teilfill-/Reconciliation-Primitiven mit Fake-Börse getestet. Kein produktiver Adapter und keine Verbindung zum UI oder Runtime; vollständige unten genannte Live-Nachweise bleiben offen.
 
 DEC-046 → UI-Settings/SEC/Live-Vorbereitung: `ui/src/settings-draft.ts`, `ui/src/live-preparation.ts`, `src/hixton/live/`, `src/hixton/ui/live.py`, `tests/test_live_preparation.py` und `ui/tests/settings-draft.test.mjs`. Entwurf/gespeicherter Stand, Windows-Vault, Passwortsession, Read-only-Prüfung und fail-closed Live-Anforderung implementiert. **Order-Intent/Submit/Fill-/Reconciliation-/Live-aus mit offenen Echtgeldpositionen weiterhin OFFEN**; nicht durch positive UI-/Vault-Tests als abgenommen markieren. Umfang/Grenzen DMS 07/11/12/20.

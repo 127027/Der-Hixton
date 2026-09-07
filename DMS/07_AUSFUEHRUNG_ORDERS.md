@@ -36,7 +36,7 @@ Pflichtfelder:
 
 ## Verbindliche Orderarten
 
-Eine später freigegebene Liveversion verwendet verbindlich Market-Orders nach bestätigtem Signal. Kauforders verwenden, sofern von Binance für das Symbol erlaubt, `quoteOrderQty` mit 80 USDT Zielnotional; Verkaufsorders schließen höchstens die tatsächlich verfügbare Basisassetmenge. Vor Submit darf der aktuelle ausführbare Referenzpreis höchstens 25 bps vom Intent-Referenzpreis abweichen. Limit-/Marketable-Limit-Orders gehören nicht zum beschlossenen Erst-Liveumfang.
+Eine später freigegebene Liveversion verwendet verbindlich Market-Orders nach bestätigtem Signal. Kauforders verwenden, sofern von Binance für das Symbol erlaubt, `quoteOrderQty` mit dem ausdrücklich freigegebenen Zielnotional: **beim einmaligen DEC-047-Test 50 USDT**, erst bei separat freigegebenem 3×80-Betrieb 80 USDT. Gebühren werden gesondert verbucht. Verkaufsorders schließen höchstens die tatsächlich verfügbare botzugehörige Basisassetmenge. Vor Submit darf der aktuelle ausführbare Referenzpreis höchstens 25 bps vom Intent-Referenzpreis abweichen. Limit-/Marketable-Limit-Orders gehören nicht zum beschlossenen Erst-Liveumfang. Beim Einmaltest sind genau eine Einstiegsberechtigung und ein anschließender Strategieausstieg zulässig; kein blinder Neuversand und keine automatische Wiederbewaffnung. DMS 20 beschreibt den noch nicht implementierten Ablauf.
 
 Nach Submit gelten feste Zeiten:
 

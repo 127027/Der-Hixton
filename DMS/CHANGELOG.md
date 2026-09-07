@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.8.2 – 07.09.2026 / Anwendung unverändert 0.4.1
+
+- DEC-047: Eigentümer entscheidet die bisher offene Testform. Genau ein Echtgeldtrade nach einem neuen qualifizierten Hixton-Signal aus zehn Coins, 50 USDT Kaufnotional mit separat ausgewiesenen Gebühren, regulärer Coin-Strategieausstieg, danach keine weiteren Einstiege und kein automatischer 3×80-Livestart.
+- DMS 07/08/12/13/15/16/20 synchronisiert: globale restart-/konkurrenzfeste Einmalbegrenzung statt 50 je beliebiger Order; echter Soll/Ist-/Fill-/Gebühren-/Strategie-/Exitbericht als Abnahmeanforderung. Fehlender oder nicht ausgelöster Stop/TP wird nicht als bestanden ausgegeben.
+- Aktueller Code und Runtime erneut gelesen: alle zehn V6-Profile ohne festen Take-Profit und aktiviertes ATR-Trailing; nur XRP mit zusätzlichem lokalem 1h-Schlusskurs-ATR-Stop, kein Binance-Schutzauftrag. Keine stillen Strategieergänzungen. Ein Trade kann nicht alle zehn Profile/Fehlerpfade oder Profitabilität belegen.
+- **Nur Dokumentationsentscheidung, kein ausführbarer Einmaltest und keine neue Abnahme.** Kein Echtgeldauftrag, keine API-Key-Eingabe, kein Paper-Settingwechsel und kein Prozessneustart.
+
 ## 1.8.1 – 07.09.2026 / Anwendung 0.4.1
 
 - Browser-Abnahme fand nicht unterstützte native Dialoge im eingebetteten Browser: Anwenden sowie Schlüssel-Speichern/-Entfernen verwenden jetzt Inline-Bestätigungen. Neue Text-/Passwortfelder verwenden die bestehende Optik. Kein vorzeitiges Speichern beim Öffnen der Bestätigung.
