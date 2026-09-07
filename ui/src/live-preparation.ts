@@ -1,13 +1,12 @@
-/** Private controls: no localStorage/sessionStorage, no secret echo, no automatic enable. */
+/** Private forms: inline feedback, verified sessions, no browser secret storage. */
 interface LiveStatus {
   state: string;
-  ready: boolean;
   authenticated: boolean;
   password_configured: boolean;
-  credentials: { configured: boolean; fingerprint?: string; saved_at_utc?: string };
+  credentials: { configured: boolean };
   blockers: string[];
-  account_check: { free_usdt: string; free_bnb: string; checked_at_utc: string; blockers: string[] } | null;
-  trial?: {state: string; symbol?: string; reason?: string | null; net_pnl_usdt?: string | null};
+  account_check: { blockers: string[] } | null;
+  trial?: {state: string; symbol?: string};
 }
 
 function element<T extends HTMLElement>(id: string): T {
@@ -16,143 +15,156 @@ function element<T extends HTMLElement>(id: string): T {
   return item as T;
 }
 
-export function initializeLivePreparation(sharedSettingsBlocker: () => string | null): void {
+export function initializeLivePreparation(sharedSettingsBlocker: () => string | null): {refresh: () => Promise<boolean>; dispose: () => void} {
   let last: LiveStatus | null = null;
   let generation = 0;
   let busy = false;
-  const controls = ["live-unlock", "live-save-key", "live-delete-key", "live-check", "live-request", "live-off", "live-lock", "live-trial-start"];
-  const message = (value: string): void => { element("live-result").textContent = value; };
+  let focusAfter: string | null = null;
+  const privateButtons = ["live-save-key", "live-delete-key", "live-delete-confirm", "live-delete-cancel", "live-check", "live-request", "live-off", "live-lock", "live-trial-start"];
+  const message = (id: string, value: string): void => { element(id).textContent = value; };
   const clearSecrets = (): void => {
-    for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret", "live-confirmation", "live-trial-confirmation"]) element<HTMLInputElement>(id).value = "";
+    for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret"])
+      element<HTMLInputElement>(id).value = "";
+    element<HTMLInputElement>("live-trial-consent").checked = false;
+    element("live-delete-panel").classList.add("hidden");
+  };
+  const updateControls = (): void => {
+    element<HTMLButtonElement>("live-unlock").disabled = busy;
+    element<HTMLFieldSetElement>("live-protected").disabled = busy || !last?.authenticated;
+    for (const id of privateButtons) element<HTMLButtonElement>(id).disabled = busy || !last?.authenticated;
   };
   const render = (status: LiveStatus): void => {
-    if (last?.authenticated && !status.authenticated) clearSecrets();
+    if (last?.authenticated && !status.authenticated) {
+      clearSecrets();
+      message("live-auth-result", "Sitzung abgelaufen oder in einem anderen Fenster ersetzt. Bitte erneut entsperren.");
+    }
     last = status;
-    element("live-state").textContent = status.state === "LIVE_DISABLED"
-      ? "LIVE AUS · Vorbereitung, keine Echtgeldfreigabe"
-      : `EINMALTEST · ${status.state} · offene oder ungeklärte Ausführung beachten`;
+    message("live-state", status.state === "LIVE_DISABLED" ? "Live aus · Echtgeld noch nicht freigegeben" : `Einmaltest: ${status.state}`);
     element("live-auth-panel").classList.toggle("hidden", status.authenticated);
-    element<HTMLFieldSetElement>("live-protected").disabled = !status.authenticated;
-    element("live-key-help").textContent = status.authenticated
-      ? "Entsperrt. API-Key und zugehöriges Secret in die unten sichtbaren Felder eintragen, sicher speichern und danach das Binance-Konto prüfen. Kein automatischer Handelsstart."
-      : "Die Binance-Key-Felder und Handelsaktionen sind unten sichtbar, aber gesperrt. Zuerst oben das lokale Hixton-Passwort festlegen bzw. damit entsperren; danach werden sie bedienbar.";
     element("live-password-repeat-label").classList.toggle("hidden", status.password_configured);
-    element("live-unlock").textContent = status.password_configured ? "Geschützten Bereich entsperren" : "Lokales Passwort festlegen & entsperren";
-    element("live-credentials-status").textContent = status.credentials.configured
-      ? `Binance-Schlüssel gespeichert${status.credentials.fingerprint ? ` · Fingerprint ${status.credentials.fingerprint}` : ""}.`
-      : "Binance API-Schlüssel nicht vorhanden. Zuerst den lokalen Bereich entsperren, dann hier eintragen.";
-    element("live-trial-status").textContent = status.trial?.state && status.trial.state !== "NOT_STARTED"
-      ? `Einmaltest: ${status.trial.state}${status.trial.symbol ? ` · ${status.trial.symbol}` : ""}${status.trial.reason ? ` · ${status.trial.reason}` : ""}. Echtgeld-Abnahme nicht durch einen simulierten Test ersetzt.`
-      : "Einmaltest nicht gestartet. Dieser Button prüft die Freigabe; bei fehlender Orderanbindung bleiben echte Orders gesperrt.";
+    element<HTMLInputElement>("live-password-repeat").required = !status.password_configured;
+    message("live-unlock", status.password_configured ? "Entsperren" : "Passwort speichern & entsperren");
+    message("live-auth-help", status.password_configured
+      ? "Passwort ist bereits eingerichtet. Verwende das damals gewählte Hixton-Passwort, nicht dein Binance-Passwort. Entsperrung gilt 15 Minuten."
+      : "Eigenes lokales Passwort mit mindestens 12 Zeichen wählen und wiederholen. Nicht dein Binance-Passwort.");
+    message("live-credentials-status", status.credentials.configured ? "Binance-Schlüssel gespeichert." : "Noch kein Binance-Schlüssel gespeichert.");
+    message("live-trial-status", status.trial?.state && status.trial.state !== "NOT_STARTED" ? `Test: ${status.trial.state}${status.trial.symbol ? " · " + status.trial.symbol : ""}` : "Nicht gestartet. Echtgeldanbindung noch gesperrt.");
     const list = element("live-blockers");
     list.replaceChildren();
     for (const reason of new Set([...status.blockers, ...(status.account_check?.blockers ?? [])])) {
       const item = document.createElement("li"); item.textContent = reason; list.append(item);
     }
+    updateControls();
+  };
+  const refresh = async (): Promise<boolean> => {
+    const current = ++generation;
+    try {
+      const response = await fetch("/api/live/status", {cache:"no-store", credentials:"same-origin"});
+      const result = await response.json();
+      if (current !== generation) return false;
+      if (!response.ok) throw new Error("Status nicht erreichbar.");
+      render(result as LiveStatus);
+      return result.authenticated === true;
+    } catch {
+      if (current === generation) {
+        last = null; clearSecrets(); updateControls();
+        element("live-auth-panel").classList.remove("hidden");
+        message("live-auth-result", "Verbindung zum Bot fehlt. Bitte erneut versuchen; Zugang bleibt gesperrt.");
+        message("live-state", "Status unbekannt · keine Echtgeldfreigabe");
+      }
+      return false;
+    }
   };
   const request = async (path: string, body: Record<string, unknown>): Promise<Record<string, unknown>> => {
-    const response = await fetch(`/api/live/${path}`, { method: "POST", cache: "no-store", credentials: "same-origin",
-      headers: { "Content-Type": "application/json", "X-Hixton-Action": "local-ui-v1" }, body: JSON.stringify(body) });
+    const response = await fetch(`/api/live/${path}`, {
+      method:"POST", cache:"no-store", credentials:"same-origin",
+      headers:{"Content-Type":"application/json", "X-Hixton-Action":"local-ui-v1"}, body:JSON.stringify(body),
+    });
     const result = await response.json() as Record<string, unknown>;
     if (response.status === 409 && (path === "enable" || path === "trial/start")) {
       render(result as unknown as LiveStatus);
-      message(path === "trial/start" ? "50-USDT-Einmaltest nicht gestartet. Technische Freigabe fehlt; Gründe unten. Kein Kauf ausgelöst." : "Live bleibt gesperrt. Die Gründe stehen unten. Keine Orders wurden ausgelöst.");
-      return result;
+      throw new Error("Noch nicht startbereit: Binance-Orderausführung und Kontoabgleich fehlen. Kein Echtgeldauftrag gesendet. Details unter „Technische Freigabe prüfen“.");
     }
     if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : `Aktion fehlgeschlagen (${response.status}).`);
     return result;
   };
-  const refresh = async (): Promise<void> => {
-    const current = ++generation;
-    try {
-      const response = await fetch("/api/live/status", { cache: "no-store", credentials: "same-origin" });
-      const result = await response.json();
-      if (current !== generation) return;
-      if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : "Live-Status nicht erreichbar.");
-      render(result as LiveStatus);
-    } catch {
-      if (current === generation) {
-        element("live-state").textContent = "Live-Status nicht erreichbar — keine Freigabe bestätigt.";
-        element<HTMLFieldSetElement>("live-protected").disabled = true;
-        clearSecrets();
-      }
-    }
+  const requireAuth = (): void => {
+    if (!last?.authenticated) throw new Error("Zuerst unter Binance verbinden entsperren.");
   };
-  const action = (id: string, run: () => Promise<void>): void => {
-    element<HTMLButtonElement>(id).addEventListener("click", async () => {
+  const bind = (id: string, event: "click" | "submit", feedback: string, run: () => Promise<void>): void => {
+    element(id).addEventListener(event, async (e) => {
+      e.preventDefault();
       if (busy) return;
-      busy = true; ++generation;
-      for (const control of controls) element<HTMLButtonElement>(control).disabled = true;
+      busy = true; ++generation; focusAfter = null; updateControls();
+      message(feedback, "Bitte warten …");
       try { await run(); }
-      catch (error) { message(error instanceof Error ? error.message : "Aktion fehlgeschlagen."); }
+      catch (error) { message(feedback, error instanceof Error ? error.message : "Aktion fehlgeschlagen."); }
       finally {
-        busy = false;
-        for (const control of controls) element<HTMLButtonElement>(control).disabled = false;
         await refresh();
+        busy = false; updateControls();
+        if (focusAfter && last?.authenticated) element(focusAfter).focus();
       }
     });
   };
-  action("live-unlock", async () => {
+  bind("live-auth-panel", "submit", "live-auth-result", async () => {
     const password = element<HTMLInputElement>("live-password").value;
     const repeat = element<HTMLInputElement>("live-password-repeat").value;
     element<HTMLInputElement>("live-password").value = "";
     element<HTMLInputElement>("live-password-repeat").value = "";
-    await request("unlock", { password, repeat }); message("Geschützter Bereich für 15 Minuten entsperrt. Live bleibt aus.");
+    await request("unlock", {password, repeat});
+    if (!await refresh()) throw new Error("Passwort angenommen, aber Sitzung nicht bestätigt. Cookies für diese lokale Adresse erlauben und erneut entsperren.");
+    message("live-auth-result", "Entsperrt. API-Key und Secret können jetzt eingegeben werden.");
+    focusAfter = "live-api-key";
   });
-  action("live-save-key", async () => {
+  bind("live-key-form", "submit", "live-key-result", async () => {
+    requireAuth();
     const api_key = element<HTMLInputElement>("live-api-key").value;
     const secret_key = element<HTMLInputElement>("live-api-secret").value;
-    if (element<HTMLInputElement>("live-confirmation").value !== "SPEICHERN") {
-      message("Zum Speichern/Ersetzen zuerst SPEICHERN in das Bestätigungsfeld eingeben. Live bleibt aus.");
-      element<HTMLInputElement>("live-confirmation").focus(); return;
-    }
     try {
-      await request("credentials", { api_key, secret_key, confirmation: "SCHLUESSEL SPEICHERN" });
-      message("Schlüssel sicher im Windows-Anmeldedatenspeicher gespeichert. Als Nächstes Konto prüfen; kein automatischer Live-Start.");
-    } finally { clearSecrets(); }
-  });
-  action("live-delete-key", async () => {
-    if (element<HTMLInputElement>("live-confirmation").value !== "ENTFERNEN") {
-      message("Zum lokalen Entfernen zuerst ENTFERNEN eingeben. Dies widerruft den Key nicht bei Binance.");
-      element<HTMLInputElement>("live-confirmation").focus(); return;
+      await request("credentials", {api_key, secret_key, confirmation:"SCHLUESSEL SPEICHERN"});
+      message("live-key-result", "Schlüssel sicher gespeichert. Jetzt Verbindung prüfen.");
+    } finally {
+      element<HTMLInputElement>("live-api-key").value = "";
+      element<HTMLInputElement>("live-api-secret").value = "";
     }
-    await request("credentials/delete", { confirmation: "SCHLUESSEL ENTFERNEN" }); clearSecrets();
-    message("Lokalen Key entfernt. Falls nötig zusätzlich in Binance widerrufen. Lokales Hixton-Passwort bleibt erhalten.");
   });
-  action("live-check", async () => {
-    message("Binance-Konto und Rechte werden gelesen. Es werden keine Orders gesendet …");
+  bind("live-check", "click", "live-check-result", async () => {
+    requireAuth();
     const result = await request("check", {});
-    message(`Kontoprüfung abgeschlossen: ${String(result.free_usdt)} freie USDT, ${String(result.free_bnb)} freie BNB. ${result.account_checks_passed ? "Kontovorprüfung bestanden, Livefreigabe weiterhin separat." : "Blockierungen unten beachten."}`);
+    message("live-check-result", result.account_checks_passed ? "Kontovorprüfung bestanden. Echtgeld-Freigabe bleibt separat." : "Kontovorprüfung blockiert: " + ((result.blockers as string[] | undefined)?.join(" · ") || "Details unter technische Freigabe."));
   });
-  action("live-request", async () => {
-    const blocker = sharedSettingsBlocker();
-    if (blocker) { message(blocker); return; }
-    if (!last?.credentials.configured) {
-      message("Binance API-Schlüssel fehlt. Bitte API-Key und Secret hier lokal eingeben und sicher speichern.");
-      element<HTMLInputElement>("live-api-key").focus(); return;
-    }
+  bind("live-lock", "click", "live-auth-result", async () => {
+    requireAuth(); await request("lock", {}); last = null; clearSecrets();
+    message("live-auth-result", "Zugang gesperrt.");
+  });
+  element("live-delete-key").addEventListener("click", () => element("live-delete-panel").classList.remove("hidden"));
+  element("live-delete-cancel").addEventListener("click", () => element("live-delete-panel").classList.add("hidden"));
+  bind("live-delete-confirm", "click", "live-key-result", async () => {
+    requireAuth();
+    await request("credentials/delete", {confirmation:"SCHLUESSEL ENTFERNEN"});
+    clearSecrets(); message("live-key-result", "Lokalen Schlüssel entfernt. Bei Binance nicht widerrufen.");
+  });
+  bind("live-request", "click", "live-result", async () => {
+    requireAuth();
+    const blocker = sharedSettingsBlocker(); if (blocker) throw new Error(blocker);
+    if (!last?.credentials.configured) throw new Error("Zuerst API-Key und Secret speichern und Verbindung prüfen.");
     await request("enable", {});
   });
-  action("live-off", async () => {
-    const result = await request("disable", {});
-    message(typeof result.message === "string" ? result.message : "Neue Live-Einstiege gesperrt. Bestehende echte Positionen nicht automatisch verkauft; Paper bleibt unverändert.");
+  bind("live-off", "click", "live-result", async () => {
+    requireAuth();
+    await request("disable", {});
+    message("live-result", "Neue Echtgeld-Einstiege gestoppt, auch beim Einmaltest. Kein Sofortverkauf; Paper läuft weiter.");
   });
-  action("live-trial-start", async () => {
-    const blocker = sharedSettingsBlocker();
-    if (blocker) { message(blocker); return; }
-    if (!last?.credentials.configured) {
-      message("Für den Einmaltest zuerst Binance API-Key und Secret in den sichtbaren Feldern speichern und das Konto prüfen.");
-      element<HTMLInputElement>("live-api-key").focus(); return;
-    }
-    if (element<HTMLInputElement>("live-trial-confirmation").value !== "TEST 50 USDT") {
-      message("Für genau einen signalgesteuerten 50-USDT-Einmaltest TEST 50 USDT eingeben. Das ersetzt keine technische Freigabe.");
-      element<HTMLInputElement>("live-trial-confirmation").focus(); return;
-    }
-    try { await request("trial/start", {confirmation: "TEST 50 USDT", notional_usdt: "50.00"}); }
-    finally { element<HTMLInputElement>("live-trial-confirmation").value = ""; }
+  bind("live-trial-start", "click", "live-trial-result", async () => {
+    requireAuth();
+    const blocker = sharedSettingsBlocker(); if (blocker) throw new Error(blocker);
+    if (!last?.credentials.configured) throw new Error("Zuerst API-Key und Secret speichern und Verbindung prüfen.");
+    if (!element<HTMLInputElement>("live-trial-consent").checked) throw new Error("Den einzelnen 50-USDT-Echtgeldtrade zuerst per Häkchen bestätigen.");
+    try { await request("trial/start", {confirmation:"TEST 50 USDT", notional_usdt:"50.00"}); }
+    finally { element<HTMLInputElement>("live-trial-consent").checked = false; }
   });
-  action("live-lock", async () => { await request("lock", {}); clearSecrets(); message("Geschützter Bereich gesperrt."); });
   window.addEventListener("pagehide", clearSecrets);
   void refresh();
-  window.setInterval(() => { if (!busy) void refresh(); }, 5_000);
+  const timer = window.setInterval(() => { if (!busy) void refresh(); }, 5_000);
+  return {refresh, dispose: () => { window.clearInterval(timer); window.removeEventListener("pagehide", clearSecrets); clearSecrets(); }};
 }

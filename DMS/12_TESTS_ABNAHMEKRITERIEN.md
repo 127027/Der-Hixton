@@ -1,5 +1,11 @@
 # 12 – Tests und Abnahmekriterien
 
+## Abnahme 0.4.4 / DEC-050
+
+201 Python-Tests und 13 UI-Tests; ein opt-in Vault-Test im Standardsatz übersprungen. Neue API-/Persistenzfälle 4×45, 5×40, 10×24 nach Neustart ohne Kontoveränderung; Engine eröffnet in einem kontrollierten Fünf-Signal-Fall genau vier 45-USDT-Positionen und blockiert die fünfte. Passwort-Einrichtung, erneutes Entsperren nach Prozessrestart, Fehler, Key-Speicherung, Fake-Kontovorprüfung und weiterhin verweigerter Live-Start geprüft.
+
+UI-Tests führen die produktiven Formularcontroller in einem isolierten DOM-/Fetch-Harness aus: Submit/Enter-Pfad, Passwortfehler direkt am Feld, verifizierte Entsperrung, Keyspeichern, Kontoprüfung, Sitzung/Cookiefehler, gleichzeitige Anmeldung, Lock, Löschbestätigung, Testcheckbox, fehlende Echtgeldfreigabe, einfacher Übernehmen-Submit, Doppelstartschutz und Fehler-/Polling-Erhalt. Keine realen Zugangsdaten und keine echte Börsenorder. Sichtprüfung/ausgelieferter Stand siehe DMS 18.
+
 Aktuell 0.4.3: **196 Python-Tests / ein opt-in Test übersprungen, sieben UI-Tests**. Neue Nachweise: ein gemeinsamer Speicherweg und Live-Lesequelle nach 1×50-Speicherung sowie Neustart; keine Konto-/Positions-/Soak-Veränderung; klare Ablehnung 4×80/5×80/Überbudget ohne Rückfall; gemeinsame Pause bei wartendem/offenem Fake-Test ohne Kauf, Verkauf oder erneutes Starten. UI-Modell prüft unmittelbare Entwurfsanzeige, Erfolgs-/Fehler-/Verwerfzustände und serverseitige Grenzwerte; genau ein Echtgeld-aus-Bedienelement, kein konkurrierender Live-Preview-Schreiber. Dies ist weiterhin keine echte Binance-Ausführungsabnahme.
 
 Prüfstand 0.4.2: 25 neue Controller-Tests plus sieben zusätzliche API-Fälle, insgesamt 190 Python-Tests bestanden und ein opt-in Vault-Test übersprungen; vier UI-Tests. Geprüft sind globale Einmalberechtigung bei Konkurrenz, zehn Signale/richtige Rangfolge, bestehende Coin-Filter und XRP-Stop, 500/NaN/etc. zurückweisen, Restart/Timeout, fehlende veraltete/offene Bars, Entry-Stopp bei offener Position, regulärer Exit, unvollständiger Abgleich/Restmengen und Gebühren. API bleibt auch mit Key/Bestätigung gesperrt; keine Mutation des Paperkontos. Kein produktiver Runtime-, Binance-Testnet-, manueller Fremdbestands- oder Echtgeldbeleg. Die nachfolgenden Live-Abnahmen bleiben insoweit offen.

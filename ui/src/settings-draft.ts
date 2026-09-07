@@ -24,14 +24,14 @@ function formatBudget(value: string | number): string {
 }
 
 export function describeSettings(value: TradingSettings): string {
-  return `${value.slot_count} × ${formatBudget(value.target_notional_usdt)} USDT · Positionsbudget ${formatBudget(value.slot_count * Number(value.target_notional_usdt))} USDT · Einstiegspause ${value.emergency_stop ? "EIN" : "AUS"}`;
+  return `${value.slot_count} × ${formatBudget(value.target_notional_usdt)} USDT = ${formatBudget(value.slot_count * Number(value.target_notional_usdt))} USDT${value.emergency_stop ? " · bestehende Einstiegssperre aktiv" : ""}`;
 }
 
 export function describeLivePlan(saved: TradingSettings | null, draft: TradingSettings, dirty: boolean, saving: boolean, limits: TradingLimits | null): string {
   if (!saved || !limits) return "Gemeinsame Einstellungen nicht verfügbar. Keine Live-Freigabe.";
-  const active = `Gemeinsam gespeichert: ${describeSettings(saved)}.`;
-  if (dirty || saving) return `${active} ${saving ? "Wird gespeichert" : "Ungespeicherter Entwurf"}: ${describeSettings(draft)}. ${settingsProblem(draft, limits) ?? "Zuerst ANWENDEN oder verwerfen; Live an ist mit ungespeicherten Änderungen blockiert."}`;
-  return `${active} Paper verwendet diese Werte; normaler Livebetrieb muss nach technischer Freigabe dieselben Werte verwenden. Live ist dadurch nicht eingeschaltet. Der separate Einmaltest bleibt 1 × 50 USDT.`;
+  const active = `Gespeichert: ${describeSettings(saved)}.`;
+  if (dirty || saving) return `${active} ${saving ? "Wird gespeichert" : "Noch nicht übernommen"}: ${describeSettings(draft)}. ${settingsProblem(draft, limits) ?? "Erst Übernehmen klicken, bevor Live angefordert wird."}`;
+  return `${active} Gemeinsame Vorgabe für Paper und normalen Livebetrieb.`;
 }
 
 export class SettingsDraft {

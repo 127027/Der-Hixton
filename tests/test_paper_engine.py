@@ -249,6 +249,26 @@ def test_paper_settings_enforce_shared_capital() -> None:
         PaperSettings(slot_count=4, target_notional_usdt=Decimal("80"))
 
 
+def test_four_slots_of_45_really_open_four_positions_and_keep_the_budget(tmp_path: Path) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    with PaperStore(path) as store:
+        store.save_settings(PaperSettings(slot_count=4, target_notional_usdt=Decimal("45")))
+    signal_time = start + timedelta(hours=1)
+    points = _mapping(signal_time)
+    for symbol in SYMBOLS[:5]:
+        points[symbol] = (_point(symbol, signal_time, flip_up=True, strength=1.0),)
+    emitted = process_new_closed_points(str(path), points, _rules())
+    filled = [event for event in emitted if event.status is PaperEventStatus.FILLED]
+    assert [event.symbol for event in filled] == list(SYMBOLS[:4])
+    assert all(event.quote_amount_usdt <= Decimal("45") for event in filled)
+    assert any(event.reason == "NO_FREE_SLOT" for event in emitted)
+    with PaperStore(path) as store:
+        assert len(store.load_positions()) == 4
+        assert store.load_account().cash_usdt > Decimal("59")
+
+
 def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
     tmp_path: Path,
 ) -> None:

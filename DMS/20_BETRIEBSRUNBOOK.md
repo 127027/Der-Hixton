@@ -1,5 +1,15 @@
 # 20 – Betriebsrunbook
 
+## Einstellungen bedienen – gültig ab 0.4.4
+
+- Browser einmal neu laden (bei alter Ansicht Strg+F5). Unter Handel zum Beispiel 4 Trades und 45 USDT einstellen, dann **Übernehmen**. Gespeichert steht anschließend 4×45 = 180 USDT. Keine Einzahlung, keine neuen Positionen allein durch Speichern; die laufende Auslieferung setzt selbst keine Betreiberwerte um.
+- Unter Binance verbinden das **bereits eingerichtete Hixton-Passwort** eingeben und Entsperren oder Enter drücken. Nur bei erster Einrichtung Passwort wiederholen. Nicht das Binance-Passwort verwenden. Fehlermeldung steht direkt darunter, z. B. falsches Passwort oder 60 Sekunden Wartezeit nach zu vielen Versuchen. Kein Passwortreset durch das Update; Zugang nicht durch Umgehen der Prüfung freischalten.
+- Bei bestätigter Sitzung erscheint „Entsperrt“ und API-Key/Secret sind editierbar. Beide eingeben, Schlüssel speichern, Verbindung prüfen. Jede Aktion hat eine eigene sichtbare Rückmeldung. Ablage bleibt Windows Credential Manager; keine echten Schlüssel in Chat, Projekt oder GitHub.
+- Die Verbindungskontrolle liest nur Konto/Rechte. **Live an und 50-USDT-Test sind noch nicht ausführbar**, solange Orderadapter/Abgleich fehlen. Live aus sperrt neue echte Entries, auch für einen angeschlossenen Test; keine Zwangsliquidation, Paper bleibt aktiv. Bot muss für reguläre Ausstiege laufen bleiben.
+- Einmaltest optional aufklappen, Checkbox für genau einen 50-USDT-Echtgeldtrade. Keine Wortbestätigung mehr. Normales Live verwendet die gemeinsamen Werte. Schlüsselverwaltung/Sicherheitsdetails sind einklappbar; Entfernen eines Schlüssels wird separat mit Ja bestätigt.
+
+Die bisherigen Anleitungen mit Einstiegspause, Verwerfen und getipptem ANWENDEN sind historische Teilstände, durch den obigen Ablauf ersetzt. Interne Risikoabschaltungen bleiben wirksam.
+
 ## Gemeinsame Einstellungen ab 0.4.3
 
 1. Unter „Handelseinstellungen · Paper & Live“ Slots und Positionsgröße einmal eingeben. Die Live-Zusammenfassung zeigt sofort den **Entwurf** neben dem weiterhin geltenden Speicherstand. Bei 4/5 Slots erscheint die bestehende Freigabegrenze 3/240 ausdrücklich; kein stiller Standard-Rückfall.

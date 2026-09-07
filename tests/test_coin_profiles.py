@@ -334,9 +334,10 @@ def test_unapproved_mix_cannot_activate_or_start_paper(
     assert not (tmp_path / "denied.sqlite3").exists()
 
 
-def test_three_slots_remain_a_hard_limit_even_with_smaller_orders() -> None:
-    with pytest.raises(ValueError, match="3 simultaneous"):
-        PaperSettings(slot_count=4, target_notional_usdt=Decimal("60"))
+def test_ten_slots_bound_the_market_universe_within_the_existing_capital() -> None:
+    assert PaperSettings(slot_count=4, target_notional_usdt=Decimal("45")).slot_count == 4
+    with pytest.raises(ValueError, match="10 simultaneous"):
+        PaperSettings(slot_count=11, target_notional_usdt=Decimal("10"))
 
 
 @pytest.mark.parametrize("first_endpoint", ["/api/status", "/api/paper/events"])

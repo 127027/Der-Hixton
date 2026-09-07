@@ -290,8 +290,67 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
             key: value for key, value in before.items() if key != "settings"
         }
         assert status["trading_limits"] == {
-            "max_slots": 3, "max_position_budget_usdt": "240.00",
+            "max_slots": 10, "max_position_budget_usdt": "240.00",
         }
+
+
+@pytest.mark.parametrize("slots,amount", [(4, "45"), (5, "40"), (10, "24")])
+def test_expanded_slot_allocation_persists_without_inventing_cash(
+    tmp_path: Path, slots: int, amount: str,
+) -> None:
+    client, config, _ = client_for(tmp_path)
+    before = client.get("/api/status").json()["paper"]
+    payload = {"slot_count": slots, "target_notional_usdt": amount,
+               "emergency_stop": False, "confirmation": "ANWENDEN"}
+    assert client.post("/api/trading/settings", headers=HEADERS, json=payload).status_code == 200
+    restarted = TestClient(
+        create_app(config, RuntimeSupervisor(config), live_vault=MemoryVault()),
+        base_url="http://127.0.0.1:8765",
+    )
+    after = restarted.get("/api/status").json()["paper"]
+    assert after["settings"]["slot_count"] == slots
+    assert after["settings"]["target_notional_usdt"] == amount
+    assert restarted.get("/api/live/status").json()["trading_settings"] == after["settings"]
+    for field in ("cash_usdt", "positions", "strategy_session", "soak"):
+        assert after[field] == before[field]
+    assert restarted.get("/").headers["cache-control"] == "no-store"
+
+
+def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_flow(
+    tmp_path: Path,
+) -> None:
+    vault = MemoryVault()
+    original, config, _ = client_for(tmp_path, vault)
+    unlock(original)
+    # A real process restart invalidates sessions but must retain the existing password.
+    app = create_app(config, RuntimeSupervisor(config), live_vault=vault)
+    client = TestClient(app, base_url="http://127.0.0.1:8765")
+    service = app.state.live_preparation
+    assert client.get("/api/live/status").json()["password_configured"] is True
+    wrong = client.post("/api/live/unlock", headers=HEADERS,
+                        json={"password": "incorrect-password-123", "repeat": ""})
+    assert wrong.status_code == 400
+    correct = client.post("/api/live/unlock", headers=HEADERS,
+                          json={"password": PASSWORD, "repeat": ""})
+    assert correct.status_code == 200
+    assert client.get("/api/live/status").json()["authenticated"] is True
+    save_key(client)
+
+    class FakeReadOnlyClient:
+        def __init__(self, credentials: BinanceCredentials) -> None:
+            assert credentials.api_key == KEY
+
+        def inspect(self, notional: Decimal) -> dict[str, object]:
+            assert notional == Decimal("50")
+            return {"account_checks_passed": True, "blockers": [],
+                    "free_usdt": "250", "free_bnb": "0.01"}
+
+    service.client_factory = FakeReadOnlyClient
+    check = client.post("/api/live/check", headers=HEADERS, json={})
+    assert check.status_code == 200
+    assert check.json()["account_checks_passed"] is True
+    assert client.post("/api/live/enable", headers=HEADERS, json={}).status_code == 409
+    assert client.get("/api/status").json()["runtime"]["live_state"] == "LIVE_DISABLED"
 
 
 @pytest.mark.parametrize("slot_count,amount", [(4, "80"), (5, "80"), (3, "100")])
@@ -305,7 +364,7 @@ def test_common_settings_reject_unapproved_limits_without_silent_fallback(
         "emergency_stop": False, "confirmation": "ANWENDEN",
     })
     assert response.status_code == 400
-    assert "1-3 Slots" in response.json()["detail"]
+    assert "240.00 USDT" in response.json()["detail"]
     assert client.get("/api/live/status").json()["trading_settings"] == before
 
 

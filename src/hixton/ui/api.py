@@ -321,7 +321,7 @@ def create_app(
 
     @app.get("/")
     def index() -> FileResponse:
-        return FileResponse(STATIC_ROOT / "index.html")
+        return FileResponse(STATIC_ROOT / "index.html", headers={"Cache-Control": "no-store"})
 
     @app.get("/api/status")
     def status() -> dict[str, object]:

@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.10.0 – 07.09.2026 / Anwendung 0.4.4
+
+- DEC-050: Einstellungsseite vollständig in Handel, Binance verbinden und Livehandel gegliedert. Ein Übernehmen-Klick statt getippter Bestätigung, 1-USDT-Schritte, Slotzahl bis zehn bei unverändertem 240-USDT-Positionsbudget.
+- Keine sichtbare Einstiegspause oder Verwerfen-Aktion; bestehende interne Stopplatches bleiben erhalten. Key-Entfernen per Ja/Abbrechen, 50-USDT-Test per Checkbox.
+- Passwort-/Key-/Verbindungsfehler direkt an der jeweiligen Aktion, Submit/Enter-Unterstützung, erfolgreiche Entsperrung erst nach Sitzungsverifikation, Key-Fokus, Schutz gegen parallele Anmeldungen. Vorhandenes Betreiberpasswort nicht verändert. HTML nicht zwischenspeichern.
+- 201 Python- und 13 UI-Tests; Runtime-Engine mit vier Positionen und komplette isolierte Formular-/Accountvorcheck-Kette geprüft. Keine Echtgeldfreigabe, kein Reset und keine neuen Profitbehauptungen.
+
 ## 1.9.1 – 07.09.2026 / Anwendung 0.4.3
 
 - DEC-049: gemeinsame Handelseinstellungen statt getrennter Paper-/Live-Budgetdarstellung. Live-Zusammenfassung aktualisiert sich sofort bei Bearbeitung, erfolgreichem Speichern und Verwerfen; Entwurf ist ausdrücklich nicht aktiv. Keine Live-Anforderung mit ungespeicherten Werten.

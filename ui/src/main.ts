@@ -14,7 +14,8 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import "./styles.css";
-import { SettingsDraft, describeLivePlan, describeSettings, settingsProblem, type TradingSettings, type TradingLimits } from "./settings-draft";
+import type { TradingSettings, TradingLimits } from "./settings-draft";
+import { initializeTradingSettings } from "./trading-settings";
 import { initializeLivePreparation } from "./live-preparation";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "DOGEUSDT"] as const;
@@ -180,7 +181,6 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
 let selectedSymbol: SymbolName = "BTCUSDT";
 let selectedRange: RangeKey = "1m";
 let lastStatus: StatusResponse | null = null;
-const settingsDraft = new SettingsDraft();
 let coreLoadGeneration = 0;
 let chart: IChartApi | null = null;
 let candleSeries: ISeriesApi<"Candlestick"> | null = null;
@@ -227,42 +227,16 @@ function renderStatus(status: StatusResponse): void {
   text("#active-strategy-label", `BINANCE SPOT · 1H · ${status.strategy_version}`);
   text("#doc-app-version", status.application_version);
   text("#doc-strategy-version", status.strategy_version);
-  if (!status.paper) { renderSettingsEditState(); return; }
+  if (!status.paper) { tradingSettings.render(null, status.trading_limits); return; }
   text("#metric-equity", formatNumber(status.paper.equity_usdt));
   text("#metric-cash", formatNumber(status.paper.cash_usdt));
   const usedSlots = status.paper.positions.reduce((sum, position) => sum + position.slot_count, 0);
   text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - usedSlots)));
   required("#metric-slots").nextElementSibling!.textContent = `von ${status.paper.settings.slot_count}`;
   text("#metric-drawdown", `${formatNumber(status.paper.drawdown_pct)} %`);
-  if (settingsDraft.acceptsPolling) renderSettingsInputs(status.paper.settings);
-  required<HTMLInputElement>("#slot-input").max = String(status.trading_limits.max_slots);
-  text("#settings-limits", `Freigegebene Grenze: ${status.trading_limits.max_slots} Slots, zusammen ${formatNumber(status.trading_limits.max_position_budget_usdt)} USDT Positionsbudget. Größere Entwürfe werden ausdrücklich abgewiesen, nicht still auf Standardwerte gesetzt. Kein Kontoreset und keine Einzahlung durch eine Einstellungsänderung.`);
-  renderSettingsEditState();
+  tradingSettings.render(status.paper.settings, status.trading_limits);
   renderPositions(status.paper.positions);
   renderSystem(status);
-}
-
-function renderSettingsInputs(settings: PaperPayload["settings"]): void {
-  required<HTMLInputElement>("#slot-input").value = String(settings.slot_count);
-  required<HTMLInputElement>("#notional-input").value = settings.target_notional_usdt;
-  required<HTMLInputElement>("#emergency-input").checked = settings.emergency_stop;
-}
-
-function renderSettingsEditState(): void {
-  text("#settings-edit-state", settingsDraft.saving ? "Wird gespeichert …" : settingsDraft.dirty ? "Ungespeicherte Änderung — ANWENDEN oder verwerfen." : "Keine ungespeicherten Änderungen.");
-  for (const selector of ["#slot-input", "#notional-input", "#emergency-input", "#settings-button", "#settings-discard", "#settings-confirmation"]) {
-    required<HTMLInputElement | HTMLButtonElement>(selector).disabled = settingsDraft.saving || !lastStatus?.paper;
-  }
-  const saved = lastStatus?.paper?.settings ?? null;
-  const draft = readSettingsInputs();
-  const limits = lastStatus?.trading_limits ?? null;
-  text("#settings-saved", saved ? `Gespeichert: ${describeSettings(saved)}` : "Gespeicherte Einstellungen nicht verfügbar.");
-  text("#settings-validation", settingsDraft.dirty && limits ? settingsProblem(draft, limits) ?? "" : "");
-  text("#live-plan", describeLivePlan(saved, draft, settingsDraft.dirty, settingsDraft.saving, limits));
-}
-
-function readSettingsInputs(): TradingSettings {
-  return { slot_count: Number(required<HTMLInputElement>("#slot-input").value), target_notional_usdt: required<HTMLInputElement>("#notional-input").value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked };
 }
 
 function marketCard(market: Market): string {
@@ -460,7 +434,7 @@ async function refreshBacktests(): Promise<void> {
         ? `${formatNumber(summary.ending_equity as string)} USDT · ${formatNumber(summary.return_pct as string)} %`
         : "Kennzahlen nicht verfügbar";
       const version = (manifest.strategy as Record<string, unknown> | undefined)?.version ?? strategy.toUpperCase();
-      const runMode = baseline?.portfolio ? "3×80-Portfolio" : baseline?.batch ? "10×250 isoliert" : `Einzeltest ${Object.keys(baseline?.per_symbol ?? {}).join(", ")}`;
+      const runMode = baseline?.portfolio ? "Portfolio" : baseline?.batch ? "10×250 isoliert" : `Einzeltest ${Object.keys(baseline?.per_symbol ?? {}).join(", ")}`;
       const riskHalt = baseline?.portfolio?.risk_halted_at_utc;
       const riskLabel = riskHalt ? `<strong class="negative">RISIKOHALT im Test · ${formatDate(String(riskHalt), true)}</strong>` : "";
       const window = manifest.data as Record<string, unknown> | undefined;
@@ -476,7 +450,7 @@ async function refreshBacktests(): Promise<void> {
     const portfolioMetric = latestRun?.metrics.baseline?.portfolio?.metrics;
     text("#backtest-detail-title", portfolioMetric ? "Letzter Run · Portfolio-Baseline" : Object.keys(perSymbol).length === 1 ? "Letzter Run · Einzeltest-Baseline" : "Letzter Run · Baseline je Coin");
     required("#backtest-detail-body").innerHTML = portfolioMetric
-      ? `<tr><td class="mono">PORTFOLIO 3×80${latestRun?.metrics.baseline?.portfolio?.risk_halted_at_utc ? " · HALTED" : ""}</td><td>${formatNumber(portfolioMetric.starting_equity as string)}</td><td>${formatNumber(portfolioMetric.ending_equity as string)}</td><td class="${Number(portfolioMetric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(portfolioMetric.return_pct as string)} %</td><td>${String(portfolioMetric.completed_trades ?? "—")}</td><td>${formatNumber(portfolioMetric.max_drawdown_pct as string)} %</td><td>${formatNumber(portfolioMetric.buy_and_hold_ending_equity as string)}</td></tr>`
+      ? `<tr><td class="mono">PORTFOLIO${latestRun?.metrics.baseline?.portfolio?.risk_halted_at_utc ? " · HALTED" : ""}</td><td>${formatNumber(portfolioMetric.starting_equity as string)}</td><td>${formatNumber(portfolioMetric.ending_equity as string)}</td><td class="${Number(portfolioMetric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(portfolioMetric.return_pct as string)} %</td><td>${String(portfolioMetric.completed_trades ?? "—")}</td><td>${formatNumber(portfolioMetric.max_drawdown_pct as string)} %</td><td>${formatNumber(portfolioMetric.buy_and_hold_ending_equity as string)}</td></tr>`
       : Object.keys(perSymbol).length
       ? Object.entries(perSymbol).map(([symbol, metric]) => `<tr><td class="mono">${symbol}</td><td>${formatNumber(metric.starting_equity as string)}</td><td>${formatNumber(metric.ending_equity as string)}</td><td class="${Number(metric.return_pct) >= 0 ? "good" : "negative"}">${formatNumber(metric.return_pct as string)} %</td><td>${String(metric.completed_trades ?? "—")}</td><td>${formatNumber(metric.max_drawdown_pct as string)} %</td><td>${formatNumber(metric.buy_and_hold_ending_equity as string)}</td></tr>`).join("")
       : `<tr><td colspan="7">Noch kein auswertbarer Run vorhanden.</td></tr>`;
@@ -522,50 +496,6 @@ function initializeControls(): void {
     catch (error) { showToast(error instanceof Error ? error.message : String(error), true); }
     finally { button.disabled = false; }
   });
-  for (const selector of ["#slot-input", "#notional-input", "#emergency-input"]) {
-    required<HTMLInputElement>(selector).addEventListener("input", () => {
-      settingsDraft.edit(); renderSettingsEditState();
-      required<HTMLInputElement>("#settings-confirmation").value = "";
-      required("#settings-confirmation-panel").classList.add("hidden");
-    });
-  }
-  required<HTMLButtonElement>("#settings-discard").addEventListener("click", () => {
-    settingsDraft.discard();
-    if (lastStatus?.paper) renderSettingsInputs(lastStatus.paper.settings);
-    required<HTMLInputElement>("#settings-confirmation").value = "";
-    required("#settings-confirmation-panel").classList.add("hidden");
-    renderSettingsEditState();
-  });
-  required<HTMLButtonElement>("#settings-button").addEventListener("click", async () => {
-    const slots = required<HTMLInputElement>("#slot-input");
-    const notional = required<HTMLInputElement>("#notional-input");
-    if (!slots.reportValidity() || !notional.reportValidity()) return;
-    const settings = readSettingsInputs();
-    if (!lastStatus?.trading_limits) { showToast("Freigegebene Grenzen noch nicht geladen.", true); return; }
-    const problem = settingsProblem(settings, lastStatus.trading_limits);
-    if (problem) { showToast(problem, true); return; }
-    const confirmation = required<HTMLInputElement>("#settings-confirmation");
-    if (confirmation.value !== "ANWENDEN") {
-      text("#settings-confirmation-message", `Gemeinsame Handelskonfiguration: ${describeSettings(settings)}. Gilt für neue Einstiege, schaltet Live nicht ein. ANWENDEN eingeben und erneut bestätigen.`);
-      required("#settings-confirmation-panel").classList.remove("hidden");
-      confirmation.focus(); return;
-    }
-    if (!settingsDraft.beginSave()) return;
-    renderSettingsEditState();
-    try {
-      const result = await api<{ settings: TradingSettings }>("/api/trading/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", ...settings }) });
-      ++coreLoadGeneration;
-      settingsDraft.finishSave(true);
-      if (lastStatus?.paper) lastStatus.paper.settings = result.settings;
-      renderSettingsInputs(result.settings);
-      renderSettingsEditState();
-      confirmation.value = "";
-      required("#settings-confirmation-panel").classList.add("hidden");
-      showToast("Gemeinsame Handelseinstellungen gespeichert. Paper übernimmt sie für neue Einstiege; Live bleibt gesondert gesperrt.");
-      await refreshCore();
-    } catch (error) { settingsDraft.finishSave(false); showToast(error instanceof Error ? error.message : String(error), true); }
-    finally { renderSettingsEditState(); }
-  });
   required<HTMLButtonElement>("#backtest-button").addEventListener("click", async () => {
     const symbol = required<HTMLSelectElement>("#backtest-symbol").value;
     const strategy = required<HTMLSelectElement>("#backtest-strategy").value;
@@ -575,8 +505,18 @@ function initializeControls(): void {
   });
 }
 
+const tradingSettings = initializeTradingSettings(async (settings) => {
+  const result = await api<{settings: TradingSettings}>("/api/trading/settings", {
+    method: "POST", body: JSON.stringify({confirmation: "ANWENDEN", ...settings}),
+  });
+  ++coreLoadGeneration;
+  return result.settings;
+}, (settings) => {
+  if (lastStatus?.paper) lastStatus.paper.settings = settings;
+  void refreshCore();
+});
 initializeControls();
-initializeLivePreparation(() => !lastStatus?.paper ? "Gemeinsame Einstellungen noch nicht geladen." : settingsDraft.dirty || settingsDraft.saving ? "Zuerst die gemeinsamen Handelseinstellungen ANWENDEN oder verwerfen. Kein Live-Start mit ungespeichertem Entwurf." : lastStatus.paper.settings.emergency_stop ? "Gemeinsame Einstiegspause ist aktiv. Keine neuen Live-Einstiege." : null);
+initializeLivePreparation(() => tradingSettings.liveBlocker());
 ensureChart();
 void Promise.all([refreshCore(), refreshEvents(), refreshBacktests(), refreshRuntimeLogs()]).then(() => loadChart());
 window.setInterval(() => void refreshCore(), 5_000);

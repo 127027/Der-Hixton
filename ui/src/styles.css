@@ -146,6 +146,22 @@ td.mono { font-family: var(--mono); }
 .live-controls h3 { font-size: .95rem; margin: 12px 0 0; }
 .live-controls.hidden, #live-auth-panel.hidden { display: none; }
 .settings-card label.hidden { display: none; }
+.settings-layout { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 20px; align-items: start; }
+.settings-layout .settings-card { max-width: none; min-width: 0; gap: 14px; }
+.settings-layout h2 { font-size: 1.05rem; }
+.settings-form { display: grid; gap: 12px; }
+.settings-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px; }
+.settings-live-card { grid-column: 1 / -1; }
+.settings-card [role="alert"] { color: var(--red); overflow-wrap: anywhere; }
+.settings-card [role="alert"]:empty, #settings-edit-state:empty { display: none; }
+.settings-card details p { margin: 12px 0; }
+.settings-card details button { margin-top: 10px; }
+.settings-card label.trial-consent { display: flex; align-items: center; gap: 10px; }
+.settings-card input { min-width: 0; width: 100%; }
+.settings-card input[type="checkbox"] { width: auto; }
+.settings-card button { white-space: normal; }
+@media (max-width: 1050px) { .settings-layout { grid-template-columns: 1fr; } }
+@media (max-width: 520px) { .settings-fields { grid-template-columns: 1fr; } }
 .settings-card details summary { cursor: pointer; color: var(--muted); font-size: .8rem; }
 #settings-validation { color: var(--red); }
 #settings-validation:empty { display: none; }

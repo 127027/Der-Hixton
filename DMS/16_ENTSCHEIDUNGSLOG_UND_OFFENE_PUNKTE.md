@@ -1,5 +1,11 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-050 – Vereinfachte Einstellungen und flexible Slotaufteilung, 07.09.2026
+
+Eigentümer verlangt ausdrücklich höhere Slotzahlen (Beispiel 4×45), 1-USDT-Eingabeschritte und einen direkten Übernehmen-Button. Beschluss: 1–10 gleichzeitig offene Slots (zehn mögliche Coins), weiterhin höchstens 240 USDT Positionsbudget und getrennte Guthabenprüfung. Keine Freigabe von 4×80/400/750 USDT und kein Auffüllen des 250-USDT-Paperkontos. Baseline bleibt 3×80; neue Aufteilungen sind keine historischen 3×80-Ergebnisse.
+
+Drei UI-Bereiche Handel / Binance verbinden / Livehandel. Normale Parameter speichert ein Klick; kein Wort ANWENDEN/SPEICHERN nötig. Entfernen eines Keys bleibt eine eindeutige Ja/Abbrechen-Aktion, der 50-USDT-Echtgeldtest erhält eine Checkbox. Sichtbaren Einstiegspause-Schalter entfernen, bestehende interne Risiko-/Sicherheitslatches aber nicht automatisch löschen. Live aus verhindert neue Echtgeldentries und liquidiert nicht. Vorhandenes Passwort beibehalten, Authentifizierungsfehler direkt anzeigen, Key-Felder erst bei verifizierter Sitzung freischalten. Kein Echtgeld-Gate umgehen. Ersetzt die UI-/Slotgrenzen von DEC-049, nicht dessen gemeinsame Konfigurationsquelle.
+
 ## DEC-049 – Gemeinsame Handelseinstellungen, 07.09.2026
 
 Eigentümer verlangt eine zusammenhängende Paper-/Live-Konfiguration und das Entfernen irreführender Doppelungen. Slotanzahl, Positionsgröße, Coin-Profile und Einstiegspause bilden eine gemeinsame Vorgabe; Paper und künftiger normaler Livebetrieb dürfen keine still auseinanderlaufenden Kopien führen. Gleiche Echtzeit-Marktdaten und Handelslogik, getrennte simulierte/echte Konten und Fillnachweise; nur der Backtest verwendet historische Zeit. Gleiche Fills oder Gewinne sind damit nicht zugesagt.

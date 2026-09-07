@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-050 → UI index / trading-settings.ts / live-preparation.ts, zentrale Slotgrenze und API-HTML-Caching: einfache 1–10-Slot-Konfiguration ≤240 USDT, funktionale Formular-/Sessiontests und vier reale Modellpositionen im Engine-Fixture. Aktueller Ablauf ersetzt die bisherigen Einstellungs-Wortbestätigungen. Echtgeldadapter/Abgleich unverändert OFFEN. Nachweis DMS 12/18.
+
 DEC-049 → `ui/src/settings-draft.ts`, `main.ts`, `live-preparation.ts`, `ui/api.py`, `ui/live.py`, `paper/models.py`: gemeinsame persistente Einstellungen, eindeutige Entwurfs-/Speicherstandsanzeige, serverseitige Freigabegrenzen und Entry-Pause statt doppelter Echtgeld-Stopp-Aktionen. Sechs zusätzliche Pythonfälle und drei zusätzliche UI-Tests; insgesamt 196/7. Laptop-/Browsernachweis in DMS 18. Echtgeld-Ausführung bleibt separat offen, Grenze 3/240 nicht erweitert.
 
 DEC-048 → `live/trial.py`, `tests/test_live_trial.py`, Live-Service/API/UI und Tests: Einmalbudget-/Signal-/Exitcontroller fake-getestet, sichtbare gesperrte Key-Felder und explizite 50-USDT-/Live-an/aus-Aktionen implementiert. Start bleibt absichtlich blockiert. **Produktiver Exchange-/Supervisor-/Konto-Reconciler, reale Positionsanzeige und Mehrslotbetrieb OFFEN**. Ein erfolgreicher Fake-Rundlauf ist kein echter Binance-Nachweis. Vollständiger Übergabestand DMS 20.
