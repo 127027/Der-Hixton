@@ -1,5 +1,13 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Gemeinsame Einstellungen – Laptop-Abnahme 0.4.3, 07.09.2026
+
+- Code `a5952af8da5b92e943482601e481a3969557763d`, unveränderter Projektbranch. Nach geprüftem Fast-forward Neustart über `Startbot.bat` um **18:59:50 Europe/Berlin**, keine zusätzliche Startdatei. Backup `backups/hixton-before-v043-20260907.sqlite3`, Integrität `ok`, SHA-256 `0c101dee1be9ef4d7f05ce5f4f463044fb70a71b21b734afe76bf3924306ff50`.
+- Nach Start **alle elf Paper-Tabellen identisch** zum Backup. Um 19:01 Anwendung 0.4.3, HEALTHY/PAPER/LIVE_DISABLED, Cash/Equity 250 USDT, null Positionen/abgeschlossene Trades, unverändert 3×80 und Einstiegspause aus. Soak weiter seit 06.09. 15:16:26, zu diesem Zeitpunkt 27 neue geschlossene Bars je Coin. Kein Reset, kein zusätzlicher Cash und kein echter Orderversand.
+- **196 Python-Tests auch auf dem Laptop bestanden**, ein opt-in Vault-Test übersprungen. Arbeitskopie zusätzlich sieben UI-Tests, TypeScript, Ruff, mypy und Produktionsbuild bestanden. Genau ein aktuelles JS-/CSS-Bundle; alte Builds durch Git ersetzt und dort wiederherstellbar. Keine Daten/Backups/Forschungsbelege gelöscht.
+- Sichtbar auf dem laufenden Bot geprüft: eine gemeinsame Einstellungsgruppe; 1×50-Eingabe erscheint direkt auch bei Live als Entwurf, während gespeichert 3×80 bleibt; Entwurf über mehrere Statuspolls erhalten. Inline-Bestätigung nennt exakt 1×50 ohne vorzeitige Speicherung. 5×80 zeigt klar die bestehende 3/240-Grenze, statt erfolgreiche Übernahme vorzutäuschen. Verwerfen setzt Eingabe und gemeinsame Anzeige auf den echten Speicherstand zurück. Kein testweises Speichern im Betreiberkonto, kein Passwort/Key eingegeben. Browserkonsole ohne Warnung/Fehler.
+- Kein neuer Strategiebacktest nötig für diese Einstellungs-/Darstellungskorrektur; die Coin-Profile und Handelslogik wurden nicht verändert. Kein Nachweis identischer Live-Fills oder künftiger Profitabilität; produktiver Echtgeldadapter/Abgleich bleibt offen.
+
 ## Laptop-Abnahme 0.4.2 – 07.09.2026
 
 - Ausgelieferter Code `994627f574dad21beadd6997a3211d6eead38afd`, bestehender Branch `codex/build-foundation-v1`, Fast-forward ohne Überschreiben fremder Änderungen. Neustart am 07.09. um **14:12:17 Europe/Berlin** über die unveränderte `Startbot.bat`; Anwendung meldet 0.4.2. Keine zusätzliche Startdatei.
