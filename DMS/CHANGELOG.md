@@ -1,5 +1,13 @@
 # DMS-Changelog
 
+## 1.9.0 – 07.09.2026 / Anwendung 0.4.2
+
+- DEC-048 umgesetzt als weiterer Teilstand: Binance-Key-/Secret-Felder immer sichtbar, bis zur lokalen Entsperrung deaktiviert. Erklärung des dreistufigen Ablaufs; kein neues Design oder neuer Starter. Bei Statusfehler/Sitzungsende Eingaben leeren und sperren.
+- Getrennte 50-USDT-Test-/Stopp- und Live-an/aus-Bedienelemente; tatsächliche gespeicherte Paper-Slots als spätere Live-Vorlage anzeigen. Authentifizierte Testanforderung validiert genau 50 und die Bestätigung, lehnt zusätzliche/manipulierte Felder ab und bleibt ohne produktive Anbindung 409. Kein automatischer Start nach Key-Eingabe/Kontoprüfung.
+- `live/trial.py`: persistente globale Einmalberechtigung, frische gleichzeitige Zehn-Coin-Auswahl nach bestehender Rangfolge, echte Wiederverwendung von `TradePolicyGate`, eingefrorener Profilsnapshot, Restart ohne Neukauf, Exit nach Entry-Stopp, keine Freigabe eines weiteren Tests nach Abschluss. Unbekannte Orders werden weiter abgefragt, verpasste Ausstiegssignale nicht als historische Modellfills verbucht.
+- Bericht enthält Order-/Trade-IDs, Original-Fillmengen und Gebühren. Offene Restmengen brauchen Klärung; Abschluss erst nach separater vertrauenswürdiger Reconciliation. Nicht bewertete BNB-Gebühren verhindern erfundene Nettozahlen. Schlüsselwechsel/-entfernung bei angeschlossenem offenen Test verhindert; UI/API verbergen dessen Status nicht als `LIVE_DISABLED`.
+- **Alles zur Handelsausführung weiterhin Offline-/Fake-Börsen-Nachweis.** Produktionsadapter, dauerhafter Runtime-/Konto-Reconciler, echte Tradeanzeige und normaler Mehrslot-Livebetrieb sind nicht fertig. Kein Echtgeldauftrag oder Paper-Reset. 190 Python-Tests bestanden, ein opt-in Vault-Test übersprungen; vier UI-Tests, Ruff, mypy, TypeScript und Build erfolgreich. Fortsetzung DMS 20.
+
 ## 1.8.2 – 07.09.2026 / Anwendung unverändert 0.4.1
 
 - DEC-047: Eigentümer entscheidet die bisher offene Testform. Genau ein Echtgeldtrade nach einem neuen qualifizierten Hixton-Signal aus zehn Coins, 50 USDT Kaufnotional mit separat ausgewiesenen Gebühren, regulärer Coin-Strategieausstieg, danach keine weiteren Einstiege und kein automatischer 3×80-Livestart.

@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import sqlite3
 from collections.abc import Callable
+from decimal import Decimal, InvalidOperation
 from typing import Any
 
 from fastapi import FastAPI, HTTPException, Request
@@ -67,16 +68,24 @@ def install_live_routes(
 
     def get_status(authenticated: bool) -> dict[str, object]:
         soak_ready = False
+        preview: dict[str, object] | None = None
         try:
             with PaperStore(config.database_path) as store:
                 soak_ready = store.load_soak_progress().ready
+                settings = store.load_settings()
+                preview = {
+                    "slot_count": settings.slot_count,
+                    "target_notional_usdt": str(settings.target_notional_usdt),
+                }
         except (RuntimeError, sqlite3.DatabaseError, KeyError):
             pass
-        return service.status(
+        result = service.status(
             authenticated=authenticated,
             soak_ready=soak_ready,
             healthy=supervisor.state.snapshot().health == "HEALTHY",
         )
+        result["paper_settings_preview"] = preview
+        return result
 
     @app.exception_handler(VaultError)
     async def vault_error(_: Request, error: VaultError) -> JSONResponse:
@@ -132,6 +141,7 @@ def install_live_routes(
 
         def save() -> dict[str, object]:
             with service.lock:
+                service.require_settled_for_key_change()
                 service.audit("BINANCE_CREDENTIAL_SAVE_REQUESTED")
                 service.credentials.save(credentials)
                 service.invalidate_check()
@@ -149,6 +159,7 @@ def install_live_routes(
 
         def delete() -> None:
             with service.lock:
+                service.require_settled_for_key_change()
                 service.audit("BINANCE_CREDENTIAL_DELETE_REQUESTED")
                 service.credentials.vault.delete("binance-hmac")
                 service.invalidate_check()
@@ -173,8 +184,31 @@ def install_live_routes(
     @app.post("/api/live/disable")
     async def disable(request: Request) -> dict[str, object]:
         require_session(request)
-        await run_in_threadpool(service.audit, "LIVE_DISABLED_CONFIRMED")
-        return {
-            "state": "LIVE_DISABLED",
-            "message": "Keine Echtgeld-Orders aktiv. Paper bleibt unverändert.",
-        }
+        return await run_in_threadpool(service.stop_entries)
+
+    @app.post("/api/live/trial/start")
+    async def start_trial(request: Request) -> JSONResponse:
+        require_session(request)
+        data = await payload(request)
+        if (
+            set(data) != {"confirmation", "notional_usdt"}
+            or data.get("confirmation") != "TEST 50 USDT"
+            or not isinstance(data.get("notional_usdt"), str)
+        ):
+            raise HTTPException(400, "Genau einen 50-USDT-Test ausdrücklich bestätigen.")
+        try:
+            amount = Decimal(data["notional_usdt"])
+            if not amount.is_finite() or amount != Decimal("50"):
+                raise ValueError
+        except (InvalidOperation, ValueError):
+            raise HTTPException(400, "Einmaltest: ausschließlich 50 USDT Kaufbudget.") from None
+        # No URL parameter, key presence or green preflight bypasses incomplete implementation.
+        # SignalTrial is offline-tested; production adapter/account reconciliation remain open.
+        result = await run_in_threadpool(get_status, True)
+        await run_in_threadpool(service.audit, "TRIAL_REQUEST_BLOCKED")
+        return JSONResponse(result, status_code=409)
+
+    @app.post("/api/live/trial/stop")
+    async def stop_trial(request: Request) -> dict[str, object]:
+        require_session(request)
+        return await run_in_threadpool(service.stop_entries)

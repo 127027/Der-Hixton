@@ -8,6 +8,18 @@ const source = readFileSync(new URL("../src/settings-draft.ts", import.meta.url)
 const compiled = ts.transpileModule(source, { compilerOptions: { target: ts.ScriptTarget.ES2022, module: ts.ModuleKind.ES2022 } }).outputText;
 const { SettingsDraft } = await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
+test("Binance key fields stay discoverable while locked and trial controls are explicit", () => {
+  const html = readFileSync(new URL("../index.html", import.meta.url), "utf8");
+  const live = readFileSync(new URL("../src/live-preparation.ts", import.meta.url), "utf8");
+  assert.match(html, /<fieldset id="live-protected" class="live-controls" disabled>/);
+  assert.doesNotMatch(html, /id="live-protected" class="hidden/);
+  for (const id of ["live-api-key", "live-api-secret", "live-trial-start", "live-trial-off", "live-plan"])
+    assert.ok(html.includes(`id="${id}"`));
+  assert.match(live, /\.disabled = !status\.authenticated/);
+  assert.match(live, /notional_usdt: "50\.00"/);
+  assert.doesNotMatch(live, /(?:localStorage|sessionStorage)\s*[.(]/);
+});
+
 test("polling cannot overwrite an edited form even after blur or cancelled save", () => {
   const draft = new SettingsDraft();
   assert.equal(draft.acceptsPolling, true);

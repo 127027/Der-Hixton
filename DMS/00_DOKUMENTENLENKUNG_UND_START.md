@@ -1,6 +1,6 @@
 # 00 – Dokumentenlenkung und Start
 
-Aktueller Stand **DMS 1.8.2 / Anwendung 0.4.1, DEC-046/047**: Der Eigentümer hat den signalgesteuerten 50-USDT-Einmaltest mit regulärem Strategieausstieg und echtem Abschlussbericht festgelegt; die frühere Rückfrage ist geklärt. Noch keine Runtime-/UI-Ausführung dafür. Vorhanden sind korrigierte Paper-Eingaben, Live-Vorbereitung mit Windows-Schlüsselablage und Read-only-Kontoprüfung sowie ausschließlich offline getestete Orderprimitiven. **Keine Echtgeldfreigabe und kein fertiger Orderadapter.** Die datierten Stände darunter bleiben Historie. Keine Änderung von V6-Profilen oder laufendem Paperkonto; aktive UI-Settings sind aus der API zu lesen, nicht aus dem Standardwert 3×80 abzuleiten.
+Aktueller Stand **DMS 1.9.0 / Anwendung 0.4.2, DEC-048**: Sichtbare, bis zur lokalen Entsperrung deaktivierte API-Key-/Secret-Felder und getrennte Test-/Live-Steuerung eingebaut. Signal-Einmaltest-Controller mit globaler 50-USDT-Einstiegsberechtigung, regulärem Coin-Ausgang, Abschluss-/Restmengenprüfung und Fortführung offener Positionen bei Entry-Stopp ausschließlich mit Fake-Börse getestet. Produktiver Adapter, Runtime-Anschluss, echter automatischer Bestandsabgleich und Live-Abnahme fehlen weiterhin; Startanforderungen bleiben HTTP 409, **kein Echtgeldstart**. Paperkonto/Settings/Profile unverändert. Ältere datierte Stände darunter sind Historie, keine aktuelle Freigabe.
 
 ## Zweck
 

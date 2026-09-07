@@ -157,6 +157,86 @@ def account_fixture():
     return permissions, account, [], markets
 
 
+@pytest.mark.parametrize("amount", ["500", "80", "NaN", "Infinity", "-50"])
+def test_trial_endpoint_rejects_non_fifty_budget(tmp_path: Path, amount: str) -> None:
+    client, _, _ = client_for(tmp_path)
+    unlock(client)
+    response = client.post(
+        "/api/live/trial/start",
+        headers=HEADERS,
+        json={"confirmation": "TEST 50 USDT", "notional_usdt": amount},
+    )
+    assert response.status_code == 400
+
+
+def test_trial_route_is_authenticated_and_fail_closed_without_runtime_adapter(
+    tmp_path: Path,
+) -> None:
+    client, config, service = client_for(tmp_path)
+    before = client.get("/api/status").json()["paper"]
+    body = {"confirmation": "TEST 50 USDT", "notional_usdt": "50.00"}
+    assert client.post("/api/live/trial/start", headers=HEADERS, json=body).status_code == 401
+    unlock(client)
+    save_key(client)
+    response = client.post("/api/live/trial/start", headers=HEADERS, json=body)
+    assert response.status_code == 409
+    assert response.json()["trial_dispatch_available"] is False
+    assert response.json()["paper_settings_preview"] == {
+        "slot_count": 3,
+        "target_notional_usdt": "80.00",
+    }
+    assert response.json()["trial"]["state"] == "NOT_STARTED"
+    assert service.trial is None
+    assert (
+        client.post(
+            "/api/live/trial/start", headers=HEADERS, json={**body, "force_live": True}
+        ).status_code
+        == 400
+    )
+    assert client.post("/api/live/trial/stop", headers=HEADERS, json={}).status_code == 200
+    assert client.get("/api/status").json()["paper"] == before
+    with sqlite3.connect(config.database_path) as connection:
+        assert (
+            connection.execute(
+                "SELECT name FROM sqlite_master WHERE name IN ('signal_trial','trial_intents')"
+            ).fetchall()
+            == []
+        )
+
+
+def test_live_off_does_not_sell_open_trial_and_keys_cannot_orphan_it(tmp_path: Path) -> None:
+    from tests.test_live_trial import arm, open_position, trial
+
+    client, _, service = client_for(tmp_path)
+    unlock(client)
+    save_key(client)
+    controller, exchange = trial(tmp_path / "fake-exchange-only")
+    service.trial = controller
+    arm(controller)
+    open_position(controller)
+    for endpoint in ("/api/live/disable", "/api/live/trial/stop"):
+        response = client.post(endpoint, headers=HEADERS, json={})
+        assert response.status_code == 200
+        assert response.json()["state"] == "EXIT_ONLY"
+    assert controller.report()["state"] == "OPEN"
+    assert len(exchange.submits) == 1
+    assert client.get("/api/status").json()["runtime"]["live_state"] == "TRIAL_OPEN"
+    assert client.get("/api/live/status").json()["trial"]["state"] == "OPEN"
+    response = client.post(
+        "/api/live/credentials/delete",
+        headers=HEADERS,
+        json={"confirmation": "SCHLUESSEL ENTFERNEN"},
+    )
+    assert response.status_code == 400
+    response = client.post(
+        "/api/live/credentials",
+        headers=HEADERS,
+        json={"confirmation": "SCHLUESSEL SPEICHERN", "api_key": KEY, "secret_key": SECRET},
+    )
+    assert response.status_code == 400
+    assert service.credentials.status()["configured"] is True
+
+
 def test_one_by_fifty_persists_without_reset(tmp_path: Path) -> None:
     client, config, _ = client_for(tmp_path)
     before = client.get("/api/status").json()["paper"]

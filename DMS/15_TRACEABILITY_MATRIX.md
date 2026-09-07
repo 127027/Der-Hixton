@@ -1,5 +1,7 @@
 # 15 – Traceability-Matrix
 
+DEC-048 → `live/trial.py`, `tests/test_live_trial.py`, Live-Service/API/UI und Tests: Einmalbudget-/Signal-/Exitcontroller fake-getestet, sichtbare gesperrte Key-Felder und explizite 50-USDT-/Live-an/aus-Aktionen implementiert. Start bleibt absichtlich blockiert. **Produktiver Exchange-/Supervisor-/Konto-Reconciler, reale Positionsanzeige und Mehrslotbetrieb OFFEN**. Ein erfolgreicher Fake-Rundlauf ist kein echter Binance-Nachweis. Vollständiger Übergabestand DMS 20.
+
 DEC-047 → DMS 07/08/12/13/20: signalgesteuerter 50-USDT-Einmaltest und echter Abschlussbericht verbindlich spezifiziert. **Globale Einmalbudget-Freigabe, Runtime-/UI-Anbindung, echter Binance-Adapter und Ausführungsabnahme weiterhin OFFEN.** Vorhandene `live/orders.py`-Tests decken nur die isolierten Orderprimitiven ab, nicht diesen vollständigen Einmaltest. Keine Strategieänderung und kein Teststart durch Dokumentationsfreigabe.
 
 DEC-046, Ergänzung 0.4.1 → `src/hixton/live/orders.py` / `tests/test_live_orders.py`: isolierte Intent-/Submit-Beanspruchungs-/Teilfill-/Reconciliation-Primitiven mit Fake-Börse getestet. Kein produktiver Adapter und keine Verbindung zum UI oder Runtime; vollständige unten genannte Live-Nachweise bleiben offen.

@@ -331,6 +331,11 @@ class OrderJournal:
     def fill_summary(self, intent_id: str) -> dict[str, object]:
         intent, state = self.load(intent_id)
         with self._connect() as connection:
+            order = connection.execute(
+                "SELECT client_id,order_id,exchange_state,updated_at FROM trial_intents "
+                "WHERE intent_id=?",
+                (intent_id,),
+            ).fetchone()
             rows = connection.execute(
                 "SELECT * FROM trial_fills WHERE intent_id=?", (intent_id,)
             ).fetchall()
@@ -344,6 +349,11 @@ class OrderJournal:
         base = intent.symbol.removesuffix("USDT")
         net_received = quantity - fees.get(base, _ZERO) if intent.side == "BUY" else _ZERO
         return {
+            "intent_id": intent_id,
+            "client_order_id": order["client_id"],
+            "exchange_order_id": order["order_id"],
+            "exchange_state": order["exchange_state"],
+            "recorded_at_utc": order["updated_at"],
             "state": state,
             "fill_count": len(rows),
             "gross_quantity": str(quantity),
@@ -351,6 +361,19 @@ class OrderJournal:
             "net_received_base": str(net_received),
             "fees_by_asset": {asset: str(value) for asset, value in fees.items()},
             "fees_fully_valued_in_usdt": set(fees) <= {"USDT"},
+            "fills": [
+                {
+                    key: row[key]
+                    for key in (
+                        "trade_id",
+                        "quantity",
+                        "price",
+                        "commission",
+                        "commission_asset",
+                    )
+                }
+                for row in rows
+            ],
         }
 
 

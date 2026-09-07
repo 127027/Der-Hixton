@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Der Hixton</title>
-    <script type="module" crossorigin src="/assets/index-DgKq2TvI.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-D_Vga9HQ.css">
+    <script type="module" crossorigin src="/assets/index-Bkuj15YL.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CjqrXHr-.css">
   </head>
   <body>
     <div id="app-shell">
@@ -158,15 +158,17 @@
             <strong id="live-state" class="warning">Live bleibt aus — Vorbereitung wird geladen.</strong>
             <p>Paper handelt mit simuliertem Geld. Live würde echte Spot-Orders senden. Ein gespeicherter Schlüssel allein schaltet Live niemals ein. Diese Version unterstützt Schlüsselablage und Kontoprüfung; Echtgeld-Orderversand und Reconciliation sind noch nicht freigegeben.</p>
             <p id="live-credentials-status">Schlüsselstatus wird geladen …</p>
+            <p id="live-key-help">1. Lokales Hixton-Passwort festlegen und entsperren. 2. Die unten sichtbaren Felder „Binance API-Key“ und „Binance Secret-Key“ werden danach freigegeben. 3. Speichern und Konto prüfen. Dein Binance-Login-Passwort wird nicht benötigt.</p>
             <div id="live-auth-panel">
               <label>Lokales Hixton-Passwort (nicht dein Binance-Passwort)<input id="live-password" type="password" minlength="12" maxlength="256" autocomplete="current-password" /></label>
               <label id="live-password-repeat-label">Beim ersten Einrichten wiederholen<input id="live-password-repeat" type="password" maxlength="256" autocomplete="new-password" /></label>
               <p id="live-auth-help">Beim ersten Mal ein eigenes Passwort mit mindestens 12 Zeichen festlegen. Geschützte Sitzung: 15 Minuten, nach Bot-Neustart erneut entsperren.</p>
               <button id="live-unlock" class="button secondary">Live-Einstellungen entsperren</button>
             </div>
-            <div id="live-protected" class="hidden live-controls">
-              <label>Binance API-Key (HMAC)<input id="live-api-key" type="password" autocomplete="off" maxlength="256" spellcheck="false" /></label>
-              <label>Binance Secret-Key<input id="live-api-secret" type="password" autocomplete="off" maxlength="256" spellcheck="false" /></label>
+            <fieldset id="live-protected" class="live-controls" disabled>
+              <legend>Binance API-Key und Secret · nach lokalem Entsperren</legend>
+              <label>Binance API-Key (HMAC)<input id="live-api-key" type="password" autocomplete="off" maxlength="256" spellcheck="false" placeholder="Hier deinen Binance API-Key eingeben" /></label>
+              <label>Binance Secret-Key<input id="live-api-secret" type="password" autocomplete="off" maxlength="256" spellcheck="false" placeholder="Hier das zugehörige Binance Secret eingeben" /></label>
               <p>Nur hier lokal eingeben, niemals im Chat. Ablage im Windows-Anmeldedatenspeicher dieses Benutzers und PCs — nicht im Projekt, in OneDrive oder GitHub. Kein absoluter Schutz gegen Administratoren oder Schadsoftware unter deinem Windows-Konto.</p>
               <p>Eigener Bot-Account/Subaccount, Lesen und Spot-Handel; keine Auszahlungen, Transfers, Margin oder Futures. IP-Beschränkung aktivieren. Bestehende Bestände werden weder verkauft noch als Paper-Positionen übernommen.</p>
               <label>Für Schlüsseländerungen SPEICHERN oder ENTFERNEN eingeben<input id="live-confirmation" type="text" autocomplete="off" placeholder="SPEICHERN / ENTFERNEN" /></label>
@@ -174,10 +176,20 @@
               <button id="live-save-key" class="button secondary">Schlüssel sicher speichern / ersetzen</button>
               <button id="live-delete-key" class="button secondary">Gespeicherten Schlüssel entfernen</button>
               <button id="live-check" class="button secondary">Binance-Konto prüfen — keine Orders</button>
-              <button id="live-request" class="button primary">Live anfordern / Freigabe prüfen</button>
-              <button id="live-off" class="button secondary">Live aus / Anforderung verwerfen</button>
+              <p>Ein erfolgreicher Kontovorcheck bestätigt noch keinen echten Kauf/Verkauf. Orderadapter und getrennte Test-/Live-Abnahme müssen ebenfalls bereit sein.</p>
+              <h3>Einmaltest · genau ein Trade mit 50 USDT</h3>
+              <p>Wartet auf ein neues qualifiziertes Hixton-Signal aus zehn Coins, nutzt das Coin-Profil und beendet den Trade regulär. Danach keine weiteren Einstiege. Kaufbudget 50 USDT, Gebühren separat. Noch keine Echtgeldfreigabe in dieser Ausbaustufe.</p>
+              <label>Für den Einmaltest TEST 50 USDT eingeben<input id="live-trial-confirmation" type="text" autocomplete="off" placeholder="TEST 50 USDT" /></label>
+              <button id="live-trial-start" class="button primary">Test-Trade · 50 USDT · Freigabe prüfen</button>
+              <button id="live-trial-off" class="button secondary">Einmaltest: neue Einstiege stoppen</button>
+              <p id="live-trial-status" role="status">Einmaltest wurde nicht gestartet.</p>
+              <h3>Normaler Livebetrieb · getrennt vom Paperkonto</h3>
+              <p id="live-plan">Gespeicherte Paper-Einstellungen werden für die spätere Live-Freigabe gelesen …</p>
+              <p>Live an übernimmt nach Freigabe die bestätigten Slotgrößen und Coin-Profile, keine Paperpositionen und kein simuliertes Geld. Live aus sperrt neue Einstiege; vorhandene echte Positionen müssen sichtbar weiter überwacht und regelkonform beendet werden. Kein automatischer Sofortverkauf.</p>
+              <button id="live-request" class="button primary">Live an · Freigabe prüfen</button>
+              <button id="live-off" class="button secondary">Live aus · nur neue Einstiege sperren</button>
               <button id="live-lock" class="button secondary">Geschützten Bereich sperren</button>
-            </div>
+            </fieldset>
             <p id="live-result" role="status">Live ist deaktiviert. Der Paper-Test läuft unverändert weiter.</p>
             <ul id="live-blockers"></ul>
             <p>Geplanter erster Echtgeld-Test: höchstens 1×50 USDT, separat bestätigt. 3×80 und später 750 USDT werden nicht automatisch aktiviert. Live-aus darf später offene echte Positionen nicht unsichtbar machen; Ausstieg und Überwachung brauchen eine eigene, geprüfte Regel.</p>

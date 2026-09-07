@@ -13,6 +13,7 @@ from threading import RLock
 
 from hixton.live.binance import BinanceCheckError, BinanceReadOnlyClient
 from hixton.live.credentials import CredentialService, LocalAccess, Vault
+from hixton.live.trial import SignalTrial
 
 RELEASE_BLOCKERS = (
     "Echte Orderausführung, Fill-Ledger und Wiederanlauf-Reconciliation "
@@ -37,6 +38,37 @@ class LivePreparation:
         self._check: dict[str, object] | None = None
         self._check_time = 0.0
         self._next_check = 0.0
+        # No production exchange/reconciler is wired yet. Tests can inject a controller.
+        self.trial: SignalTrial | None = None
+
+    def require_settled_for_key_change(self) -> None:
+        if self.trial is not None and self.trial.report()["has_unsettled"]:
+            raise BinanceCheckError(
+                "Laufender/ungeklärter Einmaltest: Schlüssel nicht entfernen oder ersetzen. "
+                "Zuerst Orders und Bestände vollständig abgleichen."
+            )
+
+    def execution_state(self) -> str:
+        if self.trial is None:
+            return "LIVE_DISABLED"
+        report = self.trial.report()
+        return "TRIAL_" + str(report["state"]) if report["has_unsettled"] else "LIVE_DISABLED"
+
+    def stop_entries(self) -> dict[str, object]:
+        with self.lock:
+            if self.trial is not None:
+                self.trial.disable_entries()
+                report = self.trial.report()
+            else:
+                report = {"state": "NOT_STARTED", "has_unsettled": False}
+            self.audit("LIVE_NEW_ENTRIES_DISABLED")
+            return {
+                "state": "EXIT_ONLY" if report["has_unsettled"] else "LIVE_DISABLED",
+                "trial": report,
+                "message": "Neue Echtgeld-Einstiege gesperrt; keine Position automatisch "
+                "verkauft und keine Order blind storniert. Paper bleibt unverändert. "
+                "Bei offenen/unklaren echten Beständen bleibt deren Betreuung erforderlich.",
+            }
 
     def audit(self, action: str, details: dict[str, object] | None = None) -> None:
         self.database.parent.mkdir(parents=True, exist_ok=True)
@@ -107,7 +139,7 @@ class LivePreparation:
             elif fresh_check.get("account_checks_passed") is not True:
                 blockers.append("Binance-Kontoprüfung enthält Blockierungen.")
             return {
-                "state": "LIVE_DISABLED",
+                "state": self.execution_state(),
                 "order_dispatch_available": False,
                 "ready": False,
                 "authenticated": authenticated,
@@ -119,6 +151,10 @@ class LivePreparation:
                 },
                 "blockers": blockers,
                 "account_check": fresh_check if authenticated else None,
+                "trial_dispatch_available": False,
+                "trial": self.trial.report()
+                if authenticated and self.trial is not None
+                else {"state": "NOT_STARTED" if self.trial is None else "LOCKED"},
                 "first_live_trial": {
                     "slot_count": 1,
                     "target_notional_usdt": "50.00",

@@ -325,13 +325,15 @@ def create_app(
 
     @app.get("/api/status")
     def status() -> dict[str, object]:
+        runtime = _runtime_payload(supervisor.state.snapshot())
+        runtime["live_state"] = app.state.live_preparation.execution_state()
         return {
             "application": "Der Hixton Trading Bot",
             "application_version": __version__,
             "strategy_version": supervisor.strategy.version,
             "strategy_key": supervisor.strategy.key,
             "strategy_profiles": supervisor.strategy.profiles_payload(),
-            "runtime": _runtime_payload(supervisor.state.snapshot()),
+            "runtime": runtime,
             "paper": _paper_payload(supervisor, config),
             "server_time_utc": _iso(datetime.now(UTC)),
             "ui_timezone": config.ui_timezone,
