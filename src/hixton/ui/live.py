@@ -69,6 +69,7 @@ def install_live_routes(
     def get_status(authenticated: bool) -> dict[str, object]:
         soak_ready = False
         preview: dict[str, object] | None = None
+        shared: dict[str, object] | None = None
         try:
             with PaperStore(config.database_path) as store:
                 soak_ready = store.load_soak_progress().ready
@@ -77,6 +78,7 @@ def install_live_routes(
                     "slot_count": settings.slot_count,
                     "target_notional_usdt": str(settings.target_notional_usdt),
                 }
+                shared = {**preview, "emergency_stop": settings.emergency_stop}
         except (RuntimeError, sqlite3.DatabaseError, KeyError):
             pass
         result = service.status(
@@ -85,6 +87,14 @@ def install_live_routes(
             healthy=supervisor.state.snapshot().health == "HEALTHY",
         )
         result["paper_settings_preview"] = preview
+        # One existing persistent record, not a second editable Live configuration.
+        result["trading_settings"] = shared
+        blockers = result["blockers"]
+        assert isinstance(blockers, list)
+        if shared is None:
+            blockers.append("Gemeinsame Handelseinstellungen nicht verfügbar.")
+        elif shared["emergency_stop"]:
+            blockers.append("Gemeinsame Einstiegspause aktiv; keine neuen Einstiege.")
         return result
 
     @app.exception_handler(VaultError)

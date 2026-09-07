@@ -1,5 +1,14 @@
 # 20 – Betriebsrunbook
 
+## Gemeinsame Einstellungen ab 0.4.3
+
+1. Unter „Handelseinstellungen · Paper & Live“ Slots und Positionsgröße einmal eingeben. Die Live-Zusammenfassung zeigt sofort den **Entwurf** neben dem weiterhin geltenden Speicherstand. Bei 4/5 Slots erscheint die bestehende Freigabegrenze 3/240 ausdrücklich; kein stiller Standard-Rückfall.
+2. ANWENDEN bestätigen. Erst eine erfolgreiche Serverantwort ersetzt den gespeicherten Stand überall; Fehler lassen den Entwurf stehen, „Verwerfen“ stellt den Speicherstand wieder her. Kein Kontoreset, keine Kapitalzufuhr. Ein gemeinsamer Datensatz, keine zweite Live-Eingabe. Mit ungespeicherten Änderungen kein Live-Start.
+3. „Einstiegspause“ verhindert nach dem Speichern neue Käufe in Paper und stoppt neue Entries eines angeschlossenen Testcontrollers. Keine Liquidation; Entpausieren ist kein Live-Start. „Live aus · auch Einmaltest-Einstiege stoppen“ betrifft nur neue Echtgeld-Einstiege und lässt Paper laufen. Die frühere separate Einmaltest-Stopp-Schaltfläche entfällt. Ein laufender Bot bleibt für Ausstieg/Überwachung nötig.
+4. Der 1×50-Einmaltest bleibt getrennt vom normalen Budget. API-Key/Secret sind sichtbar und werden erst lokal entsperrt. Echtgeld bleibt wegen fehlendem produktivem Adapter/Abgleich gesperrt; keine Freigabe durch diese UI-Änderung. Technische Gründe sind einklappbar.
+
+Paper arbeitet bereits mit echten Binance-Marktdaten in Echtzeit, aber simuliert Geld und Ausführungen. Live soll dieselben Coin-Regeln und gespeicherten Handelsgrößen verwenden, führt aber eigene echte Positionen; historische Paper-Käufe werden nicht in Binance nachgekauft. Tatsächliche Preise, Gebühren und Fills können vom Modell abweichen. Der Backtest ist die historische Simulation. Die nachfolgende 0.4.2-Anleitung bleibt als datierter Teilstand erhalten.
+
 ## Live-Vorbereitung ab Anwendung 0.4.0
 
 ### Bedienung und tatsächlicher Teilstand 0.4.2

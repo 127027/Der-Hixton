@@ -14,7 +14,7 @@ import {
   type UTCTimestamp,
 } from "lightweight-charts";
 import "./styles.css";
-import { SettingsDraft } from "./settings-draft";
+import { SettingsDraft, describeLivePlan, describeSettings, settingsProblem, type TradingSettings, type TradingLimits } from "./settings-draft";
 import { initializeLivePreparation } from "./live-preparation";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "DOGEUSDT"] as const;
@@ -43,7 +43,7 @@ interface PaperPayload {
     starting_equity_usdt: string;
     pnl_usdt: string;
   };
-  settings: { slot_count: number; target_notional_usdt: string; emergency_stop: boolean };
+  settings: TradingSettings;
   soak: {
     started_at_utc: string;
     calendar_days: number;
@@ -81,6 +81,7 @@ interface StatusResponse {
   strategy_key: string;
   runtime: RuntimePayload;
   paper: PaperPayload | null;
+  trading_limits: TradingLimits;
   server_time_utc: string;
   ui_timezone: string;
 }
@@ -226,15 +227,17 @@ function renderStatus(status: StatusResponse): void {
   text("#active-strategy-label", `BINANCE SPOT · 1H · ${status.strategy_version}`);
   text("#doc-app-version", status.application_version);
   text("#doc-strategy-version", status.strategy_version);
-  if (!status.paper) return;
+  if (!status.paper) { renderSettingsEditState(); return; }
   text("#metric-equity", formatNumber(status.paper.equity_usdt));
   text("#metric-cash", formatNumber(status.paper.cash_usdt));
   const usedSlots = status.paper.positions.reduce((sum, position) => sum + position.slot_count, 0);
   text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - usedSlots)));
   required("#metric-slots").nextElementSibling!.textContent = `von ${status.paper.settings.slot_count}`;
   text("#metric-drawdown", `${formatNumber(status.paper.drawdown_pct)} %`);
-  text("#settings-saved", `Gespeichert: ${status.paper.settings.slot_count} × ${formatNumber(status.paper.settings.target_notional_usdt)} USDT · ${status.paper.settings.emergency_stop ? "Not-Aus aktiv" : "Paper"}`);
   if (settingsDraft.acceptsPolling) renderSettingsInputs(status.paper.settings);
+  required<HTMLInputElement>("#slot-input").max = String(status.trading_limits.max_slots);
+  text("#settings-limits", `Freigegebene Grenze: ${status.trading_limits.max_slots} Slots, zusammen ${formatNumber(status.trading_limits.max_position_budget_usdt)} USDT Positionsbudget. Größere Entwürfe werden ausdrücklich abgewiesen, nicht still auf Standardwerte gesetzt. Kein Kontoreset und keine Einzahlung durch eine Einstellungsänderung.`);
+  renderSettingsEditState();
   renderPositions(status.paper.positions);
   renderSystem(status);
 }
@@ -248,8 +251,18 @@ function renderSettingsInputs(settings: PaperPayload["settings"]): void {
 function renderSettingsEditState(): void {
   text("#settings-edit-state", settingsDraft.saving ? "Wird gespeichert …" : settingsDraft.dirty ? "Ungespeicherte Änderung — ANWENDEN oder verwerfen." : "Keine ungespeicherten Änderungen.");
   for (const selector of ["#slot-input", "#notional-input", "#emergency-input", "#settings-button", "#settings-discard", "#settings-confirmation"]) {
-    required<HTMLInputElement | HTMLButtonElement>(selector).disabled = settingsDraft.saving;
+    required<HTMLInputElement | HTMLButtonElement>(selector).disabled = settingsDraft.saving || !lastStatus?.paper;
   }
+  const saved = lastStatus?.paper?.settings ?? null;
+  const draft = readSettingsInputs();
+  const limits = lastStatus?.trading_limits ?? null;
+  text("#settings-saved", saved ? `Gespeichert: ${describeSettings(saved)}` : "Gespeicherte Einstellungen nicht verfügbar.");
+  text("#settings-validation", settingsDraft.dirty && limits ? settingsProblem(draft, limits) ?? "" : "");
+  text("#live-plan", describeLivePlan(saved, draft, settingsDraft.dirty, settingsDraft.saving, limits));
+}
+
+function readSettingsInputs(): TradingSettings {
+  return { slot_count: Number(required<HTMLInputElement>("#slot-input").value), target_notional_usdt: required<HTMLInputElement>("#notional-input").value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked };
 }
 
 function marketCard(market: Market): string {
@@ -527,25 +540,28 @@ function initializeControls(): void {
     const slots = required<HTMLInputElement>("#slot-input");
     const notional = required<HTMLInputElement>("#notional-input");
     if (!slots.reportValidity() || !notional.reportValidity()) return;
-    const settings = { slot_count: Number(slots.value), target_notional_usdt: notional.value, emergency_stop: required<HTMLInputElement>("#emergency-input").checked };
-    if (settings.slot_count * Number(settings.target_notional_usdt) > 240) { showToast("Positionsbudget darf aktuell 240 USDT nicht überschreiten.", true); return; }
+    const settings = readSettingsInputs();
+    if (!lastStatus?.trading_limits) { showToast("Freigegebene Grenzen noch nicht geladen.", true); return; }
+    const problem = settingsProblem(settings, lastStatus.trading_limits);
+    if (problem) { showToast(problem, true); return; }
     const confirmation = required<HTMLInputElement>("#settings-confirmation");
     if (confirmation.value !== "ANWENDEN") {
-      text("#settings-confirmation-message", `Paper: ${settings.slot_count} × ${settings.target_notional_usdt} USDT · ${settings.emergency_stop ? "Not-Aus EIN" : "Not-Aus AUS"}. ANWENDEN eingeben und erneut bestätigen.`);
+      text("#settings-confirmation-message", `Gemeinsame Handelskonfiguration: ${describeSettings(settings)}. Gilt für neue Einstiege, schaltet Live nicht ein. ANWENDEN eingeben und erneut bestätigen.`);
       required("#settings-confirmation-panel").classList.remove("hidden");
       confirmation.focus(); return;
     }
     if (!settingsDraft.beginSave()) return;
     renderSettingsEditState();
     try {
-      const result = await api<{ settings: PaperPayload["settings"] }>("/api/paper/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", ...settings }) });
+      const result = await api<{ settings: TradingSettings }>("/api/trading/settings", { method: "POST", body: JSON.stringify({ confirmation: "ANWENDEN", ...settings }) });
       ++coreLoadGeneration;
       settingsDraft.finishSave(true);
       if (lastStatus?.paper) lastStatus.paper.settings = result.settings;
       renderSettingsInputs(result.settings);
+      renderSettingsEditState();
       confirmation.value = "";
       required("#settings-confirmation-panel").classList.add("hidden");
-      showToast("Paper-Einstellungen wurden für neue Entries gespeichert.");
+      showToast("Gemeinsame Handelseinstellungen gespeichert. Paper übernimmt sie für neue Einstiege; Live bleibt gesondert gesperrt.");
       await refreshCore();
     } catch (error) { settingsDraft.finishSave(false); showToast(error instanceof Error ? error.message : String(error), true); }
     finally { renderSettingsEditState(); }
@@ -560,7 +576,7 @@ function initializeControls(): void {
 }
 
 initializeControls();
-initializeLivePreparation();
+initializeLivePreparation(() => !lastStatus?.paper ? "Gemeinsame Einstellungen noch nicht geladen." : settingsDraft.dirty || settingsDraft.saving ? "Zuerst die gemeinsamen Handelseinstellungen ANWENDEN oder verwerfen. Kein Live-Start mit ungespeichertem Entwurf." : lastStatus.paper.settings.emergency_stop ? "Gemeinsame Einstiegspause ist aktiv. Keine neuen Live-Einstiege." : null);
 ensureChart();
 void Promise.all([refreshCore(), refreshEvents(), refreshBacktests(), refreshRuntimeLogs()]).then(() => loadChart());
 window.setInterval(() => void refreshCore(), 5_000);

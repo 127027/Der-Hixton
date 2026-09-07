@@ -262,6 +262,79 @@ def test_one_by_fifty_persists_without_reset(tmp_path: Path) -> None:
         assert before[field] == after[field]
 
 
+def test_common_settings_are_immediately_the_live_source_and_survive_restart(
+    tmp_path: Path,
+) -> None:
+    client, config, _ = client_for(tmp_path)
+    before = client.get("/api/status").json()["paper"]
+    payload = {
+        "slot_count": 1, "target_notional_usdt": "50.00", "emergency_stop": False,
+        "confirmation": "ANWENDEN",
+    }
+    assert client.post("/api/trading/settings", json=payload).status_code == 403
+    assert client.post("/api/trading/settings", json=payload, headers=HEADERS).status_code == 200
+    restarted = TestClient(
+        create_app(config, RuntimeSupervisor(config), live_vault=MemoryVault()),
+        base_url="http://127.0.0.1:8765",
+    )
+    for active in (client, restarted):
+        status = active.get("/api/status").json()
+        after = status["paper"]
+        settings = after["settings"]
+        assert settings == {key: value for key, value in payload.items() if key != "confirmation"}
+        live = active.get("/api/live/status").json()
+        assert live["trading_settings"] == settings
+        assert live["first_live_trial"]["target_notional_usdt"] == "50.00"
+        assert live["state"] == "LIVE_DISABLED"
+        assert {key: value for key, value in after.items() if key != "settings"} == {
+            key: value for key, value in before.items() if key != "settings"
+        }
+        assert status["trading_limits"] == {
+            "max_slots": 3, "max_position_budget_usdt": "240.00",
+        }
+
+
+@pytest.mark.parametrize("slot_count,amount", [(4, "80"), (5, "80"), (3, "100")])
+def test_common_settings_reject_unapproved_limits_without_silent_fallback(
+    tmp_path: Path, slot_count: int, amount: str,
+) -> None:
+    client, _, _ = client_for(tmp_path)
+    before = client.get("/api/live/status").json()["trading_settings"]
+    response = client.post("/api/trading/settings", headers=HEADERS, json={
+        "slot_count": slot_count, "target_notional_usdt": amount,
+        "emergency_stop": False, "confirmation": "ANWENDEN",
+    })
+    assert response.status_code == 400
+    assert "1-3 Slots" in response.json()["detail"]
+    assert client.get("/api/live/status").json()["trading_settings"] == before
+
+
+@pytest.mark.parametrize("already_open", [False, True])
+def test_shared_entry_pause_stops_only_entries_and_never_rearms_or_sells(
+    tmp_path: Path, already_open: bool,
+) -> None:
+    from tests.test_live_trial import arm, open_position, trial
+
+    client, _, service = client_for(tmp_path)
+    controller, exchange = trial(tmp_path / "fake-exchange-only")
+    service.trial = controller
+    arm(controller)
+    if already_open:
+        open_position(controller)
+    previous_submits = len(exchange.submits)
+    for pause in (True, False):
+        response = client.post("/api/trading/settings", headers=HEADERS, json={
+            "slot_count": 3, "target_notional_usdt": "80.00",
+            "emergency_stop": pause, "confirmation": "ANWENDEN",
+        })
+        assert response.status_code == 200
+        live = client.get("/api/live/status").json()
+        assert live["trading_settings"]["emergency_stop"] is pause
+        assert any("Einstiegspause aktiv" in reason for reason in live["blockers"]) is pause
+        assert controller.report()["state"] == ("OPEN" if already_open else "CANCELED")
+        assert len(exchange.submits) == previous_submits
+
+
 @pytest.mark.parametrize("notional", ["NaN", "sNaN", "Infinity", "-Infinity", "bad", "0", "-1"])
 def test_invalid_paper_amount_fails_cleanly(tmp_path: Path, notional: str) -> None:
     client, _, _ = client_for(tmp_path)

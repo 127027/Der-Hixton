@@ -7,7 +7,6 @@ interface LiveStatus {
   credentials: { configured: boolean; fingerprint?: string; saved_at_utc?: string };
   blockers: string[];
   account_check: { free_usdt: string; free_bnb: string; checked_at_utc: string; blockers: string[] } | null;
-  paper_settings_preview?: {slot_count: number; target_notional_usdt: string} | null;
   trial?: {state: string; symbol?: string; reason?: string | null; net_pnl_usdt?: string | null};
 }
 
@@ -17,11 +16,11 @@ function element<T extends HTMLElement>(id: string): T {
   return item as T;
 }
 
-export function initializeLivePreparation(): void {
+export function initializeLivePreparation(sharedSettingsBlocker: () => string | null): void {
   let last: LiveStatus | null = null;
   let generation = 0;
   let busy = false;
-  const controls = ["live-unlock", "live-save-key", "live-delete-key", "live-check", "live-request", "live-off", "live-lock", "live-trial-start", "live-trial-off"];
+  const controls = ["live-unlock", "live-save-key", "live-delete-key", "live-check", "live-request", "live-off", "live-lock", "live-trial-start"];
   const message = (value: string): void => { element("live-result").textContent = value; };
   const clearSecrets = (): void => {
     for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret", "live-confirmation", "live-trial-confirmation"]) element<HTMLInputElement>(id).value = "";
@@ -42,16 +41,12 @@ export function initializeLivePreparation(): void {
     element("live-credentials-status").textContent = status.credentials.configured
       ? `Binance-Schlüssel gespeichert${status.credentials.fingerprint ? ` · Fingerprint ${status.credentials.fingerprint}` : ""}.`
       : "Binance API-Schlüssel nicht vorhanden. Zuerst den lokalen Bereich entsperren, dann hier eintragen.";
-    const plan = status.paper_settings_preview;
-    element("live-plan").textContent = plan
-      ? `Gespeichertes Paper-Budget: ${plan.slot_count} × ${plan.target_notional_usdt} USDT. Das ist die spätere Live-Vorlage, noch keine Echtgeldfreigabe. Der Einmaltest bleibt davon unabhängig 1 × 50 USDT.`
-      : "Gespeicherte Paper-Einstellungen derzeit nicht verfügbar; keine Live-Budgetfreigabe.";
     element("live-trial-status").textContent = status.trial?.state && status.trial.state !== "NOT_STARTED"
       ? `Einmaltest: ${status.trial.state}${status.trial.symbol ? ` · ${status.trial.symbol}` : ""}${status.trial.reason ? ` · ${status.trial.reason}` : ""}. Echtgeld-Abnahme nicht durch einen simulierten Test ersetzt.`
       : "Einmaltest nicht gestartet. Dieser Button prüft die Freigabe; bei fehlender Orderanbindung bleiben echte Orders gesperrt.";
     const list = element("live-blockers");
     list.replaceChildren();
-    for (const reason of [...status.blockers, ...(status.account_check?.blockers ?? [])]) {
+    for (const reason of new Set([...status.blockers, ...(status.account_check?.blockers ?? [])])) {
       const item = document.createElement("li"); item.textContent = reason; list.append(item);
     }
   };
@@ -130,6 +125,8 @@ export function initializeLivePreparation(): void {
     message(`Kontoprüfung abgeschlossen: ${String(result.free_usdt)} freie USDT, ${String(result.free_bnb)} freie BNB. ${result.account_checks_passed ? "Kontovorprüfung bestanden, Livefreigabe weiterhin separat." : "Blockierungen unten beachten."}`);
   });
   action("live-request", async () => {
+    const blocker = sharedSettingsBlocker();
+    if (blocker) { message(blocker); return; }
     if (!last?.credentials.configured) {
       message("Binance API-Schlüssel fehlt. Bitte API-Key und Secret hier lokal eingeben und sicher speichern.");
       element<HTMLInputElement>("live-api-key").focus(); return;
@@ -141,6 +138,8 @@ export function initializeLivePreparation(): void {
     message(typeof result.message === "string" ? result.message : "Neue Live-Einstiege gesperrt. Bestehende echte Positionen nicht automatisch verkauft; Paper bleibt unverändert.");
   });
   action("live-trial-start", async () => {
+    const blocker = sharedSettingsBlocker();
+    if (blocker) { message(blocker); return; }
     if (!last?.credentials.configured) {
       message("Für den Einmaltest zuerst Binance API-Key und Secret in den sichtbaren Feldern speichern und das Konto prüfen.");
       element<HTMLInputElement>("live-api-key").focus(); return;
@@ -151,10 +150,6 @@ export function initializeLivePreparation(): void {
     }
     try { await request("trial/start", {confirmation: "TEST 50 USDT", notional_usdt: "50.00"}); }
     finally { element<HTMLInputElement>("live-trial-confirmation").value = ""; }
-  });
-  action("live-trial-off", async () => {
-    const result = await request("trial/stop", {});
-    message(typeof result.message === "string" ? result.message : "Neue Test-Einstiege gesperrt; kein automatischer Verkauf.");
   });
   action("live-lock", async () => { await request("lock", {}); clearSecrets(); message("Geschützter Bereich gesperrt."); });
   window.addEventListener("pagehide", clearSecrets);

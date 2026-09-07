@@ -5,8 +5,8 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta name="color-scheme" content="dark" />
     <title>Der Hixton</title>
-    <script type="module" crossorigin src="/assets/index-Bkuj15YL.js"></script>
-    <link rel="stylesheet" crossorigin href="/assets/index-CjqrXHr-.css">
+    <script type="module" crossorigin src="/assets/index-BVVGzJLM.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-CwFSeLb6.css">
   </head>
   <body>
     <div id="app-shell">
@@ -141,22 +141,26 @@
         </section>
 
         <section id="settings" class="page">
-          <div class="section-heading"><div><p class="eyebrow">KONTROLLIERTE ÄNDERUNG</p><h2>Paper-Einstellungen</h2></div></div>
+          <div class="section-heading"><div><p class="eyebrow">EINE HANDELSKONFIGURATION</p><h2>Handelseinstellungen · Paper & Live</h2></div></div>
           <article class="settings-card">
-            <label>Positionsslots<input id="slot-input" type="number" min="1" max="3" value="3" /></label>
-            <label>Zielnotional je neuem Entry (USDT)<input id="notional-input" type="number" min="5" step="0.01" value="80.00" /></label>
-            <label class="danger-toggle"><input id="emergency-input" type="checkbox" /> Not-Aus: neue Entries blockieren</label>
-            <p>Maximal drei Slots und zusammen 240 USDT Positionsbudget. Neue Konten starten mit 250 USDT einschließlich 10 USDT Anfangsreserve. Änderungen gelten nur für neue Einstiege und setzen das Konto nicht zurück.</p>
+            <p>Einmal einstellen: Slotanzahl, Positionsgröße und Coin-Profile sind die gemeinsame Vorgabe. Paper läuft mit echten Marktdaten in Echtzeit und simuliert Geld/Fills; Live sendet nach Freigabe echte Binance-Orders. Nur der Backtest spielt historische Zeit ab. Preise und Fills können live abweichen.</p>
+            <label>Maximal gleichzeitig belegte Slots<input id="slot-input" type="number" min="1" max="3" value="3" /></label>
+            <label>Positionsgröße je neuem Einstieg (USDT)<input id="notional-input" type="number" min="0.01" step="0.01" value="80.00" /></label>
+            <label class="danger-toggle"><input id="emergency-input" type="checkbox" /> Einstiegspause · keine neuen Käufe</label>
+            <p>Die gespeicherte Pause sperrt neue Einstiege, nicht reguläre Ausstiege. Kein Sofortverkauf und kein Bot-Stopp. Aufheben schaltet Live nicht ein und startet keinen beendeten Einmaltest neu.</p>
+            <p id="settings-limits">Freigegebene Slot- und Budgetgrenzen werden geladen …</p>
+            <p id="settings-validation" class="negative" role="status"></p>
             <label id="settings-confirmation-panel" class="hidden"><span id="settings-confirmation-message">Zum Speichern ANWENDEN eingeben</span><input id="settings-confirmation" type="text" autocomplete="off" placeholder="ANWENDEN" /></label>
             <button id="settings-button" class="button primary">Mit „ANWENDEN“ bestätigen</button>
             <p id="settings-saved">Gespeicherte Einstellungen werden geladen …</p>
             <p id="settings-edit-state" role="status">Keine ungespeicherten Änderungen.</p>
             <button id="settings-discard" class="button secondary">Änderungen verwerfen</button>
           </article>
-          <div class="section-heading live-heading"><div><p class="eyebrow">ECHTGELD · GETRENNTE FREIGABE</p><h2>Binance Live-Vorbereitung</h2></div></div>
+          <div class="section-heading live-heading"><div><p class="eyebrow">AUSFÜHRUNG · GLEICHE HANDELSVORGABE</p><h2>Binance Live-Vorbereitung</h2></div></div>
           <article class="settings-card">
             <strong id="live-state" class="warning">Live bleibt aus — Vorbereitung wird geladen.</strong>
-            <p>Paper handelt mit simuliertem Geld. Live würde echte Spot-Orders senden. Ein gespeicherter Schlüssel allein schaltet Live niemals ein. Diese Version unterstützt Schlüsselablage und Kontoprüfung; Echtgeld-Orderversand und Reconciliation sind noch nicht freigegeben.</p>
+            <p id="live-plan" role="status">Gemeinsame Einstellungen werden geladen …</p>
+            <p>Paper bleibt als Vergleichskonto aktiv, auch bei später eingeschaltetem Live. Kontostände, Positionen und Ordernachweise bleiben getrennt; keine Paperposition wird nachträglich echt gekauft. Echtgeld-Orderversand und Kontoabgleich sind noch nicht freigegeben.</p>
             <p id="live-credentials-status">Schlüsselstatus wird geladen …</p>
             <p id="live-key-help">1. Lokales Hixton-Passwort festlegen und entsperren. 2. Die unten sichtbaren Felder „Binance API-Key“ und „Binance Secret-Key“ werden danach freigegeben. 3. Speichern und Konto prüfen. Dein Binance-Login-Passwort wird nicht benötigt.</p>
             <div id="live-auth-panel">
@@ -181,18 +185,15 @@
               <p>Wartet auf ein neues qualifiziertes Hixton-Signal aus zehn Coins, nutzt das Coin-Profil und beendet den Trade regulär. Danach keine weiteren Einstiege. Kaufbudget 50 USDT, Gebühren separat. Noch keine Echtgeldfreigabe in dieser Ausbaustufe.</p>
               <label>Für den Einmaltest TEST 50 USDT eingeben<input id="live-trial-confirmation" type="text" autocomplete="off" placeholder="TEST 50 USDT" /></label>
               <button id="live-trial-start" class="button primary">Test-Trade · 50 USDT · Freigabe prüfen</button>
-              <button id="live-trial-off" class="button secondary">Einmaltest: neue Einstiege stoppen</button>
               <p id="live-trial-status" role="status">Einmaltest wurde nicht gestartet.</p>
-              <h3>Normaler Livebetrieb · getrennt vom Paperkonto</h3>
-              <p id="live-plan">Gespeicherte Paper-Einstellungen werden für die spätere Live-Freigabe gelesen …</p>
-              <p>Live an übernimmt nach Freigabe die bestätigten Slotgrößen und Coin-Profile, keine Paperpositionen und kein simuliertes Geld. Live aus sperrt neue Einstiege; vorhandene echte Positionen müssen sichtbar weiter überwacht und regelkonform beendet werden. Kein automatischer Sofortverkauf.</p>
-              <button id="live-request" class="button primary">Live an · Freigabe prüfen</button>
-              <button id="live-off" class="button secondary">Live aus · nur neue Einstiege sperren</button>
+              <h3>Live an / aus · keine zweite Slot-Einstellung</h3>
+              <p>Normaler Livebetrieb verwendet ausschließlich die oben gespeicherten Werte. „Live aus“ stoppt neue Echtgeld-Einstiege auch beim Einmaltest, lässt aber vorhandene Positionen regulär auslaufen und Paper weiterlaufen. Dafür muss der Bot weiter eingeschaltet bleiben.</p>
+              <button id="live-request" class="button primary">Live an · gemeinsame Einstellungen prüfen</button>
+              <button id="live-off" class="button secondary">Live aus · auch Einmaltest-Einstiege stoppen</button>
               <button id="live-lock" class="button secondary">Geschützten Bereich sperren</button>
             </fieldset>
             <p id="live-result" role="status">Live ist deaktiviert. Der Paper-Test läuft unverändert weiter.</p>
-            <ul id="live-blockers"></ul>
-            <p>Geplanter erster Echtgeld-Test: höchstens 1×50 USDT, separat bestätigt. 3×80 und später 750 USDT werden nicht automatisch aktiviert. Live-aus darf später offene echte Positionen nicht unsichtbar machen; Ausstieg und Überwachung brauchen eine eigene, geprüfte Regel.</p>
+            <details><summary>Warum Echtgeld noch gesperrt ist</summary><ul id="live-blockers"></ul></details>
           </article>
         </section>
 

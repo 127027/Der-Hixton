@@ -1,5 +1,13 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-049 – Gemeinsame Handelseinstellungen, 07.09.2026
+
+Eigentümer verlangt eine zusammenhängende Paper-/Live-Konfiguration und das Entfernen irreführender Doppelungen. Slotanzahl, Positionsgröße, Coin-Profile und Einstiegspause bilden eine gemeinsame Vorgabe; Paper und künftiger normaler Livebetrieb dürfen keine still auseinanderlaufenden Kopien führen. Gleiche Echtzeit-Marktdaten und Handelslogik, getrennte simulierte/echte Konten und Fillnachweise; nur der Backtest verwendet historische Zeit. Gleiche Fills oder Gewinne sind damit nicht zugesagt.
+
+Umsetzung 0.4.3: sofortige gemeinsame Entwurfsanzeige mit ausdrücklich getrenntem Speicherstand, klarer ANWENDEN-Schritt, Live-Anforderung bei ungespeichertem Entwurf blockiert, ein Echtgeld-aus-Button auch für Einmaltest. Entry-Pause und Live-aus liquidieren nicht. Der bestätigte 1×50-Einmaltest bleibt eine bewusste Ausnahme zum normalen Budget. Technische Echtgeldfreigabe bleibt offen.
+
+Die genannten Beispiele 4×80/5×80 werfen eine gesonderte Budgeterweiterung auf. Bis zu deren ausdrücklicher Klärung bleiben 3 Slots / 240 USDT freigegeben; kein Hochsetzen des 250-USDT-Kontos. Die UI muss diesen Grund statt eines scheinbar erfolgreichen Rückfalls auf 3×80 nennen. Betroffen: DMS 08/12/13/20 und Tests; keine Änderung der Strategieprofile/Backtestmethodik.
+
 ## Neueste Eigentümerentscheidung – DMS 1.7
 
 DEC-045 – BESCHLOSSEN (06.09.2026): Auf ausdrücklichen Eigentümerwunsch wird V6 `HIXTON-V6-COIN-PAPER-1-9734f240e873` als **Paper-Experiment** aktiviert. Der frische Modellaccount startet mit 250 USDT, drei 80-USDT-Slots und 10 USDT Anfangsreserve. Alte Paperpositionen, Ereignisse, Dust und Soak bleiben ausschließlich im geprüften lokalen Vollarchiv; sie werden weder als neue Trades noch als Gewinn übernommen. Normale Neustarts erhalten das Konto weiterhin. Die schwächeren jüngsten/älteren Ergebnisse bleiben bestehen; dies ist keine Robustheits-, Optimalitäts- oder Livefreigabe.

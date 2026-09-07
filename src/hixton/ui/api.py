@@ -25,7 +25,7 @@ from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
 from hixton.live.credentials import Vault
 from hixton.paper.engine import load_paper_portfolio
-from hixton.paper.models import PaperSettings
+from hixton.paper.models import MAX_TRADING_POSITION_BUDGET, MAX_TRADING_SLOTS, PaperSettings
 from hixton.paper.storage import PaperStore
 from hixton.runtime.state import RuntimeSnapshot
 from hixton.runtime.supervisor import RuntimeSupervisor
@@ -335,6 +335,10 @@ def create_app(
             "strategy_profiles": supervisor.strategy.profiles_payload(),
             "runtime": runtime,
             "paper": _paper_payload(supervisor, config),
+            "trading_limits": {
+                "max_slots": MAX_TRADING_SLOTS,
+                "max_position_budget_usdt": str(MAX_TRADING_POSITION_BUDGET),
+            },
             "server_time_utc": _iso(datetime.now(UTC)),
             "ui_timezone": config.ui_timezone,
         }
@@ -398,7 +402,8 @@ def create_app(
             ]
         }
 
-    @app.post("/api/paper/settings")
+    @app.post("/api/trading/settings")
+    @app.post("/api/paper/settings", include_in_schema=False)
     async def paper_settings(request: Request) -> dict[str, object]:
         if not _origin_is_local(request):
             raise HTTPException(status_code=403, detail="Nur lokale UI-Aufrufe sind erlaubt")
@@ -419,8 +424,9 @@ def create_app(
             raise HTTPException(
                 status_code=400,
                 detail=(
-                    "Ungültige Paper-Einstellungen: 1-3 Slots, positives endliches Notional, "
-                    "zusammen höchstens 240 USDT."
+                    f"Ungültige Handelseinstellungen: 1-{MAX_TRADING_SLOTS} Slots, "
+                    "positives endliches Notional, "
+                    f"zusammen höchstens {MAX_TRADING_POSITION_BUDGET} USDT."
                 ),
             ) from None
         with PaperStore(config.database_path) as store:
@@ -431,6 +437,9 @@ def create_app(
             )
             store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             store.save_settings(settings)
+        if settings.emergency_stop:
+            # Entry-only safety action; never liquidate or re-enable on unpause.
+            app.state.live_preparation.stop_entries()
         return {"saved": True, "settings": asdict(settings)}
 
     @app.post("/api/data/sync")

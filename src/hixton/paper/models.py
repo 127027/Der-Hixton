@@ -10,6 +10,9 @@ from enum import StrEnum
 
 from hixton.constants import HIXTON_SPEC_VERSION
 
+MAX_TRADING_SLOTS = 3
+MAX_TRADING_POSITION_BUDGET = Decimal("240.00")
+
 
 class PaperEventStatus(StrEnum):
     FILLED = "FILLED"
@@ -28,9 +31,9 @@ class PaperSettings:
             raise ValueError("paper slot_count must be positive")
         if not self.target_notional_usdt.is_finite() or self.target_notional_usdt <= 0:
             raise ValueError("paper target_notional_usdt must be positive")
-        if Decimal(self.slot_count) * self.target_notional_usdt > Decimal("240.00"):
+        if Decimal(self.slot_count) * self.target_notional_usdt > MAX_TRADING_POSITION_BUDGET:
             raise ValueError("slot_count multiplied by target notional may not exceed 240 USDT")
-        if self.slot_count > 3:
+        if self.slot_count > MAX_TRADING_SLOTS:
             raise ValueError("paper supports at most 3 simultaneous slots")
 
 

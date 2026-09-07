@@ -1,5 +1,7 @@
 # 00 – Dokumentenlenkung und Start
 
+Neuester Stand **DMS 1.9.1 / Anwendung 0.4.3, DEC-049**: eine gemeinsame Handelskonfiguration, direkte Entwurfs-/Speicherstandsanzeige auch bei Live, eindeutig benannte Einstiegspause und ein gemeinsamer Echtgeld-aus-Button. Bestehende Grenze 3 Slots / 240 USDT bleibt bis zur ausdrücklichen Erweiterung bestehen. Paper läuft in echter Marktzeit, nur Geld/Fills werden simuliert. Keine Echtgeldfreigabe, kein Kontoreset und keine Strategieänderung. Nachfolgende datierte Teilstände bleiben Historie.
+
 Aktueller Stand **DMS 1.9.0 / Anwendung 0.4.2, DEC-048**: Sichtbare, bis zur lokalen Entsperrung deaktivierte API-Key-/Secret-Felder und getrennte Test-/Live-Steuerung eingebaut. Signal-Einmaltest-Controller mit globaler 50-USDT-Einstiegsberechtigung, regulärem Coin-Ausgang, Abschluss-/Restmengenprüfung und Fortführung offener Positionen bei Entry-Stopp ausschließlich mit Fake-Börse getestet. Produktiver Adapter, Runtime-Anschluss, echter automatischer Bestandsabgleich und Live-Abnahme fehlen weiterhin; Startanforderungen bleiben HTTP 409, **kein Echtgeldstart**. Paperkonto/Settings/Profile unverändert. Ältere datierte Stände darunter sind Historie, keine aktuelle Freigabe.
 
 ## Zweck

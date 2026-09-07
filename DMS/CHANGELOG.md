@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.9.1 – 07.09.2026 / Anwendung 0.4.3
+
+- DEC-049: gemeinsame Handelseinstellungen statt getrennter Paper-/Live-Budgetdarstellung. Live-Zusammenfassung aktualisiert sich sofort bei Bearbeitung, erfolgreichem Speichern und Verwerfen; Entwurf ist ausdrücklich nicht aktiv. Keine Live-Anforderung mit ungespeicherten Werten.
+- Ein persistenter Speicherweg `/api/trading/settings`, alter Paper-Pfad kompatibel. Live-Status liest denselben Datensatz einschließlich Einstiegspause. Freigabegrenzen serverseitig zentral; größere Slot-/Budgetentwürfe werden verständlich abgewiesen. Bisherige 3/240-Freigabe nicht still erweitert.
+- „Not-Aus“ eindeutig als Einstiegspause beschriftet; ein Echtgeld-aus-Button auch für Einmaltest. Keine Zwangsverkäufe, keine Erneuerung des Einmaltests durch Entpausieren. Technische Blocker einklappbar/dedupliziert. Echte Marktzeit in Paper und Live erläutert; simulierte versus echte Ausführung klar getrennt.
+- 196 Python-Tests und sieben UI-Tests bestanden, ein opt-in Vault-Test übersprungen. Keine Änderung der aktiven Coin-Profile, kein neuer Backtest, kein Paper-Reset und keine Echtgeldfreigabe.
+
 ## 1.9.0 – 07.09.2026 / Anwendung 0.4.2
 
 - Laptop-Abnahme ergänzt in DMS 18: Neustart über den bestehenden Starter, elf Paper-Tabellen unverändert, 190 Python-Tests auch im Laptop-Projekt, 50/50 Chartabfragen und sichtbare gesperrte Key-/Test-/Live-Bereiche geprüft. Keine Echtgeldfreigabe.
