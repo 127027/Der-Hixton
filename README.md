@@ -1,6 +1,8 @@
 # Der Hixton Trading Bot
 
-Aktuell: **Anwendung 0.4.4 / DMS 1.10.0**. Einstellungen sind in drei Bereiche gegliedert: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDT je Trade in 1-USDT-Schritten; insgesamt weiterhin maximal 240 USDT Positionsbudget. **4×45 = 180 USDT ist zulässig.** Ein Klick auf „Übernehmen“ speichert; kein Wort eintippen, kein zweiter Bestätigungsschritt. Kein Kontoreset oder automatischer Echtgeldstart.
+Aktuell: **Anwendung 0.4.5 / DMS 1.10.1**. Einstellungen: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDT je Trade in 1-USDT-Schritten; das gewählte Positionsbudget ist Slots × Betrag, ohne feste 240-USDT-Grenze. Ein Klick auf „Übernehmen“ speichert. Kein Kontoreset, Guthabenauffüllen oder automatischer Echtgeldstart; verfügbare Mittel und Risikogates bleiben maßgeblich. Bestehende Positionen werden bei Änderungen nicht umgebucht.
+
+Binance-Fehler `-1100` der Marktfilterabfrage korrigiert: Die Zehn-Coin-Liste wird ohne JSON-Leerzeichen gesendet. Öffentlich ohne Schlüssel reproduziert: vorher HTTP 400/-1100, korrigiert HTTP 200 mit zehn Symbolen. Live-Schalter markieren den bestätigten Serverzustand; der ausdrücklich beschriftete 50-USDT-Einmaltest braucht kein zusätzliches Häkchen und aktiviert keinen Dauerbetrieb.
 
 Unter „Binance verbinden“ zuerst das bereits eingerichtete lokale Hixton-Passwort verwenden bzw. beim ersten Mal eines festlegen. Rückmeldung steht direkt am Passwortfeld. Erst nach bestätigter Sitzung werden API-Key/Secret freigegeben; speichern und Verbindung prüfen. Vorhandene Passwörter werden nicht zurückgesetzt. Details: [Betriebsrunbook](DMS/20_BETRIEBSRUNBOOK.md).
 

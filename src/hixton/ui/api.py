@@ -25,7 +25,7 @@ from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
 from hixton.live.credentials import Vault
 from hixton.paper.engine import load_paper_portfolio
-from hixton.paper.models import MAX_TRADING_POSITION_BUDGET, MAX_TRADING_SLOTS, PaperSettings
+from hixton.paper.models import MAX_TRADING_SLOTS, PaperSettings
 from hixton.paper.storage import PaperStore
 from hixton.runtime.state import RuntimeSnapshot
 from hixton.runtime.supervisor import RuntimeSupervisor
@@ -337,7 +337,6 @@ def create_app(
             "paper": _paper_payload(supervisor, config),
             "trading_limits": {
                 "max_slots": MAX_TRADING_SLOTS,
-                "max_position_budget_usdt": str(MAX_TRADING_POSITION_BUDGET),
             },
             "server_time_utc": _iso(datetime.now(UTC)),
             "ui_timezone": config.ui_timezone,
@@ -425,8 +424,7 @@ def create_app(
                 status_code=400,
                 detail=(
                     f"Ungültige Handelseinstellungen: 1-{MAX_TRADING_SLOTS} Slots, "
-                    "positives endliches Notional, "
-                    f"zusammen höchstens {MAX_TRADING_POSITION_BUDGET} USDT."
+                    "positives endliches Notional."
                 ),
             ) from None
         with PaperStore(config.database_path) as store:

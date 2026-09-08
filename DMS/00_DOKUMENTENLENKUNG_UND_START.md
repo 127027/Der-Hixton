@@ -1,8 +1,8 @@
 # 00 – Dokumentenlenkung und Start
 
-## Aktuell: DMS 1.10.0 / Anwendung 0.4.4, DEC-050
+## Aktuell: DMS 1.10.1 / Anwendung 0.4.5, DEC-051
 
-Die Einstellungsseite ersetzt den 0.4.3-Ablauf: drei klare Bereiche, ein Klick „Übernehmen“, 1–10 Slots bei unverändert höchstens 240 USDT Positionsbudget, 1-USDT-Schritte. Kein sichtbarer Einstiegspause-/Verwerfen-Schalter und keine Wortbestätigungen. Login-/Key-/Verbindungsfehler stehen direkt an der betroffenen Aktion; erfolgreiche Entsperrung wird über die Sitzung verifiziert. Echtgeld bleibt ohne produktiven Adapter/Abgleich gesperrt. Konten, Passwort und aktive 3×80-Settings bleiben bei der Auslieferung erhalten. Nachfolgende ältere Stände sind historische Entscheidungen und insoweit durch DEC-050 ersetzt.
+Eigentümer wählt Positionsbudget über 1–10 Slots × USDT je Trade ohne feste 240-USDT-Obergrenze. Keine automatische Änderung der gespeicherten Werte oder Kontoguthaben. Live-Anzeige folgt dem Serverzustand, Einmaltest genau ein 50-USDT-Trade ohne Zusatzhäkchen. Binance-Marktfilterabfrage von JSON-Leerzeichen befreit; Fehlerphase und Codes sicher unterscheidbar. Echtgeld bleibt ohne produktiven Adapter/Abgleich gesperrt. Konten, Passwort und Schlüssel bleiben erhalten. Ältere datierte Grenzen/Checkbox-Anleitungen unten sind Historie und durch DEC-051 ersetzt.
 
 Neuester Stand **DMS 1.9.1 / Anwendung 0.4.3, DEC-049**: eine gemeinsame Handelskonfiguration, direkte Entwurfs-/Speicherstandsanzeige auch bei Live, eindeutig benannte Einstiegspause und ein gemeinsamer Echtgeld-aus-Button. Bestehende Grenze 3 Slots / 240 USDT bleibt bis zur ausdrücklichen Erweiterung bestehen. Paper läuft in echter Marktzeit, nur Geld/Fills werden simuliert. Keine Echtgeldfreigabe, kein Kontoreset und keine Strategieänderung. Nachfolgende datierte Teilstände bleiben Historie.
 

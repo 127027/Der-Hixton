@@ -1,5 +1,13 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-051 – Betreiberbudget, eindeutiger Livestatus und Binance-Fehler, 08.09.2026
+
+Eigentümer hebt die feste 240-USDT-Positionsbudgetgrenze ausdrücklich auf. Gewähltes Budget ergibt sich aus 1–10 Slots × Zielnotional; kein zusätzliches Budgetfeld. Beispiel 5×50 = 250 oder später 10×100 = 1000 ist speicherbar. Das Update setzt selbst keine dieser Größen. Baseline bleibt 3×80 bei anfänglich 250 USDT, keine Einzahlung oder Übernahme fremder Binance-Guthaben ins Paperkonto. Ausführung bleibt durch verfügbares Cash, Börsenfilter, Signale und Risikogates begrenzt; Settings gelten für neue Entries, offene Positionen laufen unverändert aus. Das Positionsbudget ist keine garantierte Verlustobergrenze.
+
+Live an/aus optisch nur gemäß bestätigtem Serverzustand markieren; bei unbekanntem Status keine Aktivbehauptung, bei Einmaltest eigenen Zustand anzeigen. Ein ausdrücklich als **genau ein Echtgeld-Testtrade · 50 USDT** beschrifteter Button ersetzt die zusätzliche Checkbox. Festes Einmalbudget und globale restartfeste Einmalberechtigung bleiben; kein Dauerbetrieb durch fehlendes Häkchen oder wiederholtes Klicken. Weiterhin kein produktiver Versand/Runtime-Reconciler, HTTP 409 statt vorgetäuschtem Start.
+
+Defekt der Kontovorprüfung nachgewiesen: `json.dumps(SYMBOLS)` enthielt Leerzeichen. Öffentliche `exchangeInfo`-Anfrage ergab HTTP 400/-1100, kompakte Serialisierung am 08.09.2026 HTTP 200 mit zehn Symbolen. Fix und Transportregression enthalten. Fehlertexte nennen ausschließlich feste Prüfschritt-/Codeerklärungen, niemals Binance-Rohtext/URL/Signatur/Keys. Authentifizierte Kontovorprüfung muss der Betreiber nach dem Update erneut auslösen; öffentlicher Markttest ist kein Nachweis der eigenen Key-Rechte. Ersetzt Budgetgrenze und Checkbox aus DEC-050, nicht Sicherheits- und Echtgeldgates.
+
 ## DEC-050 – Vereinfachte Einstellungen und flexible Slotaufteilung, 07.09.2026
 
 Eigentümer verlangt ausdrücklich höhere Slotzahlen (Beispiel 4×45), 1-USDT-Eingabeschritte und einen direkten Übernehmen-Button. Beschluss: 1–10 gleichzeitig offene Slots (zehn mögliche Coins), weiterhin höchstens 240 USDT Positionsbudget und getrennte Guthabenprüfung. Keine Freigabe von 4×80/400/750 USDT und kein Auffüllen des 250-USDT-Paperkontos. Baseline bleibt 3×80; neue Aufteilungen sind keine historischen 3×80-Ergebnisse.

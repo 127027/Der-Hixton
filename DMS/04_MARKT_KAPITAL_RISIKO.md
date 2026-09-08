@@ -1,6 +1,6 @@
 # 04 – Märkte, Kapital und Risiko
 
-Aktuell DEC-050 / 0.4.4: Baseline 3×80 bleibt unverändert, die UI erlaubt jetzt 1–10 Slots innerhalb desselben maximalen Positionsbudgets von 240 USDT. 4×45 ist zulässig; kein zusätzlicher Cash und keine neue Profitbehauptung. Die folgenden 3×80-Angaben beschreiben die Baseline. Slotanzahl ist eine Obergrenze, kein Auftrag, ohne qualifiziertes Signal zu kaufen. Interne Risikogates bleiben unverändert.
+Aktuell DEC-051 / 0.4.5: Baseline 3×80 bleibt unverändert, die UI erlaubt 1–10 Slots × gewähltes positives Zielnotional ohne feste 240-USDT-Grenze. 5×50 bzw. 10×100 sind speicherbar; kein zusätzlicher Cash und keine neue Profitbehauptung. Das Update verändert die gespeicherten Betreiberwerte nicht. Die folgenden 3×80-Angaben beschreiben die Baseline. Slotanzahl ist eine Obergrenze, kein Auftrag, ohne qualifiziertes Signal zu kaufen. Verfügbare Mittel und interne Risikogates bleiben maßgeblich. Änderungen gelten für neue Entries, nicht als Zwangsabbau vorhandener Positionen; Positionsbudget ist keine garantierte Verlustgrenze.
 
 DEC-045: Der ausdrücklich beauftragte neue V6-Paperaccount beginnt separat mit 250 USDT. Die alte 240-USDT-Kontohistorie bleibt archiviert, nicht umgebucht. 3×80, höchstens ein Slot je Coin, Baselinekosten sowie 5-%-Tagespause und 20-%-Drawdown-Halt bleiben unverändert. Die 10 USDT sind eine Anfangsreserve, kein dauerhaft garantierter Mindestbetrag.
 

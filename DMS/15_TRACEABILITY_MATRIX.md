@@ -1,6 +1,6 @@
 # 15 – Traceability-Matrix
 
-DEC-050 → UI index / trading-settings.ts / live-preparation.ts, zentrale Slotgrenze und API-HTML-Caching: einfache 1–10-Slot-Konfiguration ≤240 USDT, funktionale Formular-/Sessiontests und vier reale Modellpositionen im Engine-Fixture. Aktueller Ablauf ersetzt die bisherigen Einstellungs-Wortbestätigungen. Echtgeldadapter/Abgleich unverändert OFFEN. Nachweis DMS 12/18.
+DEC-051 → `live/binance.py`, `paper/models.py`, `ui/api.py`, UI-Controller: kompakte Marktfilteranfrage und redigierte phasenbezogene Fehler; konfigurierbares Positionsbudget ohne 240-Grenze, kein erfundenes Guthaben; serverbestätigte Live-Markierung; genau ein 50-USDT-Test ohne Checkbox. Nachweis: Transport-/API-/Engine-Regressionen und UI-Zustands-/Speichertests, DMS 12/18. Echtgeldadapter/Abgleich unverändert OFFEN. DEC-050 bleibt Grundlage der drei UI-Bereiche und einfachen Speicherung.
 
 DEC-049 → `ui/src/settings-draft.ts`, `main.ts`, `live-preparation.ts`, `ui/api.py`, `ui/live.py`, `paper/models.py`: gemeinsame persistente Einstellungen, eindeutige Entwurfs-/Speicherstandsanzeige, serverseitige Freigabegrenzen und Entry-Pause statt doppelter Echtgeld-Stopp-Aktionen. Sechs zusätzliche Pythonfälle und drei zusätzliche UI-Tests; insgesamt 196/7. Laptop-/Browsernachweis in DMS 18. Echtgeld-Ausführung bleibt separat offen, Grenze 3/240 nicht erweitert.
 

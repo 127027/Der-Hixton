@@ -1,10 +1,10 @@
 # 08 – UI-/UX-Spezifikation
 
-## Gültiger Einstellungsablauf ab 0.4.4 / DEC-050
+## Gültiger Einstellungsablauf ab 0.4.5 / DEC-051
 
-1. **Handel:** maximal offene Trades (1–10), USDT je Trade (Schritt 1), Gesamtbudget ≤240 USDT, ein Button „Übernehmen“. Kein Verwerfen, keine sichtbare Einstiegspause, keine getippte Bestätigung. Entwurf bleibt bei Polling und Fehler erhalten; erfolgreiche Serverantwort aktualisiert beide Anzeigen. Beispiel 4×45 speichert 180 USDT Positionsbudget, nicht neues Guthaben.
+1. **Handel:** maximal offene Trades (1–10), USDT je Trade (Schritt 1), ein Button „Übernehmen“. Gewähltes Positionsbudget = Slots × Betrag, keine feste 240-USDT-Grenze, kein redundanter Grenz-/Beispieltext. Kein Verwerfen, keine sichtbare Einstiegspause, keine getippte Bestätigung. Entwurf bleibt bei Polling und Fehler erhalten; erfolgreiche Serverantwort aktualisiert beide Anzeigen. Speichern erzeugt kein neues Guthaben.
 2. **Binance verbinden:** echtes Formular mit Enter-Unterstützung; Passwort und Wiederholung nur bei erstmaliger Einrichtung. Fehler/Erfolg direkt daneben. Erfolg erst nach bestätigtem Sessioncookie; Key/Secret danach freigegeben und fokussiert. Key speichern, Verbindung prüfen. Schlüsselverwaltung einklappbar, Entfernen mit Ja/Abbrechen. Keine automatische Passwort-Recovery oder Sicherheitsumgehung.
-3. **Livehandel:** gemeinsame gespeicherte Handelsgröße, Live an/aus, kompakte Rückmeldung. Einmaltest und technische Freigabegründe einklappbar. Test mit Checkbox bestätigt 50 USDT; nur diese Sonderaktion hat das feste Budget. Echtgeld bleibt wegen fehlender produktiver Anbindung gesperrt.
+3. **Livehandel:** gemeinsame gespeicherte Handelsgröße, Live an/aus, kompakte Rückmeldung. Nur bestätigtes Live-an wird grün; Live-aus markiert seinen eigenen Button (Text und aria-pressed). Unbekannter Status markiert keinen, Einmaltest separat. Einmaltest und technische Freigabegründe einklappbar. Ein ausdrücklich beschrifteter Button fordert genau einen 50-USDT-Echtgeldtrade an, keine zusätzliche Checkbox und kein Dauerbetrieb. Echtgeld bleibt wegen fehlender produktiver Anbindung gesperrt.
 
 Auf Desktop zwei Formularspalten, darunter Live; schmale Fenster einspaltig. Bestehende Farben/Typografie außerhalb der Einstellungsseite unverändert. Seite wird mit Cache-Control no-store ausgeliefert; bereits geöffnete alte Tabs müssen einmal neu geladen werden. Nachfolgende 0.4.3-/0.4.2-UI-Beschreibungen sind Historie und durch diesen Ablauf ersetzt.
 

@@ -1,12 +1,14 @@
 # 20 – Betriebsrunbook
 
-## Einstellungen bedienen – gültig ab 0.4.4
+## Einstellungen bedienen – gültig ab 0.4.5 / DEC-051
 
-- Browser einmal neu laden (bei alter Ansicht Strg+F5). Unter Handel zum Beispiel 4 Trades und 45 USDT einstellen, dann **Übernehmen**. Gespeichert steht anschließend 4×45 = 180 USDT. Keine Einzahlung, keine neuen Positionen allein durch Speichern; die laufende Auslieferung setzt selbst keine Betreiberwerte um.
+- Browser einmal neu laden (bei alter Ansicht Strg+F5). Unter Handel gewünschte Slots und USDT pro Trade einstellen, dann **Übernehmen**. Positionsbudget ist deren Produkt, keine feste 240-USDT-Grenze. 5×50 ergibt 250; 10×100 ergibt 1000, aber kein neues Kontoguthaben. Keine neuen Positionen allein durch Speichern; Auslieferung setzt selbst keine Betreiberwerte um.
 - Unter Binance verbinden das **bereits eingerichtete Hixton-Passwort** eingeben und Entsperren oder Enter drücken. Nur bei erster Einrichtung Passwort wiederholen. Nicht das Binance-Passwort verwenden. Fehlermeldung steht direkt darunter, z. B. falsches Passwort oder 60 Sekunden Wartezeit nach zu vielen Versuchen. Kein Passwortreset durch das Update; Zugang nicht durch Umgehen der Prüfung freischalten.
 - Bei bestätigter Sitzung erscheint „Entsperrt“ und API-Key/Secret sind editierbar. Beide eingeben, Schlüssel speichern, Verbindung prüfen. Jede Aktion hat eine eigene sichtbare Rückmeldung. Ablage bleibt Windows Credential Manager; keine echten Schlüssel in Chat, Projekt oder GitHub.
 - Die Verbindungskontrolle liest nur Konto/Rechte. **Live an und 50-USDT-Test sind noch nicht ausführbar**, solange Orderadapter/Abgleich fehlen. Live aus sperrt neue echte Entries, auch für einen angeschlossenen Test; keine Zwangsliquidation, Paper bleibt aktiv. Bot muss für reguläre Ausstiege laufen bleiben.
-- Einmaltest optional aufklappen, Checkbox für genau einen 50-USDT-Echtgeldtrade. Keine Wortbestätigung mehr. Normales Live verwendet die gemeinsamen Werte. Schlüsselverwaltung/Sicherheitsdetails sind einklappbar; Entfernen eines Schlüssels wird separat mit Ja bestätigt.
+- Einmaltest optional aufklappen, ausdrücklich beschrifteten Button für genau einen 50-USDT-Echtgeldtrade verwenden. Keine Checkbox oder Wortbestätigung, kein Dauerbetrieb; aktueller fehlender Echtgeldanschluss verhindert den Start weiterhin. Live an/aus markiert den Serverzustand, nicht den zuletzt angeklickten Button. Normales Live soll die gemeinsamen Werte verwenden. Schlüsselverwaltung/Sicherheitsdetails sind einklappbar; Entfernen eines Schlüssels wird separat mit Ja bestätigt.
+
+Fehlerbehebung 08.09.2026: `-1100` bei Marktfiltern war durch Leerzeichen in der vom Bot gesendeten Zehn-Coin-Liste reproduzierbar. In 0.4.5 korrigiert; hierfür keinen neuen Schlüssel erzeugen. Nach Update erneut entsperren und **Verbindung prüfen**. Ein danach genannter anderer Prüfschritt/Code ist getrennt zu untersuchen. Systemzeit, Parameterformat und Key-/IP-Rechte werden nicht mehr mit derselben pauschalen Empfehlung verwechselt. Keine Secrets in Chat, Logs oder Projektdateien schreiben.
 
 Die bisherigen Anleitungen mit Einstiegspause, Verwerfen und getipptem ANWENDEN sind historische Teilstände, durch den obigen Ablauf ersetzt. Interne Risikoabschaltungen bleiben wirksam.
 

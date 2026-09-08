@@ -19,6 +19,22 @@ from hixton.live.credentials import BinanceCredentials
 _BASE = "https://api.binance.com"
 _PUBLIC = {"/api/v3/time", "/api/v3/exchangeInfo"}
 _PRIVATE = {"/api/v3/account", "/api/v3/openOrders", "/sapi/v1/account/apiRestrictions"}
+_STEPS = {
+    "/api/v3/time": "Systemzeit",
+    "/api/v3/exchangeInfo": "Marktfilter",
+    "/api/v3/account": "Kontostatus",
+    "/api/v3/openOrders": "offene Orders",
+    "/sapi/v1/account/apiRestrictions": "API-Berechtigungen",
+}
+_ERROR_HINTS: dict[int | None, str] = {
+    -1100: "Ungültiges Parameterformat der Anfrage. Kein Nachweis für einen defekten API-Key.",
+    -1102: "Anfrageparameter fehlt oder ist falsch formatiert.",
+    -1021: "Zeitstempel außerhalb der Toleranz. Windows-Uhr synchronisieren.",
+    -1022: "Signatur ungültig. Zuordnung von API-Key und Secret prüfen.",
+    -2014: "API-Key-Format ungültig. Eingabe prüfen.",
+    -2015: "API-Key, Berechtigungen oder IP-Freigabe nicht akzeptiert.",
+    -1003: "Binance-Anfragelimit erreicht. Vor erneutem Prüfen warten.",
+}
 
 
 class BinanceCheckError(RuntimeError):
@@ -79,8 +95,9 @@ class BinanceReadOnlyClient:
                 with suppress(ValueError):
                     retry = min(3600, max(60, int(error.headers.get("Retry-After", "60"))))
             raise BinanceCheckError(
-                f"Binance-Prüfung fehlgeschlagen (HTTP {error.code}, Code {code}). "
-                "Key-Rechte, IP-Freigabe und Kontoverfügbarkeit prüfen.",
+                f"Binance-Prüfung: {_STEPS[path]} fehlgeschlagen "
+                f"(HTTP {error.code}, Code {code}). "
+                + _ERROR_HINTS.get(code, "Binance hat die Anfrage abgewiesen."),
                 retry,
             ) from None
         except (URLError, OSError, ValueError):
@@ -98,7 +115,10 @@ class BinanceReadOnlyClient:
         permissions = self._read("/sapi/v1/account/apiRestrictions")
         account = self._read("/api/v3/account", {"omitZeroBalances": "true"})
         orders = self._read("/api/v3/openOrders")
-        markets = self._read("/api/v3/exchangeInfo", {"symbols": json.dumps(SYMBOLS)})
+        # Binance rejects spaces in this JSON-array parameter with -1100.
+        markets = self._read(
+            "/api/v3/exchangeInfo", {"symbols": json.dumps(SYMBOLS, separators=(",", ":"))}
+        )
         return assess_account(permissions, account, orders, markets, notional)
 
 

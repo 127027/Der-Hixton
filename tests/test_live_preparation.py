@@ -290,11 +290,11 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
             key: value for key, value in before.items() if key != "settings"
         }
         assert status["trading_limits"] == {
-            "max_slots": 10, "max_position_budget_usdt": "240.00",
+            "max_slots": 10,
         }
 
 
-@pytest.mark.parametrize("slots,amount", [(4, "45"), (5, "40"), (10, "24")])
+@pytest.mark.parametrize("slots,amount", [(4, "45"), (5, "50"), (10, "100")])
 def test_expanded_slot_allocation_persists_without_inventing_cash(
     tmp_path: Path, slots: int, amount: str,
 ) -> None:
@@ -353,7 +353,9 @@ def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_f
     assert client.get("/api/status").json()["runtime"]["live_state"] == "LIVE_DISABLED"
 
 
-@pytest.mark.parametrize("slot_count,amount", [(4, "80"), (5, "80"), (3, "100")])
+@pytest.mark.parametrize(
+    "slot_count,amount", [(11, "80"), (0, "80"), (3, "NaN"), (3, "Infinity"), (3, "-50")]
+)
 def test_common_settings_reject_unapproved_limits_without_silent_fallback(
     tmp_path: Path, slot_count: int, amount: str,
 ) -> None:
@@ -364,7 +366,7 @@ def test_common_settings_reject_unapproved_limits_without_silent_fallback(
         "emergency_stop": False, "confirmation": "ANWENDEN",
     })
     assert response.status_code == 400
-    assert "240.00 USDT" in response.json()["detail"]
+    assert "Ungültige Handelseinstellungen" in response.json()["detail"]
     assert client.get("/api/live/status").json()["trading_settings"] == before
 
 
@@ -586,6 +588,55 @@ def test_readonly_transport_signs_and_cannot_reach_order_endpoints() -> None:
         with pytest.raises(BinanceCheckError):
             client._read(path)
     assert len(seen) == 1
+
+
+def test_inspection_sends_compact_public_symbol_array(monkeypatch: pytest.MonkeyPatch) -> None:
+    client = BinanceReadOnlyClient(BinanceCredentials(KEY, SECRET))
+    permissions, account, orders, markets = account_fixture()
+    monkeypatch.setattr("hixton.live.binance.time.time", lambda: 1000.0)
+    responses = {
+        "/api/v3/time": {"serverTime": 1_000_000},
+        "/sapi/v1/account/apiRestrictions": permissions,
+        "/api/v3/account": account,
+        "/api/v3/openOrders": orders,
+        "/api/v3/exchangeInfo": markets,
+    }
+    seen = []
+
+    class Opener:
+        def open(self, request, timeout):
+            seen.append(request)
+            url = urlsplit(request.full_url)
+            if url.path == "/api/v3/exchangeInfo":
+                query = parse_qs(url.query)
+                assert query == {"symbols": [json.dumps(SYMBOLS, separators=(",", ":"))]}
+                assert " " not in query["symbols"][0]
+                assert request.get_header("X-mbx-apikey") is None
+                assert "signature" not in query
+            return io.BytesIO(json.dumps(responses[url.path]).encode())
+
+    client._opener = Opener()
+    assert client.inspect(Decimal("50"))["account_checks_passed"] is True
+    assert len(seen) == 5
+
+
+@pytest.mark.parametrize(
+    "code,hint", [(-1100, "Parameterformat"), (-2015, "IP-Freigabe"), (-1021, "Zeitstempel")]
+)
+def test_http_error_identifies_phase_and_code_without_leaking_payload(code: int, hint: str) -> None:
+    client = BinanceReadOnlyClient(BinanceCredentials(KEY, SECRET))
+
+    class Opener:
+        def open(self, request, timeout):
+            raise HTTPError(request.full_url, 400, SECRET, {},
+                            io.BytesIO(json.dumps({"code": code, "msg": KEY}).encode()))
+
+    client._opener = Opener()
+    with pytest.raises(BinanceCheckError) as error:
+        client._read("/api/v3/exchangeInfo")
+    assert "Marktfilter" in str(error.value) and hint in str(error.value)
+    assert KEY not in str(error.value) and SECRET not in str(error.value)
+    assert "https://" not in str(error.value)
 
 
 def test_http_errors_and_timeouts_redact_secrets() -> None:

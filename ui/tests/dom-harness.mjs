@@ -15,6 +15,9 @@ export const {initializeTradingSettings} = await import(moduleUrl("trading-setti
 class Element {
   value = ""; checked = false; disabled = false; required = false; textContent = "";
   children = []; listeners = new Map(); classes = new Set(); focused = false;
+  attributes = new Map();
+  setAttribute(name, value) { this.attributes.set(name, value); }
+  getAttribute(name) { return this.attributes.get(name); }
   classList = {
     add: (x) => this.classes.add(x), remove: (x) => this.classes.delete(x),
     contains: (x) => this.classes.has(x),
@@ -66,7 +69,7 @@ export function mockLive() {
     else if(url.endsWith("/lock")) {state.authenticated=false;data={authenticated:false};}
     else if(url.endsWith("/check")) data={account_checks_passed:true};
     else if(url.endsWith("/enable") || url.endsWith("/trial/start")) {status=409;data=structuredClone(state);}
-    else if(url.endsWith("/disable")) data={state:"LIVE_DISABLED"};
+    else if(url.endsWith("/disable")) {state.state="LIVE_DISABLED";data={state:"LIVE_DISABLED"};}
     else throw Error(`Unexpected request ${url}`);
     return {ok:status<400,status,json:async()=>data};
   };

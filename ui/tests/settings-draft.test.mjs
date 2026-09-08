@@ -11,7 +11,7 @@ test("simple form: one save, ten slots, one-USDT steps, no pause/discard/typing 
   assert.match(html,/id="notional-input"[^>]+step="1"/);
   assert.match(html,/id="slot-input"[^>]+max="10"/);
   assert.match(html,/id="settings-button"[^>]+>Übernehmen</);
-  assert.doesNotMatch(html,/id="(?:settings-confirmation|settings-discard|emergency-input|live-confirmation|live-trial-confirmation)"/);
+  assert.doesNotMatch(html,/id="(?:settings-confirmation|settings-discard|emergency-input|live-confirmation|live-trial-confirmation|live-trial-consent|settings-limits)"/);
   for(const id of ["live-auth-result","live-key-result","live-check-result","live-result","live-trial-result"])
     assert.ok(html.includes(`id="${id}"`));
   assert.match(html,/<fieldset id="live-protected" class="live-controls" disabled>/);
@@ -24,12 +24,15 @@ test("new controllers avoid native prompts and browser secret storage",()=>{
     assert.doesNotMatch(code,/(localStorage|sessionStorage)\s*[.(]/);
   }
 });
-test("four-by-forty-five fits the same 240-USDT budget; arbitrary slot counts do not",()=>{
-  const limits={max_slots:10,max_position_budget_usdt:"240"};
+test("user chooses position budget, with valid slots and finite positive amounts",()=>{
+  const limits={max_slots:10};
   assert.equal(settingsProblem({slot_count:4,target_notional_usdt:"45",emergency_stop:false},limits),null);
   assert.equal(settingsProblem({slot_count:10,target_notional_usdt:"24",emergency_stop:false},limits),null);
   for(const slot_count of [0,11,1.5]) assert.match(settingsProblem({slot_count,target_notional_usdt:"10"},limits),/1 bis 10/);
-  assert.match(settingsProblem({slot_count:4,target_notional_usdt:"80"},limits),/240,00/);
+  assert.equal(settingsProblem({slot_count:5,target_notional_usdt:"50"},limits),null);
+  assert.equal(settingsProblem({slot_count:10,target_notional_usdt:"100"},limits),null);
+  for(const target_notional_usdt of ["0","-50","NaN","Infinity","1e309"])
+    assert.match(settingsProblem({slot_count:3,target_notional_usdt},limits),/positive, endliche/);
 });
 test("failed save preserves edit and concurrent save cannot start",()=>{
   const draft=new SettingsDraft();draft.edit();

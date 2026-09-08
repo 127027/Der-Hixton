@@ -5,16 +5,14 @@ export interface TradingSettings {
   emergency_stop: boolean;
 }
 
-export interface TradingLimits { max_slots: number; max_position_budget_usdt: string }
+export interface TradingLimits { max_slots: number }
 
 export function settingsProblem(settings: TradingSettings, limits: TradingLimits): string | null {
   const amount = Number(settings.target_notional_usdt);
   if (!Number.isInteger(settings.slot_count) || settings.slot_count < 1 || settings.slot_count > limits.max_slots)
     return `Freigegeben sind 1 bis ${limits.max_slots} Slots. Dieser Entwurf kann nicht übernommen werden.`;
-  if (!Number.isFinite(amount) || amount <= 0)
+  if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(settings.slot_count * amount))
     return "Positionsgröße muss eine positive, endliche USDT-Zahl sein.";
-  if (settings.slot_count * amount > Number(limits.max_position_budget_usdt))
-    return `Positionsbudget über der freigegebenen Grenze von ${formatBudget(limits.max_position_budget_usdt)} USDT. Kein zusätzliches Kontoguthaben durch Einstellen einer größeren Zahl.`;
   return null;
 }
 

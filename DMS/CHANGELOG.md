@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.10.1 – 08.09.2026 / Anwendung 0.4.5
+
+- DEC-051: feste 240-USDT-Grenze aufgehoben, Positionsbudget aus Slots × Betrag; keine automatische Änderung gespeicherter Settings oder Guthaben. UI ohne redundante Grenz-/Beispieltexte.
+- Binance-Marktfilterfehler -1100 öffentlich ohne Schlüssel reproduziert und durch kompakte JSON-Coinliste korrigiert. Fehlerphase/Code mit sicheren festen Meldungen statt pauschalem Key-Rechtehinweis.
+- Live-Markierung folgt ausschließlich dem Serverzustand, unbekannte Zustände nicht als aktiv anzeigen. Ein ausdrücklicher 50-USDT-Einmaltestbutton ohne Checkbox; globale Einmalbegrenzung und noch fehlende Echtgeldfreigabe unverändert.
+- 207 Python-Tests bestanden, ein opt-in Vault-Test übersprungen; 15 UI-Tests, Ruff, mypy, TypeScript und Produktionsbuild erfolgreich. Kein echter Auftrag, keine Schlüsseländerung, kein neuer Backtest oder Profitnachweis. Auslieferungsnachweis DMS 18.
+
 ## 1.10.0 – 07.09.2026 / Anwendung 0.4.4
 
 - DEC-050: Einstellungsseite vollständig in Handel, Binance verbinden und Livehandel gegliedert. Ein Übernehmen-Klick statt getippter Bestätigung, 1-USDT-Schritte, Slotzahl bis zehn bei unverändertem 240-USDT-Positionsbudget.

@@ -33,7 +33,6 @@ export function initializeTradingSettings(save: (value: TradingSettings) => Prom
     item("live-plan").textContent = describeLivePlan(saved, value, draft.dirty, draft.saving, limits);
     if (limits) {
       item<HTMLInputElement>("slot-input").max = String(limits.max_slots);
-      item("settings-limits").textContent = `1–${limits.max_slots} Trades gleichzeitig · zusammen maximal ${Number(limits.max_position_budget_usdt)} USDT. Beispiel: 4 × 45 = 180 USDT. Beträge in USDT, nicht Euro.`;
     }
   };
   for (const id of ["slot-input", "notional-input"])

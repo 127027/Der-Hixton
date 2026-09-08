@@ -25,13 +25,21 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
   const clearSecrets = (): void => {
     for (const id of ["live-password", "live-password-repeat", "live-api-key", "live-api-secret"])
       element<HTMLInputElement>(id).value = "";
-    element<HTMLInputElement>("live-trial-consent").checked = false;
     element("live-delete-panel").classList.add("hidden");
   };
   const updateControls = (): void => {
     element<HTMLButtonElement>("live-unlock").disabled = busy;
     element<HTMLFieldSetElement>("live-protected").disabled = busy || !last?.authenticated;
     for (const id of privateButtons) element<HTMLButtonElement>(id).disabled = busy || !last?.authenticated;
+    // State comes only from the server, never from clicking an action button.
+    const enabled = last?.state === "LIVE_ENABLED";
+    const disabled = last?.state === "LIVE_DISABLED" || last?.state === "EXIT_ONLY";
+    for (const [id, active] of [["live-request", enabled], ["live-off", disabled]] as const) {
+      element(id).setAttribute("aria-pressed", String(active));
+      element(id).classList.toggle("is-selected", active);
+    }
+    message("live-request", enabled ? "● Live ist an" : "Live an");
+    message("live-off", disabled ? "● Live ist aus" : "Live aus");
   };
   const render = (status: LiveStatus): void => {
     if (last?.authenticated && !status.authenticated) {
@@ -39,7 +47,11 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
       message("live-auth-result", "Sitzung abgelaufen oder in einem anderen Fenster ersetzt. Bitte erneut entsperren.");
     }
     last = status;
-    message("live-state", status.state === "LIVE_DISABLED" ? "Live aus · Echtgeld noch nicht freigegeben" : `Einmaltest: ${status.state}`);
+    message("live-state", status.state === "LIVE_DISABLED" ? "Live aus · Echtgeld noch nicht freigegeben"
+      : status.state === "LIVE_ENABLED" ? "Live an · echte Orders aktiv"
+      : status.state === "EXIT_ONLY" ? "Live aus · offene Positionen laufen aus"
+      : status.state.startsWith("TRIAL_") ? `Einmaltest: ${status.state.slice(6)}`
+      : `Ungeklärter Live-Status: ${status.state}`);
     element("live-auth-panel").classList.toggle("hidden", status.authenticated);
     element("live-password-repeat-label").classList.toggle("hidden", status.password_configured);
     element<HTMLInputElement>("live-password-repeat").required = !status.password_configured;
@@ -159,9 +171,7 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
     requireAuth();
     const blocker = sharedSettingsBlocker(); if (blocker) throw new Error(blocker);
     if (!last?.credentials.configured) throw new Error("Zuerst API-Key und Secret speichern und Verbindung prüfen.");
-    if (!element<HTMLInputElement>("live-trial-consent").checked) throw new Error("Den einzelnen 50-USDT-Echtgeldtrade zuerst per Häkchen bestätigen.");
-    try { await request("trial/start", {confirmation:"TEST 50 USDT", notional_usdt:"50.00"}); }
-    finally { element<HTMLInputElement>("live-trial-consent").checked = false; }
+    await request("trial/start", {confirmation:"TEST 50 USDT", notional_usdt:"50.00"});
   });
   window.addEventListener("pagehide", clearSecrets);
   void refresh();

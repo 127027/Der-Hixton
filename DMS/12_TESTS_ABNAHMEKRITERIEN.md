@@ -1,5 +1,11 @@
 # 12 – Tests und Abnahmekriterien
 
+## Abnahme 0.4.5 / DEC-051
+
+207 Python-Tests bestanden, ein opt-in Vault-Test übersprungen; 15 UI-Tests, Ruff, mypy (45 Quelldateien), TypeScript und Produktionsbuild erfolgreich. Neue Regressionen: vollständige simulierte Read-only-Prüfkette mit kompakter Zehn-Coin-Liste ohne Key im öffentlichen Request; phasen-/codespezifische Fehler ohne Secret-/Rohtextleak; 250-/1000-USDT-Aufteilungen über API/UI, Neustartpersistenz ohne Cashmutation; Engine überschreitet vorhandenes Cash auch bei größerem Plan nicht. Ungültige Slots/NaN/Infinity/negative Beträge weiter abweisen.
+
+UI-Harness prüft Live-aus → verweigertes Live-an ohne falsches Grün, ausschließlich hypothetisch bestätigtes Live-an, Auslaufen, Testzustand und unbekannten Status ohne Auswahl. Ein expliziter Klick sendet ausschließlich die feste 50-USDT-Einmalanforderung, niemals normales Live-enable. Bestehende globale Einmal-, Exit-, Replay- und Neustarttests bleiben erhalten. Öffentlicher echter Markttest: alter Request HTTP 400/-1100, kompakter Request HTTP 200 mit zehn Symbolen. **Kein authentifizierter Betreiber-Accountnachweis, kein Binance-Ordertest und keine Echtgeldfreigabe.** Ältere Prüfstände unten sind Historie.
+
 ## Abnahme 0.4.4 / DEC-050
 
 201 Python-Tests und 13 UI-Tests; ein opt-in Vault-Test im Standardsatz übersprungen. Neue API-/Persistenzfälle 4×45, 5×40, 10×24 nach Neustart ohne Kontoveränderung; Engine eröffnet in einem kontrollierten Fünf-Signal-Fall genau vier 45-USDT-Positionen und blockiert die fünfte. Passwort-Einrichtung, erneutes Entsperren nach Prozessrestart, Fehler, Key-Speicherung, Fake-Kontovorprüfung und weiterhin verweigerter Live-Start geprüft.

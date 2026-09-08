@@ -147,7 +147,6 @@
                   <label>Maximal offene Trades<input id="slot-input" type="number" min="1" max="10" step="1" value="3" required /></label>
                   <label>USDT pro Trade<input id="notional-input" type="number" min="1" step="1" value="80" required /></label>
                 </div>
-                <p id="settings-limits">Budget wird geladen …</p>
                 <p id="settings-validation" class="negative" role="alert"></p>
                 <button id="settings-button" type="submit" class="button primary">Übernehmen</button>
               </form>
@@ -195,16 +194,15 @@
               <strong id="live-state" class="warning">Status wird geladen …</strong>
               <p id="live-plan">Handelsgröße wird geladen …</p>
               <div class="settings-fields">
-                <button id="live-request" type="button" class="button primary" disabled>Live an</button>
-                <button id="live-off" type="button" class="button secondary" disabled>Live aus</button>
+                <button id="live-request" type="button" class="button secondary" aria-pressed="false" disabled>Live an</button>
+                <button id="live-off" type="button" class="button secondary" aria-pressed="false" disabled>Live aus</button>
               </div>
               <p id="live-result" role="alert">Echte Orders sind noch nicht verfügbar. Paper läuft weiter.</p>
               <p>Live aus stoppt neue Echtgeld-Trades. Offene Positionen laufen regulär aus; der Bot muss dafür eingeschaltet bleiben. Paper nutzt echte Marktdaten und Echtzeit, aber simuliertes Geld.</p>
               <details>
                 <summary>Einmaliger 50-USDT-Test</summary>
                 <p>Ein neues Signal aus zehn Coins abwarten, genau einen Trade mit 50 USDT Kaufbudget ausführen und regulär aussteigen. Gebühren separat. Danach keine weiteren Einstiege.</p>
-                <label class="trial-consent"><input id="live-trial-consent" type="checkbox" /> Genau einen Echtgeld-Trade mit 50 USDT bestätigen.</label>
-                <button id="live-trial-start" type="button" class="button secondary" disabled>50-USDT-Test starten</button>
+                <button id="live-trial-start" type="button" class="button secondary" disabled>Genau 1 Echtgeld-Testtrade · 50 USDT starten</button>
                 <p id="live-trial-status" role="status">Nicht gestartet.</p>
                 <p id="live-trial-result" role="alert"></p>
               </details>

@@ -81,20 +81,60 @@ test("unlock does not claim success when cookie/session verification fails",asyn
   } finally {live.dispose();ui.restore();}
 });
 
-test("test trade needs a checkbox and remains blocked by genuine missing implementation",async()=>{
+test("one explicit click requests exactly one fifty-USDT test, never continuous trading",async()=>{
   const mock=mockLive();mock.state.credentials.configured=true;
   const ui=harness(mock.fetcher),live=initializeLivePreparation(()=>null);
   try {
     await live.refresh();await unlockUI(ui);
     await ui.node("live-trial-start").fire("click");
-    assert.match(ui.node("live-trial-result").textContent,/Häkchen/);
-    assert.equal(mock.calls.filter(c=>c.url.endsWith("/trial/start")).length,0);
-    ui.node("live-trial-consent").checked=true;
-    await ui.node("live-trial-start").fire("click");
+    assert.equal(mock.calls.filter(c=>c.url.endsWith("/trial/start")).length,1);
+    assert.equal(mock.calls.filter(c=>c.url.endsWith("/enable")).length,0);
     assert.deepEqual(mock.calls.find(c=>c.url.endsWith("/trial/start")).body,{confirmation:"TEST 50 USDT",notional_usdt:"50.00"});
     assert.match(ui.node("live-trial-result").textContent,/Noch nicht startbereit/);
-    assert.equal(ui.node("live-trial-consent").checked,false);
   } finally {live.dispose();ui.restore();}
+});
+
+test("live state selection follows server acknowledgement, rejects false green and clears on failure",async()=>{
+  const mock=mockLive();mock.state.credentials.configured=true;
+  let offline=false;
+  const ui=harness((...args)=>{if(offline) throw Error("offline");return mock.fetcher(...args);});
+  const live=initializeLivePreparation(()=>null);
+  const selected=id=>ui.node(id).getAttribute("aria-pressed");
+  try {
+    await live.refresh();await unlockUI(ui);
+    assert.equal(selected("live-off"),"true");assert.equal(selected("live-request"),"false");
+    await ui.node("live-request").fire("click"); // Real missing-adapter 409 is not an activation.
+    assert.equal(selected("live-request"),"false");
+    mock.state.state="LIVE_ENABLED";await live.refresh(); // Hypothetical confirmed server state, no exchange.
+    assert.equal(selected("live-request"),"true");assert.match(ui.node("live-state").textContent,/Live an/);
+    await ui.node("live-off").fire("click");
+    assert.equal(selected("live-off"),"true");assert.equal(selected("live-request"),"false");
+    mock.state.state="EXIT_ONLY";await live.refresh();
+    assert.equal(selected("live-off"),"true");assert.match(ui.node("live-state").textContent,/laufen aus/);
+    mock.state.state="TRIAL_ENTRY_PENDING";await live.refresh();
+    assert.equal(selected("live-off"),"false");assert.equal(selected("live-request"),"false");
+    assert.match(ui.node("live-state").textContent,/Einmaltest/);
+    offline=true;await live.refresh();
+    assert.equal(selected("live-request"),"false");assert.equal(selected("live-off"),"false");
+    assert.match(ui.node("live-state").textContent,/unbekannt/);
+  } finally {live.dispose();ui.restore();}
+});
+
+test("250 and 1000 USDT planned allocations can be explicitly saved in the shared form",async()=>{
+  const ui=harness(()=>{});const writes=[];
+  const settings=initializeTradingSettings(async value=>{writes.push(value);return value;},()=>{});
+  try {
+    settings.render({slot_count:3,target_notional_usdt:"80",emergency_stop:false},{max_slots:10});
+    for(const [slots,amount] of [[5,50],[10,100]]) {
+      ui.node("slot-input").value=String(slots);await ui.node("slot-input").fire("input");
+      ui.node("notional-input").value=String(amount);await ui.node("notional-input").fire("input");
+      await ui.node("trading-form").fire("submit");
+      assert.equal(ui.node("settings-validation").textContent,"");
+      assert.equal(settings.liveBlocker(),null);
+    }
+    assert.equal(writes.length,2);
+    assert.match(ui.node("live-plan").textContent,/1.000,00 USDT/);
+  } finally {ui.restore();}
 });
 
 test("one submit applies 4x45, preserves draft across polls and blocks duplicate submits",async()=>{
@@ -102,7 +142,7 @@ test("one submit applies 4x45, preserves draft across polls and blocks duplicate
   let resolveSave, writes=0, accepted;
   const settings=initializeTradingSettings(value=>{writes++;return new Promise(resolve=>{resolveSave=()=>resolve(value);});},value=>{accepted=value;});
   const original={slot_count:3,target_notional_usdt:"80.00",emergency_stop:false};
-  const limits={max_slots:10,max_position_budget_usdt:"240.00"};
+  const limits={max_slots:10};
   try {
     settings.render(original,limits);
     ui.node("slot-input").value="4";await ui.node("slot-input").fire("input");
@@ -121,14 +161,15 @@ test("one submit applies 4x45, preserves draft across polls and blocks duplicate
   } finally {ui.restore();}
 });
 
-test("save failure and excess budget stay visible without reverting the user's values",async()=>{
+test("save failure and invalid amount stay visible without reverting the user's values",async()=>{
   const ui=harness(()=>{});
   const settings=initializeTradingSettings(async()=>{throw Error("Speichern fehlgeschlagen");},()=>{throw Error("Must not apply");});
   try {
-    settings.render({slot_count:3,target_notional_usdt:"80",emergency_stop:false},{max_slots:10,max_position_budget_usdt:"240"});
+    settings.render({slot_count:3,target_notional_usdt:"80",emergency_stop:false},{max_slots:10});
     ui.node("slot-input").value="4";await ui.node("slot-input").fire("input");
+    ui.node("notional-input").value="-1";await ui.node("notional-input").fire("input");
     await ui.node("trading-form").fire("submit");
-    assert.match(ui.node("settings-validation").textContent,/240,00 USDT/);
+    assert.match(ui.node("settings-validation").textContent,/positive, endliche/);
     ui.node("notional-input").value="45";await ui.node("notional-input").fire("input");
     await ui.node("trading-form").fire("submit");
     assert.match(ui.node("settings-validation").textContent,/Speichern fehlgeschlagen/);
@@ -168,7 +209,6 @@ test("unsaved settings block both trading start controls without sending request
   try {
     await live.refresh();await unlockUI(ui);
     await ui.node("live-request").fire("click");
-    ui.node("live-trial-consent").checked=true;
     await ui.node("live-trial-start").fire("click");
     assert.equal(mock.calls.filter(c=>/\/(enable|trial\/start)$/.test(c.url)).length,0);
     assert.match(ui.node("live-result").textContent,/Übernehmen/);

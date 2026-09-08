@@ -244,9 +244,22 @@ def test_exit_frees_slot_before_same_bar_entry(tmp_path: Path) -> None:
         }
 
 
-def test_paper_settings_enforce_shared_capital() -> None:
-    with pytest.raises(ValueError, match="240"):
-        PaperSettings(slot_count=4, target_notional_usdt=Decimal("80"))
+def test_larger_planned_budget_never_creates_account_cash(tmp_path: Path) -> None:
+    path = tmp_path / "paper.sqlite3"
+    start = datetime(2026, 1, 1, 0, tzinfo=UTC)
+    initialize_paper_at_latest(str(path), _mapping(start), at=start)
+    with PaperStore(path) as store:
+        before = store.load_account().cash_usdt
+        store.save_settings(PaperSettings(slot_count=10, target_notional_usdt=Decimal("100")))
+        assert store.load_account().cash_usdt == before
+    signal_time = start + timedelta(hours=1)
+    points = {symbol: (_point(symbol, signal_time, flip_up=True, strength=1.0),)
+              for symbol in SYMBOLS}
+    process_new_closed_points(str(path), points, _rules())
+    with PaperStore(path) as store:
+        assert store.load_account().cash_usdt >= 0
+        assert sum(p.cost_basis_usdt for p in store.load_positions()) <= before
+        assert len(store.load_positions()) < 10
 
 
 def test_four_slots_of_45_really_open_four_positions_and_keep_the_budget(tmp_path: Path) -> None:
