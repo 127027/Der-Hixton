@@ -67,7 +67,7 @@ jobs:
           v=strategy_definition('v6'); assert v.quote_asset=='USDC' and v.symbols==SYMBOLS
           c=load_project_config(Path('config/examples/config.example.json'),project_root=Path('.').resolve()); assert c.database_path.name=='hixton-usdc.sqlite3'
           PY
-          ! grep -RInE 'USDT|usdt' src config ui --exclude-dir=node_modules
+          ! grep -RInE 'USDT|usdt' src/hixton config ui --exclude-dir=node_modules
       - name: Commit verified migration
         run: |
           git config user.name 'github-actions[bot]'
