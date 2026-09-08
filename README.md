@@ -2,15 +2,15 @@
 
 ## Aktuell: Anwendung 0.4.6 / DMS 1.11.0
 
-USDC-Migration in Prüfung, **noch nicht aktiviert**. Der bestehende V6-Paperbot bleibt ein USDT-Modellkonto. V7 prüft die unveränderten Coin-Profile auf echten USDC-Kerzen separat; alte Konten, Keys und USDT-Backtests werden nicht umbenannt oder zurückgesetzt. Ergebnisse, Grenzen und nächste Arbeitsschritte: [USDC-Prüfstand V7](backtests/v7/README.md).
+USDC-Migration **aktiv**. Der aktuelle V6-Paperbot nutzt ausschließlich die zehn USDC-Märkte und die getrennte `data/hixton-usdc.sqlite3`. Historische USDT-Berichte bleiben historische Nachweise. Ergebnisse, Grenzen und nächste Arbeitsschritte: [USDC-Prüfstand V7](backtests/v7/README.md).
 
-Die Übersicht zeigt den letzten Hixton-Trendwechsel je Coin. Ein grüner Trend ist kein neuer Kaufauftrag: Ein frisch gestartetes Cash-Konto kauft alte Signale nicht nach. Der geplante spätere Einmaltest soll **50 USDC** nutzen; der bisherige USDT-Livebereich ist noch nicht migriert und bleibt technisch gesperrt. Es gibt keinen echten Binance-Testtrade und keine 24/7-Livefreigabe.
+Die Übersicht zeigt den letzten Hixton-Trendwechsel je Coin. Ein grüner Trend ist kein neuer Kaufauftrag: Ein frisch gestartetes Cash-Konto kauft alte Signale nicht nach. Der geplante spätere Einmaltest soll **50 USDC** nutzen; der Livebereich ist auf USDC vorbereitet, bleibt aber bis zum produktiven Orderadapter und zur Reconciliation technisch gesperrt. Es gibt keinen echten Binance-Testtrade und keine 24/7-Livefreigabe.
 
 ## Weiterhin gültige Bedienung seit 0.4.5
 
-Aktuell: **Anwendung 0.4.5 / DMS 1.10.1**. Einstellungen: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDT je Trade in 1-USDT-Schritten; das gewählte Positionsbudget ist Slots × Betrag, ohne feste 240-USDT-Grenze. Ein Klick auf „Übernehmen“ speichert. Kein Kontoreset, Guthabenauffüllen oder automatischer Echtgeldstart; verfügbare Mittel und Risikogates bleiben maßgeblich. Bestehende Positionen werden bei Änderungen nicht umgebucht.
+Aktuell: **Anwendung 0.4.5 / DMS 1.10.1**. Einstellungen: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDC je Trade in 1-USDC-Schritten; das gewählte Positionsbudget ist Slots × Betrag, ohne feste 240-USDC-Grenze. Ein Klick auf „Übernehmen“ speichert. Kein Kontoreset, Guthabenauffüllen oder automatischer Echtgeldstart; verfügbare Mittel und Risikogates bleiben maßgeblich. Bestehende Positionen werden bei Änderungen nicht umgebucht.
 
-Binance-Fehler `-1100` der Marktfilterabfrage korrigiert: Die Zehn-Coin-Liste wird ohne JSON-Leerzeichen gesendet. Öffentlich ohne Schlüssel reproduziert: vorher HTTP 400/-1100, korrigiert HTTP 200 mit zehn Symbolen. Live-Schalter markieren den bestätigten Serverzustand; der ausdrücklich beschriftete 50-USDT-Einmaltest braucht kein zusätzliches Häkchen und aktiviert keinen Dauerbetrieb.
+Binance-Fehler `-1100` der Marktfilterabfrage korrigiert: Die Zehn-Coin-Liste wird ohne JSON-Leerzeichen gesendet. Öffentlich ohne Schlüssel reproduziert: vorher HTTP 400/-1100, korrigiert HTTP 200 mit zehn Symbolen. Live-Schalter markieren den bestätigten Serverzustand; der ausdrücklich beschriftete 50-USDC-Einmaltest braucht kein zusätzliches Häkchen und aktiviert keinen Dauerbetrieb.
 
 Unter „Binance verbinden“ zuerst das bereits eingerichtete lokale Hixton-Passwort verwenden bzw. beim ersten Mal eines festlegen. Rückmeldung steht direkt am Passwortfeld. Erst nach bestätigter Sitzung werden API-Key/Secret freigegeben; speichern und Verbindung prüfen. Vorhandene Passwörter werden nicht zurückgesetzt. Details: [Betriebsrunbook](DMS/20_BETRIEBSRUNBOOK.md).
 
@@ -24,7 +24,7 @@ Zentrale Projektablage: `https://github.com/127027/Der-Hixton`
 
 ## Schnellstart unter Windows
 
-Prüfstand 06.09.2026 (DMS 1.7.1 / Anwendung 0.3.2): V6 wird auf Eigentümerwunsch mit einem sauberen neuen 250-USDT-Paperkonto betrieben. 3×80 USDT können gleichzeitig eingesetzt werden; 10 USDT sind die Anfangsreserve. Alte Paperhistorie wird gesichert, nicht als neuer Erfolg mitgezählt. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster. **Paper-Experiment, nicht nachgewiesen optimal und nicht live-reif.**
+Prüfstand 06.09.2026 (DMS 1.7.1 / Anwendung 0.3.2): V6 wird auf Eigentümerwunsch mit einem sauberen neuen 250-USDC-Paperkonto betrieben. 3×80 USDC können gleichzeitig eingesetzt werden; 10 USDT sind die Anfangsreserve. Alte Paperhistorie wird gesichert, nicht als neuer Erfolg mitgezählt. Der [V6-Vergleich](backtests/v6/README.md) verbessert das volle Portfoliofenster, verschlechtert aber jüngstes und älteres Fenster. **Paper-Experiment, nicht nachgewiesen optimal und nicht live-reif.**
 
 Im Repository existiert genau ein menschlicher Programmstarter:
 
@@ -41,21 +41,21 @@ Der erste Start lädt und prüft für alle zehn Märkte drei Jahre `1h`-Daten pl
 - Binance Spot für BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT und DOGE gegen USDT.
 - Versionierte V1- und V2-Strategien: VIDYA/CMO, SMA-Nachglättung, Wilder-ATR, Bänder und ausschließlich geschlossene `1h`-Bars.
 - Vom Eigentümer bereitgestellte Pine-v6-Referenz mit eigenem Hash und Golden-Test; der kontrollierte V1→V2-Wechsel bewahrt das alte Ledger und startet einen neuen V2-Soak.
-- 24/7-Paper-Ledger mit gemeinsamem Startcash 250 USDT für neue Konten (10 USDT Anfangsreserve; bestehende Ledger bleiben unverändert), drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
+- 24/7-Paper-Ledger mit gemeinsamem Startcash 250 USDC für neue Konten (10 USDT Anfangsreserve; bestehende Ledger bleiben unverändert), drei Slots à 80 USDT, Kostenmodell, Not-Aus, Tagesverlustpause, Drawdown-Halt und restartfestem Soak-Nachweis.
 - WebSocket-Livestream mit REST-Gap-Recovery, Startup-Prüfung und täglichem Audit um 00:05 UTC.
 - Verpasste geschlossene Bars werden nach einem Neustart exakt einmal nachverarbeitet; Soak-Tage, Bars je Coin und abgeschlossene Trades werden dauerhaft in SQLite gezählt und in der bestehenden Systemkarte angezeigt.
 - Lokale deutsche UI mit zehn Marktkarten, Positionen, Datenqualität und Candlestick-Charts für Heute, 1 Woche, 1 Monat, 1 Jahr und 3 Jahre.
 - Kauf-/Verkaufsmarker aus der nativen `1h`-Strategie; 1 Jahr wird nur zur Anzeige auf `4h`, 3 Jahre auf `1d` aggregiert.
-- Backtest: gemeinsames 250-USDT-Spiegelportfolio mit drei festen 80-USDT-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
+- Backtest: gemeinsames 250-USDT-Spiegelportfolio mit drei festen 80-USDC-Slots und denselben 5-%-/20-%-Risikogates wie Paper, zehn strikt isolierte Läufe à 250 USDT oder ein einzelner Coin à 250 USDT, jeweils Baseline und Stress. Läufe ohne diese Gates heißen ausdrücklich `strategy-only`.
 - Backtest v2: dokumentierte Parametersuche, ältere Marktsegmente, Kosten-Stress und Nachbarprüfung; V2 ist für Paper freigegeben, wegen früher Risikohalts aber ausdrücklich nicht für Live.
-- Backtest v3: der gewünschte Versuch, mehrere 80-USDT-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V6 verteilt höchstens einen Slot je Coin.
+- Backtest v3: der gewünschte Versuch, mehrere 80-USDC-Slots demselben Coin zu geben, ist getrennt dokumentiert und verworfen; die aktive V6 verteilt höchstens einen Slot je Coin.
 - Backtest v4/v5: begrenzte Coin-Parametersuche, Verlustdiagnose, getrennte Trainings-/Prüffenster, Original-Pine-Kontrolle und explizit versionierte Forschungsregeln; keine automatische Paperumschaltung.
 - V6: zehn explizite Coin-Profile, deterministische Zusatzfilter/Schlusskurs-Stops und Paper-/Backtest-/Restart-Parität; ausdrückliche Paper-Experimentfreigabe trotz dokumentierter Mehrfenster-Portfoliorückschritte.
 - Ziel sind gute Signalquellen und effiziente Nutzung der eingestellten Slots innerhalb des gewählten Budgets und vorhandenen Cashs. 250→500 USDT und genannte Tradezahlen sind Beispiele, keine Optimierungsquoten; kein Overfitting und keine erzwungenen Trades.
 - Unveränderliche Backtest-Runordner mit Manifest, Metriken, Trades, Equity und HTML-Bericht.
 - Einstellungen: ungespeicherter Entwurf bleibt über Status-Polls erhalten, ein Übernehmen-Klick und Anzeige gespeicherter Werte; keine Kontoauffüllung oder Änderung bestehender Positionen.
 - Live-Vorbereitung mit HMAC API-Key **und** Secret ausschließlich im Windows-Anmeldedatenspeicher des aktuellen Benutzers und PCs. Kein Export, keine Klartextdatei, kein lokaler Browserstorage. Separates Hixton-Passwort, 15-Minuten-Sitzung, genaue Origin-Prüfung, redigierte Fehler und eigener Vorbereitungs-Audit.
-- Read-only Binance-Prüfung: Uhr, Rechte/IP-Freigabe, freie USDT/BNB, offene Orders, Fremdbestände und grundlegende Filter aller zehn Paare. Sie erzeugt keine Orders und ist kein Ausführungsnachweis. Erster geplanter Echtgeldversuch höchstens 1×50, spätere Erhöhungen separat.
+- Read-only Binance-Prüfung: Uhr, Rechte/IP-Freigabe, freie USDC/BNB, offene Orders, Fremdbestände und grundlegende Filter aller zehn Paare. Sie erzeugt keine Orders und ist kein Ausführungsnachweis. Erster geplanter Echtgeldversuch höchstens 1×50, spätere Erhöhungen separat.
 
 ## Sichere Grenzen
 
@@ -73,10 +73,10 @@ py -3 src/main.py status
 py -3 src/main.py data sync --symbol ALL
 py -3 src/main.py data audit --symbol ALL
 py -3 src/main.py backtest all
-py -3 src/main.py backtest single --symbol ETHUSDT
+py -3 src/main.py backtest single --symbol ETHUSDC
 py -3 src/main.py backtest portfolio
 py -3 src/main.py backtest all --strategy v2
-py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDT
+py -3 src/main.py backtest single --strategy v2 --symbol ETHUSDC
 py -3 src/main.py backtest portfolio --strategy v2
 py -3 src/main.py backtest portfolio --strategy v3
 py -3 src/main.py backtest research --output backtests/v4/runs/mein-neuer-review/research.json
