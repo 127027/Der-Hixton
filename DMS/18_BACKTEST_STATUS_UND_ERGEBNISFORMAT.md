@@ -1,5 +1,16 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Einstellungen und Binance-Vorprüfung – Laptop-Abnahme 0.4.5, 08.09.2026
+
+- Ausgelieferter Code `d8f9528`, enthält auch den zuvor lokal ausgelieferten 0.4.4-Stand `f1e7f6b`. Bestehender Branch, sauberer Fast-forward, keine zusätzliche Startdatei. Vor Auslieferung war auf Port 8765 kein Bot-Listener erreichbar; kein fremder Prozess beendet. Start über `Startbot.bat` um 07:19:41 Europe/Berlin, Serverstart 07:19:43.
+- Backup `backups/hixton-before-v045-20260908.sqlite3`, Integrität `ok`, SHA-256 `bf8fd2b3ccd6f35ff5241f232e31f98de7df85b71d67a848e5935348b2a68336`. Unmittelbar nach Start alle elf Paper-Tabellen identisch zum Backup. Keine Passwörter oder API-Schlüssel gelesen, geändert oder veröffentlicht; Status meldet beide weiterhin eingerichtet.
+- Nach Synchronisation HEALTHY / PAPER / LIVE_DISABLED, Binance-Stream verbunden, alle zehn Coin-Karten DATEN OK. Gespeichert unverändert 3×80, Cash 250 USDT, keine Positionen/abgeschlossenen Trades. Soak unverändert seit 06.09. 15:16:26; danach 40 geschlossene Bars je Coin. Kein Reset, kein Echtgeldauftrag und kein Profitnachweis.
+- 207 Python-Tests auch im Laptop-Projekt bestanden, ein opt-in Vault-Test übersprungen. Arbeitskopie zusätzlich 15 UI-Tests, Ruff, mypy, TypeScript und Produktionsbuild bestanden. Nur aktuelle JS-/CSS-Bundles vorhanden; vorherige Builds in Git wiederherstellbar, Daten/Backtests/Backups nicht gelöscht.
+- Browser geprüft: drei geordnete Einstellungsbereiche, bearbeitbarer 5×50-Entwurf ohne 240-Grenzfehler, gemeinsamer Live-Entwurf neben unverändertem 3×80-Speicherstand, eindeutig markiertes „Live ist aus“ ohne grünes Live-an, ein ausdrücklicher 50-USDT-Einmaltestbutton ohne Checkbox. Entwurf anschließend durch Reload verworfen, **nicht im Betreiberkonto gespeichert**. Passwort-/Key-Felder gesperrt bis zur Betreiberentsperrung; gespeicherter Schlüsselstatus sichtbar. Privater Login-/Kontoprüf-/Startablauf nur mit isolierten Fixtures geprüft, nicht mit Betreibergeheimnissen.
+- Binance-Defekt separat öffentlich ohne Authentifizierung reproduziert: alte `symbols`-Serialisierung HTTP 400 / -1100; kompakte Serialisierung HTTP 200, zehn Symbolantworten. Die Rechte-/Saldo-/IP-Prüfung des Betreiberaccounts steht nach Update erneut durch den Betreiber an. Produktiver Orderadapter und Konto-/Runtime-Reconciliation bleiben offen; UI-Korrektur oder öffentliches HTTP 200 sind keine Echtgeldfreigabe.
+
+Ältere datierte Abnahmen und Grenzen unten bleiben Historie. Kein Strategiebacktest neu berechnet; Coin-Profile und Signalregeln in diesem Update unverändert.
+
 ## Gemeinsame Einstellungen – Laptop-Abnahme 0.4.3, 07.09.2026
 
 - Code `a5952af8da5b92e943482601e481a3969557763d`, unveränderter Projektbranch. Nach geprüftem Fast-forward Neustart über `Startbot.bat` um **18:59:50 Europe/Berlin**, keine zusätzliche Startdatei. Backup `backups/hixton-before-v043-20260907.sqlite3`, Integrität `ok`, SHA-256 `0c101dee1be9ef4d7f05ce5f4f463044fb70a71b21b734afe76bf3924306ff50`.
