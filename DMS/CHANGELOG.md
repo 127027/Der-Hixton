@@ -2,6 +2,7 @@
 
 ## 1.11.0 – 08.09.2026 / Anwendung 0.4.6
 
+- Auf Rückfrage direkter USDT-Spiegelnachweis: alter 739,52-Run exakt reproduziert; aktuelle drei Jahre 742,60, 384/384 produktive Paper-Engine-Fills identisch. Replay ab echtem Paperstart ebenfalls null Signale/Fills. Separate CLI-Defaultabweichung korrigiert: Portfolio nutzt wie UI gespeicherte Handelsgrößen, Regression 4×45 vs. Config 3×80. Kein Reset oder erzwungener Entry.
 - DEC-052: USDC-Ziel und geplanter 50-USDC-Einmaltest ausdrücklich von noch aktiver V6-USDT-Runtime getrennt. Keine Konto-/Key-/Profiländerung, kein Echtgeldstart.
 - V7-Validierung mit echten USDC-Kerzen, Datenverfügbarkeitsprüfung, unveränderten Coin-Profilen, Baseline/Stress, Einzel-/Portfoliofenstern und optionalem zeitraumgleichen USDT-Kontrolllauf. Quote im Manifest, Quellcodehashes, kein Umetikettieren oder Auffüllen fehlender Historie. Nur-lesender Zugriff auf Kontrollkerzen.
 - Marktübersicht zeigt letzten Hixton-Trendwechsel und erklärt alte grüne Trends ohne nachträglichen Kauf. Veraltete 240-USDT-Zielgrenze und Anwenden/Verwerfen-Beschreibung im Haupt-README korrigiert.

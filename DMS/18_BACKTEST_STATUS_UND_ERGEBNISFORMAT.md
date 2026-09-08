@@ -1,5 +1,35 @@
 # 18 – Backteststatus und Ergebnisnachweis
 
+## Direkter Paper-/Backtest-Spiegelnachweis – 08.09.2026
+
+Abschließender Nachtrag: 224 Python-Tests in der Arbeitskopie, ein opt-in Vault-Test übersprungen; 16 UI-Tests. Laufende Laptop-API: 50/50 Chartkombinationen mit Daten, zehn valide Märkte und letzte Signalzeiten. Backtest-CLI-Größenkorrektur betrifft neue Aufrufe, nicht die bereits unverändert laufende Paperstrategie. Keine erneute Strategieaktivierung erforderlich.
+
+Auf Eigentümerrückfrage ausdrücklich **den aktiven USDT-Bot** geprüft, nicht USDC-V7 mit V6 verwechselt. Alle zehn von `/api/markets` gemeldeten Coin-Parameter und Zusatzregeln stimmen mit `HIXTON-V6-COIN-PAPER-1-9734f240e873` überein. Gespeichert 3×80, Cash-Neustart 250, Einstiegspause aus.
+
+| Prüfung | Ergebnis |
+| --- | --- |
+| Alter Zeitraum 06.09.2023 13:00–06.09.2026 13:00 UTC neu gerechnet | **739,51593332654975 USDT**, exakt identisch zum alten Run; auch Stress exakt **573,5368270751159** |
+| Aktuelle drei Jahre 08.09.2023 11:00–08.09.2026 11:00 UTC | **742,60147103788215 USDT**, 192 abgeschlossene Trades, +197,04 %, maximaler Drawdown 21,54 % |
+| Tatsächliche Paper-Engine separat über dieselben drei Jahre abgespielt | **384/384 Fills exakt gleich**: Signal-ID, Zeit, Preis, Menge und Gebühr; Equity-Differenz **0** |
+| Tatsächliche Paper-Engine neu in Cash ab realer Aktivierung 06.09.2026 13:14:58.869511 UTC | **0 neue Trendwechsel bei allen zehn Coins, 0 Fills, 250 Equity**, identisch zum laufenden Paperkonto |
+
+Neue volle Drei-Jahres-Referenz `backtests/v6/runs/9cda3e2f-5120-4ceb-8e0b-9e777d8ba48d/`, Wiederholung des alten Zeitraums `e668d192-1432-42f8-9cae-aac46a1d8f21` gegenüber altem `d97de0ed-733b-4b0b-891d-5b8fa3202fe8`. Baseline 3×80 identisch in CLI/UI und gespeicherten Settings. Sämtliche Schattenkonten lagen in eigenen temporären SQLite-Dateien, nicht im Betreiberkonto. Beide Simulatoren verwendeten echte identische USDT-Kerzen, 400 Warm-up-Bars, aktuelle gleiche Filter, die zehn individuellen Profile und gemeinsame Risikoregeln. Modellparität ist kein Nachweis tatsächlicher Binance-Fills.
+
+**Einordnung:** Der Backtest spiegelt die aktuellen Handelsregeln, aber startet historisch 2023; das reale Paperkonto wurde 2026 frisch in Cash begonnen. Es übernimmt weder alte Positionen noch bereits erzielte Gewinne oder einen historischen Risikohalt. Der positive volle Verlauf kann deshalb gleichzeitig mit einem negativen Neustart ab März 2024 bestehen. Der volle Baseline-Run erreicht am 26.03.2026 05:59:59.999 UTC den dauerhaften Entry-Halt; die drei Jahre sind kein Nachweis ununterbrochen profitablen Dauerhandels. Sein Endwert besteht aus **709,37 Cash plus 33,23 bewerteten Restmengen**, nicht aus 742,60 frei handelbarem Cash. Keine Zwangsliquidation/Umwertung vorgenommen.
+
+Zusätzlich eine echte, **nicht für die aktuelle Handelspause ursächliche** Inkonsistenz behoben: Der CLI-Portfolioaufruf verwendete bislang die Installationsdefaults für Slots/Betrag, während die UI bereits gespeicherte Handelseinstellungen nutzte. CLI liest jetzt ebenfalls gespeicherte Größen; nur ohne initialisierte Paper-Settings gelten explizite Configdefaults. Regression mit gespeichertem 4×45 gegenüber Config 3×80, in beiden Kostenszenarien, ohne Änderung des Kontos. Einzeltests bleiben absichtlich 1×250. Vorhandene 3×80-Ergebnisse werden dadurch nicht geändert.
+
+## USDC-Validierung und Laptop-Abnahme 0.4.6 – 08.09.2026
+
+- Code `81a8fb84cada14ea4172c908972df8997ea97711`, DMS 1.11.0 / DEC-052. Kanonische V7-Prüfung `385bc1f7-4dca-4dcd-a138-3c33bd9c7da8`: echte öffentliche USDC-Kerzen, unveränderte V6-Coin-Profile, keine Optimierung. Vollständige Einzelergebnisse und Grenzen in [V7](../backtests/v7/README.md), kompakter JSON-Nachweis dort. Kein privater Binance-Request/Orderversand für diesen Backtest.
+- Keine vollen drei gemeinsamen Jahre: Start nach Datenverfügbarkeit und 400 Warm-up-Bars am 24.03.2024 00:00 UTC, Ende 08.09.2026 06:00 UTC. Portfolio 250/3×80 Baseline **203,83 USDC (−18,47 %)**, Stress **203,44**. 365 Tage **211,01 / 204,99**; 90 Tage **263,83 / 257,19**. USDT-Kontrolle mit identischen Fenstern **201,24 / 198,15**, **232,62 / 227,20**, **259,24 / 248,94**. Ein alter positiver Drei-Jahres-Run darf nicht als USDC- oder beliebiger Startnachweis übernommen werden.
+- AVAX/DOT in allen drei USDC-Einzelfenstern negativ. Langes Portfolio 14 abgeschlossene Trades, früher Entry-Halt. Jüngstes Fenster trotz positiver End-Equity **−23,51 USDC aus abgeschlossenen Trades**, drei Positionen offen. Ergebnis enthält deren Bewertung und Restmengen. Keine Live-/Robustheitsfreigabe, kein Nachweis täglich zuverlässiger Gewinne.
+- Laptop gezielt über vorhandene `Startbot.bat` neu gestartet am 08.09. um **13:32:41 Europe/Berlin**, Serverstart **13:32:43**, Prozess 19036. Sicherung `backups/hixton-before-v046-20260908.sqlite3`, SHA-256 `a1f561fb173801f8e2cba20b5856c2698a7cf87855808884ffbb32c9350258bb`, Integrität `ok`. Unmittelbar nach Start **alle elf Paper-Tabellen identisch**. Keine Schlüssel-/Passwortänderung, kein Cashreset und keine Strategieaktivierung.
+- Nach Synchronisation **HEALTHY / PAPER / LIVE_DISABLED**, Stream verbunden. Weiter V6-USDT, 250 Cash/Equity, drei freie Slots, null abgeschlossene Trades. Soak bleibt seit 06.09. 15:16:26, zuletzt 46 neue abgeschlossene Bars je Coin. Keine Tagespause, kein Risikohalt; die letzten Trendwechsel aller zehn liegen vor der Aktivierung. DOT zuletzt 06.09. 12:59 Europe/Berlin, Aktivierung erst 15:14:58. Kein Nachkaufen alter Signale.
+- **222 Python-Tests**, ein opt-in Vault-Test übersprungen; **16 UI-Tests**, Ruff, mypy (47 Dateien), TypeScript und Produktionsbuild bestanden. Browser zeigt zehn aktuelle Marktkarten mit letztem Signalzeitpunkt und Hinweis „Grüner Trend ≠ neuer Kauf“; Cash und Profil unverändert. Neues JS-Bundle `index-Dg8zueNR.js`, nur ein aktuelles JS-/CSS-Paar; alter Build in Git wiederherstellbar.
+
+Offen bleiben vollständige USDC-Runtime-/Ledger-/UI-/Kontoprüfmigration, produktiver Binance-Orderadapter, Ausführungs-/Restart-Abgleich und Echtgeldabnahme. **Kein 50-USDC-Test gestartet, kein 3×80-Livebetrieb.** Diese Grenze ist unabhängig von der erfolgreichen technischen Abnahme dieses Diagnose-/Forschungsupdates.
+
 ## Einstellungen und Binance-Vorprüfung – Laptop-Abnahme 0.4.5, 08.09.2026
 
 - Ausgelieferter Code `d8f9528`, enthält auch den zuvor lokal ausgelieferten 0.4.4-Stand `f1e7f6b`. Bestehender Branch, sauberer Fast-forward, keine zusätzliche Startdatei. Vor Auslieferung war auf Port 8765 kein Bot-Listener erreichbar; kein fremder Prozess beendet. Start über `Startbot.bat` um 07:19:41 Europe/Berlin, Serverstart 07:19:43.

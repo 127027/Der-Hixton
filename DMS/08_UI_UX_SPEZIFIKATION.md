@@ -1,5 +1,11 @@
 # 08 – UI-/UX-Spezifikation
 
+## Ergänzung 0.4.6 / DEC-052
+
+Jede Marktkarte zeigt den letzten Indikator-Trendwechsel mit Kauf/Verkauf und Zeitpunkt in Europe/Berlin. Bei grünem Trend ohne Position erklären: alter Trend ist kein neuer Kauf; historische Signale werden nicht nachgehandelt. Kein Signal ist kein Fillnachweis. Ohne geladene Signalhistorie unbekannt/noch kein Wechsel anzeigen, nicht behaupten, es habe niemals einen gegeben.
+
+USDC-V7 bleibt ein separater Validierungsstand außerhalb der aktiven Strategieauswahl. Bestehende V6-/USDT-Preis-, Konto- und Einstellungslabels nicht vor der tatsächlichen Ledger-/Runtime-Migration umetikettieren. Geplanter künftiger Einmaltest 50 USDC; bisheriger USDT-Livebereich bleibt bis zur vollständigen Umsetzung gesperrt. Layout und übrige Bedienung unverändert.
+
 ## Gültiger Einstellungsablauf ab 0.4.5 / DEC-051
 
 1. **Handel:** maximal offene Trades (1–10), USDT je Trade (Schritt 1), ein Button „Übernehmen“. Gewähltes Positionsbudget = Slots × Betrag, keine feste 240-USDT-Grenze, kein redundanter Grenz-/Beispieltext. Kein Verwerfen, keine sichtbare Einstiegspause, keine getippte Bestätigung. Entwurf bleibt bei Polling und Fehler erhalten; erfolgreiche Serverantwort aktualisiert beide Anzeigen. Speichern erzeugt kein neues Guthaben.

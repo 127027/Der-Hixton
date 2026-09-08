@@ -30,6 +30,8 @@ from hixton.data.sync import synchronize_symbol
 from hixton.domain.models import Candle
 from hixton.domain.versions import StrategyDefinition, strategy_definition
 from hixton.paper.engine import activate_paper_strategy
+from hixton.paper.models import PaperSettings
+from hixton.paper.storage import PaperStore
 from hixton.runtime.analysis import rebuild_analysis
 
 PROJECT_ROOT = Path(__file__).resolve().parents[2]
@@ -296,6 +298,17 @@ def command_backtest_all(args: argparse.Namespace, config: ProjectConfig) -> int
 def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) -> int:
     warmup_start, report_start, report_end = _window(args.end)
     strategy = strategy_definition(args.strategy or config.strategy_key)
+    # Match the UI runner: operator-saved sizes override installation defaults.
+    # Research without an initialized Paper account still uses the explicit config.
+    with PaperStore(config.database_path) as store:
+        try:
+            paper_settings = store.load_settings()
+        except RuntimeError:
+            paper_settings = PaperSettings(
+                slot_count=config.paper_slot_count,
+                target_notional_usdt=config.paper_target_notional_usdt,
+                emergency_stop=False,
+            )
     candles_by_symbol = {}
     rules_by_symbol = {}
     with CandleStore(config.database_path) as store:
@@ -313,8 +326,8 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
             report_start_utc=report_start,
             report_end_utc=report_end,
             starting_cash=config.paper_starting_cash_usdt,
-            target_notional=config.paper_target_notional_usdt,
-            slot_count=config.paper_slot_count,
+            target_notional=paper_settings.target_notional_usdt,
+            slot_count=paper_settings.slot_count,
             costs=cost,
             execution_rules=rules_by_symbol,
             strategy_parameters=strategy.parameters,
@@ -333,7 +346,8 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
         report_end_utc=report_end,
         strategy=strategy,
     )
-    print(f"3x80-Portfolio gespeichert: {output}")
+    print(f"Portfolio {paper_settings.slot_count}x{paper_settings.target_notional_usdt} "
+          f"gespeichert: {output}")
     return 0
 
 
