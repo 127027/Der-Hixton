@@ -50,6 +50,10 @@ class WindowsVault:
     """Only exact app targets, never enumerate the user's stored credentials."""
 
     def __init__(self, installation: Path) -> None:
+        # The default quote migration must not move existing passwords/API keys
+        # to a new namespace. No secret read/copy/reset is needed for this alias.
+        if installation.name == "hixton-usdc.sqlite3":
+            installation = installation.with_name("hixton.sqlite3")
         digest = hashlib.sha256(str(installation.resolve()).casefold().encode()).hexdigest()[:24]
         self.prefix = f"DerHixton/{digest}/"
 

@@ -17,7 +17,7 @@ from hixton.live.credentials import CredentialService, LocalAccess, Vault
 from hixton.live.trial import SignalTrial
 
 RELEASE_BLOCKERS = (
-    "USDC-Signal-/Paper-Runtime noch nicht migriert; "
+    "USDC-Migration und Echtorder-Anschluss benötigen gemeinsame Betriebsabnahme; "
     "USDT-Signale werden nicht als USDC ausgeführt.",
     "Orderadapter und Fill-Ledger sind offline getestet, "
     "aber noch nicht an die Runtime angebunden. "

@@ -81,7 +81,7 @@ test("unlock does not claim success when cookie/session verification fails",asyn
   } finally {live.dispose();ui.restore();}
 });
 
-test("one explicit click requests exactly one fifty-USDT test, never continuous trading",async()=>{
+test("one explicit click requests exactly one fifty-USDC test, never continuous trading",async()=>{
   const mock=mockLive();mock.state.credentials.configured=true;
   const ui=harness(mock.fetcher),live=initializeLivePreparation(()=>null);
   try {
@@ -120,11 +120,11 @@ test("live state selection follows server acknowledgement, rejects false green a
   } finally {live.dispose();ui.restore();}
 });
 
-test("250 and 1000 USDT planned allocations can be explicitly saved in the shared form",async()=>{
+test("250 and 1000 USDC planned allocations can be explicitly saved in the shared form",async()=>{
   const ui=harness(()=>{});const writes=[];
   const settings=initializeTradingSettings(async value=>{writes.push(value);return value;},()=>{});
   try {
-    settings.render({slot_count:3,target_notional_usdt:"80",emergency_stop:false},{max_slots:10});
+    settings.render({slot_count:3,target_notional_usdc:"80",emergency_stop:false},{max_slots:10});
     for(const [slots,amount] of [[5,50],[10,100]]) {
       ui.node("slot-input").value=String(slots);await ui.node("slot-input").fire("input");
       ui.node("notional-input").value=String(amount);await ui.node("notional-input").fire("input");
@@ -133,7 +133,7 @@ test("250 and 1000 USDT planned allocations can be explicitly saved in the share
       assert.equal(settings.liveBlocker(),null);
     }
     assert.equal(writes.length,2);
-    assert.match(ui.node("live-plan").textContent,/1.000,00 USDT/);
+    assert.match(ui.node("live-plan").textContent,/1.000,00 USDC/);
   } finally {ui.restore();}
 });
 
@@ -141,7 +141,7 @@ test("one submit applies 4x45, preserves draft across polls and blocks duplicate
   const ui=harness(()=>{throw Error("No network expected");});
   let resolveSave, writes=0, accepted;
   const settings=initializeTradingSettings(value=>{writes++;return new Promise(resolve=>{resolveSave=()=>resolve(value);});},value=>{accepted=value;});
-  const original={slot_count:3,target_notional_usdt:"80.00",emergency_stop:false};
+  const original={slot_count:3,target_notional_usdc:"80.00",emergency_stop:false};
   const limits={max_slots:10};
   try {
     settings.render(original,limits);
@@ -155,8 +155,8 @@ test("one submit applies 4x45, preserves draft across polls and blocks duplicate
     assert.equal(ui.node("settings-button").disabled,true);
     await ui.node("trading-form").fire("submit");
     assert.equal(writes,1);resolveSave();await submit;
-    assert.deepEqual(accepted,{slot_count:4,target_notional_usdt:"45",emergency_stop:false});
-    assert.match(ui.node("settings-saved").textContent,/4 × 45,00 USDT = 180,00 USDT/);
+    assert.deepEqual(accepted,{slot_count:4,target_notional_usdc:"45",emergency_stop:false});
+    assert.match(ui.node("settings-saved").textContent,/4 × 45,00 USDC = 180,00 USDC/);
     assert.equal(settings.liveBlocker(),null);
   } finally {ui.restore();}
 });
@@ -165,7 +165,7 @@ test("save failure and invalid amount stay visible without reverting the user's 
   const ui=harness(()=>{});
   const settings=initializeTradingSettings(async()=>{throw Error("Speichern fehlgeschlagen");},()=>{throw Error("Must not apply");});
   try {
-    settings.render({slot_count:3,target_notional_usdt:"80",emergency_stop:false},{max_slots:10});
+    settings.render({slot_count:3,target_notional_usdc:"80",emergency_stop:false},{max_slots:10});
     ui.node("slot-input").value="4";await ui.node("slot-input").fire("input");
     ui.node("notional-input").value="-1";await ui.node("notional-input").fire("input");
     await ui.node("trading-form").fire("submit");

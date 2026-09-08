@@ -19,7 +19,7 @@ import { initializeTradingSettings } from "./trading-settings";
 import { initializeLivePreparation } from "./live-preparation";
 import { marketSignalText } from "./market-signal";
 
-const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "DOGEUSDT"] as const;
+const symbols = ["BTCUSDC", "ETHUSDC", "BNBUSDC", "SOLUSDC", "XRPUSDC", "ADAUSDC", "LINKUSDC", "AVAXUSDC", "DOTUSDC", "DOGEUSDC"] as const;
 type SymbolName = (typeof symbols)[number];
 type RangeKey = "today" | "1w" | "1m" | "1y" | "3y";
 
@@ -27,23 +27,23 @@ interface PaperPosition {
   symbol: string;
   quantity: string;
   average_price: string;
-  cost_basis_usdt: string;
+  cost_basis_usdc: string;
   entry_time_utc: string;
-  market_value_usdt: string;
+  market_value_usdc: string;
   strategy_version: string;
   slot_count: number;
 }
 interface PaperPayload {
-  cash_usdt: string;
-  equity_usdt: string;
-  unrealized_pnl_usdt: string;
+  cash_usdc: string;
+  equity_usdc: string;
+  unrealized_pnl_usdc: string;
   drawdown_pct: string;
   strategy_session: {
     key: string;
     version: string;
     activated_at_utc: string;
-    starting_equity_usdt: string;
-    pnl_usdt: string;
+    starting_equity_usdc: string;
+    pnl_usdc: string;
   };
   settings: TradingSettings;
   soak: {
@@ -179,7 +179,7 @@ async function api<T>(url: string, options?: RequestInit): Promise<T> {
   return response.json() as Promise<T>;
 }
 
-let selectedSymbol: SymbolName = "BTCUSDT";
+let selectedSymbol: SymbolName = "BTCUSDC";
 let selectedRange: RangeKey = "1m";
 let lastStatus: StatusResponse | null = null;
 let coreLoadGeneration = 0;
@@ -229,8 +229,8 @@ function renderStatus(status: StatusResponse): void {
   text("#doc-app-version", status.application_version);
   text("#doc-strategy-version", status.strategy_version);
   if (!status.paper) { tradingSettings.render(null, status.trading_limits); return; }
-  text("#metric-equity", formatNumber(status.paper.equity_usdt));
-  text("#metric-cash", formatNumber(status.paper.cash_usdt));
+  text("#metric-equity", formatNumber(status.paper.equity_usdc));
+  text("#metric-cash", formatNumber(status.paper.cash_usdc));
   const usedSlots = status.paper.positions.reduce((sum, position) => sum + position.slot_count, 0);
   text("#metric-slots", String(Math.max(0, status.paper.settings.slot_count - usedSlots)));
   required("#metric-slots").nextElementSibling!.textContent = `von ${status.paper.settings.slot_count}`;
@@ -248,7 +248,7 @@ function marketCard(market: Market): string {
   const extras = [rule.cmo_floor ? `CMO ≥ ${rule.cmo_floor}` : "", rule.slope_bars ? `VIDYA-Steigung ${rule.slope_bars}h` : "", rule.stop_atr ? `Stop ${rule.stop_atr} ATR am Schlusskurs` : "", rule.trail_atr ? `Trail ${rule.trail_atr} ATR` : ""].filter(Boolean).join(" · ");
   return `<article class="market-card" data-symbol="${market.symbol}" tabindex="0">
     <div class="market-top"><strong>${market.display_symbol}</strong><span class="trend-tag ${trendClass}">${market.trend}</span></div>
-    <div class="market-price">${formatPrice(market.price)} <small>USDT</small></div>
+    <div class="market-price">${formatPrice(market.price)} <small>USDC</small></div>
     <div class="market-meta"><span>${formatDate(market.price_time_utc)}</span><span class="${market.data.valid ? "good" : "warning"}">${market.data.valid ? "DATEN OK" : "PRÜFUNG"}</span></div>
     <div class="market-meta"><span>VIDYA ${p.vidya_length} · MOM ${p.momentum_length} · SMA ${p.smoothing_length} · ATR ${p.atr_length} · Band ${p.band_multiplier}${extras ? `<br>${extras}` : ""}</span></div>
     <div class="market-meta"><span>${escapeHtml(marketSignalText(market.last_signal, formatDate))}${market.trend === "UP" && market.position_state !== "LONG" ? "<br>Grüner Trend ≠ neuer Kauf. Alte Signale werden nicht nachgehandelt." : ""}</span></div>
@@ -274,7 +274,7 @@ function renderMarkets(markets: Market[]): void {
 
 function renderPositions(positions: PaperPosition[]): void {
   const container = required("#position-cards");
-  container.innerHTML = positions.length ? positions.map((position) => `<article class="position-card"><strong>${position.symbol.replace("USDT", "/USDT")} · ${position.slot_count} Slot${position.slot_count === 1 ? "" : "s"}</strong><span>Menge ${formatNumber(position.quantity, 6)}</span><br><span>Einstieg ${formatPrice(Number(position.average_price))}</span><br><span>Marktwert ${formatNumber(position.market_value_usdt)} USDT</span><br><span>${position.strategy_version}</span></article>`).join("") : `<article class="position-card"><strong>Keine offene Position</strong><span>Paper startet in Cash. Alte Signale werden nicht nachgehandelt.</span></article>`;
+  container.innerHTML = positions.length ? positions.map((position) => `<article class="position-card"><strong>${position.symbol.replace("USDC", "/USDC")} · ${position.slot_count} Slot${position.slot_count === 1 ? "" : "s"}</strong><span>Menge ${formatNumber(position.quantity, 6)}</span><br><span>Einstieg ${formatPrice(Number(position.average_price))}</span><br><span>Marktwert ${formatNumber(position.market_value_usdc)} USDC</span><br><span>${position.strategy_version}</span></article>`).join("") : `<article class="position-card"><strong>Keine offene Position</strong><span>Paper startet in Cash. Alte Signale werden nicht nachgehandelt.</span></article>`;
 }
 
 function renderQuality(markets: Market[]): void {
@@ -288,7 +288,7 @@ function renderSystem(status: StatusResponse): void {
     : "Noch nicht gestartet";
   const items: Array<[string, string]> = [
     ["Aktive Paperstrategie", `${status.strategy_version} · seit ${formatDate(status.paper?.strategy_session.activated_at_utc ?? null, true)}`],
-    ["Ergebnis dieser Strategie", status.paper ? `${formatNumber(status.paper.strategy_session.pnl_usdt)} USDT seit ${formatNumber(status.paper.strategy_session.starting_equity_usdt)} USDT Start` : "—"],
+    ["Ergebnis dieser Strategie", status.paper ? `${formatNumber(status.paper.strategy_session.pnl_usdc)} USDC seit ${formatNumber(status.paper.strategy_session.starting_equity_usdc)} USDC Start` : "—"],
     ["Datenfeed", `${status.runtime.feed_mode} · ${status.runtime.stream_connected ? "verbunden" : "Fallback"}`],
     ["Letzte Synchronisation", formatDate(status.runtime.last_sync_utc, true)],
     ["Nächster 00:05-UTC-Audit", `${formatUtc(status.runtime.next_daily_audit_utc)} / ${formatDate(status.runtime.next_daily_audit_utc, true)} Europe/Berlin`],
@@ -334,7 +334,7 @@ async function loadChart(background = false): Promise<void> {
   const timezone = required<HTMLSelectElement>("#timezone-select").value;
   ensureChart();
   if (!background) required("#chart-loading").classList.remove("hidden");
-  text("#chart-symbol", requestedSymbol.replace("USDT", "/USDT"));
+  text("#chart-symbol", requestedSymbol.replace("USDC", "/USDC"));
   try {
     const payload = await api<ChartPayload>(`/api/chart?symbol=${requestedSymbol}&range=${requestedRange}&timezone=${encodeURIComponent(timezone)}`);
     if (generation !== chartLoadGeneration) return;
@@ -398,7 +398,7 @@ async function refreshCore(): Promise<void> {
 async function refreshEvents(): Promise<void> {
   try {
     const response = await api<{ events: Array<Record<string, string | null>> }>("/api/paper/events?limit=250");
-    required("#events-body").innerHTML = response.events.length ? response.events.map((event) => `<tr><td>${formatDate(event.occurred_at_utc ?? null, true)}</td><td class="mono">${event.symbol}</td><td>${event.action}</td><td class="${event.status === "FILLED" ? "good" : "warning"}">${event.status}</td><td>${formatPrice(event.execution_price ? Number(event.execution_price) : event.reference_price ? Number(event.reference_price) : null)}</td><td>${event.reason ?? (event.realized_pnl_usdt ? `PnL ${formatNumber(event.realized_pnl_usdt)} USDT` : "—")}</td></tr>`).join("") : `<tr><td colspan="6">Noch keine Paper-Ereignisse. Der Bot handelt keine historischen Signale nach.</td></tr>`;
+    required("#events-body").innerHTML = response.events.length ? response.events.map((event) => `<tr><td>${formatDate(event.occurred_at_utc ?? null, true)}</td><td class="mono">${event.symbol}</td><td>${event.action}</td><td class="${event.status === "FILLED" ? "good" : "warning"}">${event.status}</td><td>${formatPrice(event.execution_price ? Number(event.execution_price) : event.reference_price ? Number(event.reference_price) : null)}</td><td>${event.reason ?? (event.realized_pnl_usdc ? `PnL ${formatNumber(event.realized_pnl_usdc)} USDC` : "—")}</td></tr>`).join("") : `<tr><td colspan="6">Noch keine Paper-Ereignisse. Der Bot handelt keine historischen Signale nach.</td></tr>`;
   } catch { /* Startup can precede ledger initialization. */ }
 }
 
@@ -432,8 +432,9 @@ async function refreshBacktests(): Promise<void> {
       const baseline = run.metrics.baseline;
       const firstMetric = baseline ? Object.values(baseline.per_symbol ?? {})[0] : undefined;
       const summary = baseline?.portfolio?.metrics ?? baseline?.batch ?? firstMetric;
+      const quote = manifest.quote_asset === "USDC" || manifest.quote_asset === "USDT" ? manifest.quote_asset : "Quote ungeklärt";
       const result = summary
-        ? `${formatNumber(summary.ending_equity as string)} USDT · ${formatNumber(summary.return_pct as string)} %`
+        ? `${formatNumber(summary.ending_equity as string)} ${quote} · ${formatNumber(summary.return_pct as string)} %`
         : "Kennzahlen nicht verfügbar";
       const version = (manifest.strategy as Record<string, unknown> | undefined)?.version ?? strategy.toUpperCase();
       const runMode = baseline?.portfolio ? "Portfolio" : baseline?.batch ? "10×250 isoliert" : `Einzeltest ${Object.keys(baseline?.per_symbol ?? {}).join(", ")}`;
@@ -475,7 +476,7 @@ async function refreshRuntimeLogs(): Promise<void> {
 }
 
 function initializeControls(): void {
-  const coinOptions = symbols.map((symbol) => `<option value="${symbol}">${symbol.replace("USDT", "/USDT")}</option>`).join("");
+  const coinOptions = symbols.map((symbol) => `<option value="${symbol}">${symbol.replace("USDC", "/USDC")}</option>`).join("");
   required<HTMLSelectElement>("#coin-select").innerHTML = coinOptions;
   required<HTMLSelectElement>("#backtest-symbol").insertAdjacentHTML("beforeend", coinOptions);
   document.querySelectorAll<HTMLButtonElement>(".nav-item").forEach((button) => button.addEventListener("click", () => setPage(button.dataset.target!, button.textContent ?? "Der Hixton")));

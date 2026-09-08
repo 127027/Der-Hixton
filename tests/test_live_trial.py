@@ -37,7 +37,7 @@ class Exchange:
             "FILLED",
             quantity,
             quantity * price,
-            (ExchangeFill(str(len(self.submits)), quantity, price, D("0"), "USDT"),),
+            (ExchangeFill(str(len(self.submits)), quantity, price, D("0"), "USDC"),),
         )
         self.orders[intent.client_order_id] = order
         if self.timeout:
@@ -55,7 +55,7 @@ def trial(tmp_path: Path, exchange=None, *, released=True):
     return SignalTrial(journal, executor, V6, lambda: released), exchange
 
 
-def universe(at=NOW, *, buy_symbol="SOLUSDT", sell_symbol=None):
+def universe(at=NOW, *, buy_symbol="SOLUSDC", sell_symbol=None):
     result = {}
     for symbol in SYMBOLS:
         point = replace(
@@ -107,7 +107,7 @@ def test_ten_simultaneous_signals_reserve_one_entry_in_dms_rank_order(tmp_path):
     open_position(controller, points)
     for _ in range(3):
         controller.advance(points, now=NOW, healthy=True)
-    assert controller.report()["symbol"] == "BTCUSDT"
+    assert controller.report()["symbol"] == "BTCUSDC"
     assert len(exchange.submits) == 1 and exchange.submits[0].quote_budget == D("50")
 
 
@@ -134,10 +134,10 @@ def test_old_incomplete_or_unhealthy_signals_do_not_enter(tmp_path, case):
     at = NOW - timedelta(seconds=10) if case == "before_arm" else NOW
     points = universe(at)
     if case == "incomplete":
-        del points["ETHUSDT"]
+        del points["ETHUSDC"]
     if case == "open_bar":
-        point = points["SOLUSDT"][0]
-        points["SOLUSDT"] = (replace(point, candle=replace(point.candle, closed=False)),)
+        point = points["SOLUSDC"][0]
+        points["SOLUSDC"] = (replace(point, candle=replace(point.candle, closed=False)),)
     controller.advance(
         points,
         now=NOW + timedelta(seconds=91) if case == "stale" else NOW,
@@ -150,8 +150,8 @@ def test_old_incomplete_or_unhealthy_signals_do_not_enter(tmp_path, case):
 def test_uses_existing_coin_filter_not_just_green_flip(tmp_path):
     controller, exchange = trial(tmp_path)
     arm(controller)
-    points = universe(buy_symbol="BTCUSDT")
-    points["BTCUSDT"] = (replace(points["BTCUSDT"][0], abs_cmo=0.1),)
+    points = universe(buy_symbol="BTCUSDC")
+    points["BTCUSDC"] = (replace(points["BTCUSDC"][0], abs_cmo=0.1),)
     controller.advance(points, now=NOW, healthy=True)
     assert controller.report()["state"] == "WAITING_SIGNAL"
     assert not exchange.submits
@@ -188,7 +188,7 @@ def test_disable_open_position_preserves_exit_and_completion_survives_restart(tm
     controller.disable_entries()
     assert controller.report()["state"] == "OPEN"
     at = NOW + timedelta(hours=1)
-    points = universe(at, buy_symbol="BTCUSDT", sell_symbol="SOLUSDT")
+    points = universe(at, buy_symbol="BTCUSDC", sell_symbol="SOLUSDC")
     assert controller.advance(points, now=at, healthy=True)["state"] == "EXIT_PENDING"
     assert controller.advance(points, now=at, healthy=True)["state"] == "AWAITING_RECONCILIATION"
     with pytest.raises(RuntimeError, match="reconciliation incomplete"):
@@ -202,7 +202,7 @@ def test_disable_open_position_preserves_exit_and_completion_survives_restart(tm
     assert restarted.advance(universe(at), now=at, healthy=True)["state"] == "COMPLETED"
     assert [order.side for order in exchange.submits] == ["BUY", "SELL"]
     assert exchange.submits[-1].base_quantity == D("0.5")
-    assert restarted.report()["net_pnl_usdt"] == "2.5"
+    assert restarted.report()["net_pnl_usdc"] == "2.5"
     assert restarted.report()["buy"]["exchange_order_id"] == "1"
     assert restarted.report()["sell"]["fills"][0]["trade_id"] == "2"
     with pytest.raises(RuntimeError, match="bereits angelegt"):
@@ -212,11 +212,11 @@ def test_disable_open_position_preserves_exit_and_completion_survives_restart(tm
 def test_xrp_stop_uses_frozen_profile_without_adding_take_profit(tmp_path):
     controller, _ = trial(tmp_path)
     arm(controller)
-    open_position(controller, universe(buy_symbol="XRPUSDT"))
+    open_position(controller, universe(buy_symbol="XRPUSDC"))
     at = NOW + timedelta(hours=1)
     points = universe(at, buy_symbol=None)
-    point = points["XRPUSDT"][0]
-    points["XRPUSDT"] = (replace(point, candle=replace(point.candle, close=95, low=94)),)
+    point = points["XRPUSDC"][0]
+    points["XRPUSDC"] = (replace(point, candle=replace(point.candle, close=95, low=94)),)
     result = controller.advance(points, now=at, healthy=True)
     assert result["state"] == "EXIT_PENDING"
     assert result["exit_signal"]["reason"] == "POLICY_STOP_ATR"
@@ -246,7 +246,7 @@ def test_base_entry_fee_reduces_sell_and_unknown_bnb_value_is_not_zero(tmp_path)
     )
     assert controller.advance(universe(), now=NOW, healthy=True)["state"] == "OPEN"
     at = NOW + timedelta(hours=1)
-    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDT")
+    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDC")
     controller.advance(points, now=at, healthy=True)
     controller.advance(points, now=at, healthy=True)
     identity = exchange.submits[-1].client_order_id
@@ -260,7 +260,7 @@ def test_base_entry_fee_reduces_sell_and_unknown_bnb_value_is_not_zero(tmp_path)
         no_open_orders=True, owned_remaining=D(0), account_matches=True, now=at
     )
     assert exchange.submits[-1].base_quantity == D("0.499")
-    assert controller.report()["net_pnl_usdt"] is None
+    assert controller.report()["net_pnl_usdc"] is None
     assert controller.report()["unvalued_fee_assets"] == ["BNB"]
 
 
@@ -270,10 +270,10 @@ def test_missed_exit_uses_current_reference_without_backdated_fill(tmp_path):
     open_position(controller)
     missed_at = NOW + timedelta(hours=1)
     current_at = NOW + timedelta(hours=4)
-    missed = universe(missed_at, buy_symbol=None, sell_symbol="SOLUSDT")["SOLUSDT"][0]
-    current = universe(current_at, buy_symbol=None)["SOLUSDT"][0]
+    missed = universe(missed_at, buy_symbol=None, sell_symbol="SOLUSDC")["SOLUSDC"][0]
+    current = universe(current_at, buy_symbol=None)["SOLUSDC"][0]
     current = replace(current, candle=replace(current.candle, close=99))
-    points = {"SOLUSDT": (missed, current)}
+    points = {"SOLUSDC": (missed, current)}
     result = controller.advance(points, now=current_at, healthy=True)
     assert result["exit_signal"]["bar_close"] == missed_at.isoformat()
     assert result["exit_signal"]["reference_price"] == "99"
@@ -286,7 +286,7 @@ def test_tradable_residue_is_not_a_completed_success(tmp_path):
     arm(controller)
     open_position(controller)
     at = NOW + timedelta(hours=1)
-    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDT")
+    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDC")
     controller.advance(points, now=at, healthy=True)
     exchange.timeout = True
     controller.advance(points, now=at, healthy=True)
@@ -325,7 +325,7 @@ def test_entry_release_expiry_does_not_block_an_owned_exit(tmp_path):
     open_position(controller)
     controller.release_check = lambda: False
     at = NOW + timedelta(hours=1)
-    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDT")
+    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDC")
     controller.advance(points, now=at, healthy=True)
     assert controller.advance(points, now=at, healthy=True)["state"] == "AWAITING_RECONCILIATION"
     assert [order.side for order in exchange.submits] == ["BUY", "SELL"]
@@ -368,7 +368,10 @@ def test_each_usdc_coin_uses_own_profile_once_without_relabeling_usdt(tmp_path, 
 
     entry_points = points(NOW, True)
     # A USDT universe must not be implicitly accepted by this USDC controller.
-    assert controller.advance(universe(), now=NOW, healthy=True)["state"] == "WAITING_SIGNAL"
+    wrong_quote = {
+        symbol.removesuffix("USDC") + "USDT": series for symbol, series in entry_points.items()
+    }
+    assert controller.advance(wrong_quote, now=NOW, healthy=True)["state"] == "WAITING_SIGNAL"
     assert controller.advance(entry_points, now=NOW, healthy=True)["state"] == "ENTRY_PENDING"
     assert controller.advance(entry_points, now=NOW, healthy=True)["state"] == "OPEN"
     at = NOW + timedelta(hours=1)

@@ -52,7 +52,7 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 class BinanceReadOnlyClient:
-    def __init__(self, credentials: BinanceCredentials, *, quote_asset: str = "USDT") -> None:
+    def __init__(self, credentials: BinanceCredentials, *, quote_asset: str = "USDC") -> None:
         self._credentials = credentials
         self.quote_asset = quote_asset
         self.symbols = symbols_for_quote(quote_asset)
@@ -143,7 +143,7 @@ def assess_account(
     markets: Any,
     notional: Decimal,
     *,
-    quote_asset: str = "USDT",
+    quote_asset: str = "USDC",
 ) -> dict[str, object]:
     """Strict data assessment; metadata only, never import account holdings into paper."""
     symbols = symbols_for_quote(quote_asset)
@@ -236,6 +236,7 @@ def assess_account(
         "quote_asset": quote_asset,
         "free_quote": str(free_quote),
         "free_usdt": str(free_quote) if quote_asset == "USDT" else None,
+        "free_usdc": str(free_quote) if quote_asset == "USDC" else None,
         "free_bnb": str(balances.get("BNB", (Decimal(0), Decimal(0)))[0]),
         "open_order_count": len(orders),
         "checked_symbols": list(symbols),

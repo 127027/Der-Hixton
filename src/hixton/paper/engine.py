@@ -47,7 +47,7 @@ def initialize_paper_at_latest(
     at: datetime | None = None,
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
-    starting_cash_usdt: Decimal | None = None,
+    starting_cash_usdc: Decimal | None = None,
 ) -> bool:
     """Arm a new account at latest; preserve checkpoints on every later restart."""
 
@@ -64,7 +64,7 @@ def initialize_paper_at_latest(
             at=at,
             strategy_key=strategy_key,
             strategy_version=strategy_version,
-            starting_cash_usdt=starting_cash_usdt,
+            starting_cash_usdc=starting_cash_usdc,
         )
         store.require_strategy(strategy_key, strategy_version)
         existing = store.all_checkpoints()
@@ -91,9 +91,9 @@ def _blocked_event(signal: Signal, reason: str) -> PaperEvent:
         reference_price=_d(signal.close),
         execution_price=None,
         base_quantity=None,
-        quote_amount_usdt=None,
-        fee_usdt=None,
-        realized_pnl_usdt=None,
+        quote_amount_usdc=None,
+        fee_usdc=None,
+        realized_pnl_usdc=None,
         breakout_strength=(
             _d(signal.breakout_strength) if signal.breakout_strength is not None else None
         ),
@@ -114,7 +114,7 @@ def _equity(
         ),
         ZERO,
     )
-    basis = sum((position.cost_basis_usdt for position in positions.values()), ZERO)
+    basis = sum((position.cost_basis_usdc for position in positions.values()), ZERO)
     dust_value = sum(
         (qty * latest_prices.get(symbol, ZERO) for symbol, qty in (dust or {}).items()), ZERO
     )
@@ -129,8 +129,8 @@ def _risk_account(
 ) -> tuple[PaperAccount, bool, Decimal]:
     decision = evaluate_portfolio_risk(
         PortfolioRiskState(
-            high_water_equity_usdt=account.high_water_equity_usdt,
-            day_start_equity_usdt=account.day_start_equity_usdt,
+            high_water_equity_usdc=account.high_water_equity_usdc,
+            day_start_equity_usdc=account.day_start_equity_usdc,
             day_start_date_utc=account.day_start_date_utc,
             halted=account.halted,
             halt_reason=account.halt_reason,
@@ -140,8 +140,8 @@ def _risk_account(
     )
     updated = replace(
         account,
-        high_water_equity_usdt=decision.state.high_water_equity_usdt,
-        day_start_equity_usdt=decision.state.day_start_equity_usdt,
+        high_water_equity_usdc=decision.state.high_water_equity_usdc,
+        day_start_equity_usdc=decision.state.day_start_equity_usdc,
         day_start_date_utc=decision.state.day_start_date_utc,
         halted=decision.state.halted,
         halt_reason=decision.state.halt_reason,
@@ -242,7 +242,7 @@ def process_new_closed_points(
                 latest_prices[symbol] = _d(point.candle.close)
                 processed_bars[symbol] += 1
 
-            equity, _ = _equity(account.cash_usdt, positions, latest_prices, dust)
+            equity, _ = _equity(account.cash_usdc, positions, latest_prices, dust)
             account, daily_paused, _ = _risk_account(account, equity=equity, at=close_time)
 
             decisions = {}
@@ -280,8 +280,8 @@ def process_new_closed_points(
                     continue
                 fee = gross_quote * BASELINE_COSTS.fee_rate
                 net_quote = gross_quote - fee
-                account = replace(account, cash_usdt=account.cash_usdt + net_quote)
-                realized = net_quote - position.cost_basis_usdt * quantity / position.quantity
+                account = replace(account, cash_usdc=account.cash_usdc + net_quote)
+                realized = net_quote - position.cost_basis_usdc * quantity / position.quantity
                 dust[point.symbol] = dust.get(point.symbol, ZERO) + position.quantity - quantity
                 emitted.append(
                     PaperEvent(
@@ -295,9 +295,9 @@ def process_new_closed_points(
                         reference_price=reference,
                         execution_price=fill_price,
                         base_quantity=quantity,
-                        quote_amount_usdt=net_quote,
-                        fee_usdt=fee,
-                        realized_pnl_usdt=realized,
+                        quote_amount_usdc=net_quote,
+                        fee_usdc=fee,
+                        realized_pnl_usdc=realized,
                         breakout_strength=None,
                         strategy_version=signal.strategy_version,
                     )
@@ -338,7 +338,7 @@ def process_new_closed_points(
                     emitted.append(_blocked_event(signal, "NO_FREE_SLOT"))
                     continue
                 rules = rules_by_symbol[signal.symbol]
-                budget = min(settings.target_notional_usdt, account.cash_usdt)
+                budget = min(settings.target_notional_usdc, account.cash_usdc)
                 reference = _d(fill_candles[signal.symbol].open)
                 fill_price = reference * (ONE + BASELINE_COSTS.adverse_price_rate)
                 gross_quantity = _round_down(budget / fill_price, rules.step_size)
@@ -346,21 +346,21 @@ def process_new_closed_points(
                 if gross_quantity < rules.min_qty or quote_spend < rules.min_notional:
                     emitted.append(_blocked_event(signal, "BELOW_EXCHANGE_MINIMUM"))
                     continue
-                if quote_spend <= ZERO or quote_spend > account.cash_usdt:
+                if quote_spend <= ZERO or quote_spend > account.cash_usdc:
                     emitted.append(_blocked_event(signal, "INSUFFICIENT_CASH"))
                     continue
                 fee_base = gross_quantity * BASELINE_COSTS.fee_rate
                 net_quantity = gross_quantity - fee_base
                 fee_quote = fee_base * fill_price
-                account = replace(account, cash_usdt=account.cash_usdt - quote_spend)
+                account = replace(account, cash_usdc=account.cash_usdc - quote_spend)
                 position = PaperPosition(
                     symbol=signal.symbol,
                     quantity=net_quantity,
                     average_price=fill_price,
-                    cost_basis_usdt=quote_spend,
+                    cost_basis_usdc=quote_spend,
                     entry_time_utc=boundary,
                     entry_signal_id=signal.signal_id,
-                    entry_fee_usdt=fee_quote,
+                    entry_fee_usdc=fee_quote,
                     updated_at_utc=boundary,
                     strategy_version=signal.strategy_version,
                     slot_count=1,
@@ -380,9 +380,9 @@ def process_new_closed_points(
                         reference_price=reference,
                         execution_price=fill_price,
                         base_quantity=net_quantity,
-                        quote_amount_usdt=quote_spend,
-                        fee_usdt=fee_quote,
-                        realized_pnl_usdt=None,
+                        quote_amount_usdc=quote_spend,
+                        fee_usdc=fee_quote,
+                        realized_pnl_usdc=None,
                         breakout_strength=(
                             _d(point.breakout_strength)
                             if point.breakout_strength is not None
@@ -431,7 +431,7 @@ def activate_paper_strategy(
         account = store.load_account()
         positions = store.load_positions()
         events: list[PaperEvent] = []
-        cash = account.cash_usdt
+        cash = account.cash_usdc
         dust = store.load_dust()
         for position in positions:
             rule = rules_by_symbol[position.symbol]
@@ -445,7 +445,7 @@ def activate_paper_strategy(
                 )
             fee = gross_quote * BASELINE_COSTS.fee_rate
             net_quote = gross_quote - fee
-            realized = net_quote - position.cost_basis_usdt * quantity / position.quantity
+            realized = net_quote - position.cost_basis_usdc * quantity / position.quantity
             dust[position.symbol] = dust.get(position.symbol, ZERO) + position.quantity - quantity
             signal_id = hashlib.sha256(
                 (
@@ -465,9 +465,9 @@ def activate_paper_strategy(
                     reference_price=reference,
                     execution_price=fill_price,
                     base_quantity=quantity,
-                    quote_amount_usdt=net_quote,
-                    fee_usdt=fee,
-                    realized_pnl_usdt=realized,
+                    quote_amount_usdc=net_quote,
+                    fee_usdc=fee,
+                    realized_pnl_usdc=realized,
                     breakout_strength=None,
                     strategy_version=position.strategy_version,
                 )
@@ -476,9 +476,9 @@ def activate_paper_strategy(
         session_equity, _ = _equity(cash, {}, latest_prices, dust)
         activated_account = replace(
             account,
-            cash_usdt=cash,
-            high_water_equity_usdt=cash,
-            day_start_equity_usdt=cash,
+            cash_usdc=cash,
+            high_water_equity_usdc=cash,
+            day_start_equity_usdc=cash,
             day_start_date_utc=moment.date().isoformat(),
             halted=False,
             halt_reason=None,
@@ -487,7 +487,7 @@ def activate_paper_strategy(
         if strategy.key == "v6":
             # A new research session must not erase an account-wide risk halt or high-water mark.
             activated_account, _, _ = _risk_account(
-                replace(account, cash_usdt=cash), equity=session_equity, at=moment
+                replace(account, cash_usdc=cash), equity=session_equity, at=moment
             )
         store.apply_strategy_activation(
             account=activated_account,
@@ -495,7 +495,7 @@ def activate_paper_strategy(
             checkpoints=checkpoints,
             strategy_key=strategy.key,
             strategy_version=strategy.version,
-            starting_equity_usdt=session_equity,
+            starting_equity_usdc=session_equity,
             at=moment,
             dust=dust,
         )
@@ -509,7 +509,7 @@ def load_paper_portfolio(
     at: datetime | None = None,
     strategy_key: str = "v1",
     strategy_version: str = HIXTON_SPEC_VERSION,
-    starting_cash_usdt: Decimal | None = None,
+    starting_cash_usdc: Decimal | None = None,
 ) -> PaperPortfolio:
     moment = (at or datetime.now(UTC)).astimezone(UTC)
     with PaperStore(database_path) as store:
@@ -517,7 +517,7 @@ def load_paper_portfolio(
             at=moment,
             strategy_key=strategy_key,
             strategy_version=strategy_version,
-            starting_cash_usdt=starting_cash_usdt,
+            starting_cash_usdc=starting_cash_usdc,
         )
         store.require_strategy(strategy_key, strategy_version)
         account = store.load_account()
@@ -525,14 +525,14 @@ def load_paper_portfolio(
         positions = store.load_positions()
         dust = store.load_dust()
     by_symbol = {position.symbol: position for position in positions}
-    equity, unrealized = _equity(account.cash_usdt, by_symbol, latest_prices, dust)
+    equity, unrealized = _equity(account.cash_usdc, by_symbol, latest_prices, dust)
     account, daily_paused, drawdown_pct = _risk_account(account, equity=equity, at=moment)
     return PaperPortfolio(
         account=account,
         settings=settings,
         positions=positions,
-        equity_usdt=equity,
-        unrealized_pnl_usdt=unrealized,
+        equity_usdc=equity,
+        unrealized_pnl_usdc=unrealized,
         daily_loss_paused=daily_paused,
         drawdown_pct=drawdown_pct,
     )

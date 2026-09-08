@@ -62,6 +62,7 @@ class RuntimeSupervisor:
         self._sync_lock = asyncio.Lock()
         self._task: asyncio.Task[None] | None = None
         self._backtest_task_handle: asyncio.Task[None] | None = None
+        self._available_starts: dict[str, datetime] = {}
 
     def _process_paper(
         self, points: dict[str, tuple[IndicatorPoint, ...]], rules: dict[str, ExecutionRules]
@@ -200,7 +201,7 @@ class RuntimeSupervisor:
                         points,
                         strategy_key=self.strategy.key,
                         strategy_version=self.strategy.version,
-                        starting_cash_usdt=self.config.paper_starting_cash_usdt,
+                        starting_cash_usdc=self.config.paper_starting_cash_usdc,
                     )
                     if not first_start:
                         events = await asyncio.to_thread(
@@ -265,11 +266,15 @@ class RuntimeSupervisor:
             if not store.integrity_check():
                 raise RuntimeError("SQLite integrity check failed")
             for symbol in SYMBOLS:
+                if symbol not in self._available_starts:
+                    self._available_starts[symbol] = client.first_available_open(
+                        symbol, start=warmup_start, end_exclusive=report_end
+                    )
                 synchronize_symbol(
                     client=client,
                     store=store,
                     symbol=symbol,
-                    start=warmup_start,
+                    start=max(warmup_start, self._available_starts[symbol]),
                     end_exclusive=report_end,
                 )
                 current_candles = client.fetch_klines(
@@ -283,6 +288,10 @@ class RuntimeSupervisor:
             start=warmup_start,
             end_exclusive=report_end,
             strategy=self.strategy,
+            starts_by_symbol={
+                symbol: max(warmup_start, max(self._available_starts.values()))
+                for symbol in SYMBOLS
+            },
         )
         rules: dict[str, ExecutionRules] = {}
         with CandleStore(self.config.database_path) as store:
@@ -311,7 +320,12 @@ class RuntimeSupervisor:
         report_end = (
             min(values[-1].candle.open_time_utc for values in points.values()) + TIMEFRAME_DELTA
         )
-        report_start = _subtract_calendar_years(report_end, 3)
+        report_start = max(
+            _subtract_calendar_years(report_end, 3),
+            max(
+                values[0].candle.open_time_utc + 400 * TIMEFRAME_DELTA for values in points.values()
+            ),
+        )
         candles = {
             item_symbol: [point.candle for point in symbol_points]
             for item_symbol, symbol_points in points.items()
@@ -350,8 +364,8 @@ class RuntimeSupervisor:
                     candles_by_symbol=candles,
                     report_start_utc=report_start,
                     report_end_utc=report_end,
-                    starting_cash=self.config.paper_starting_cash_usdt,
-                    target_notional=paper_settings.target_notional_usdt,
+                    starting_cash=self.config.paper_starting_cash_usdc,
+                    target_notional=paper_settings.target_notional_usdc,
                     slot_count=paper_settings.slot_count,
                     costs=costs,
                     execution_rules=rules,
@@ -370,8 +384,8 @@ class RuntimeSupervisor:
                     candles=candles[symbol],
                     report_start_utc=report_start,
                     report_end_utc=report_end,
-                    starting_cash=self.config.starting_usdt_per_symbol,
-                    target_notional=self.config.target_notional_usdt,
+                    starting_cash=self.config.starting_usdc_per_symbol,
+                    target_notional=self.config.target_notional_usdc,
                     costs=costs,
                     execution_rules=rules[symbol],
                     strategy_parameters=strategy.parameters_for(symbol),

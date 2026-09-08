@@ -51,7 +51,7 @@ def test_1200_bar_golden_parity_for_each_market(market_index: int, symbol: str) 
 
 
 def test_initial_state_and_first_tradable_bar_are_exact() -> None:
-    points = evaluate_batch("ETHUSDT", deterministic_candles("ETHUSDT", 401, 1))
+    points = evaluate_batch("ETHUSDC", deterministic_candles("ETHUSDC", 401, 1))
     assert all(point.trend is TrendState.UNINITIALIZED for point in points[:399])
     assert points[399].trend is TrendState.DOWN
     assert not points[399].tradable
@@ -67,10 +67,10 @@ def test_owner_pine_v6_semantics_match_independent_oracle() -> None:
         band_multiplier=3.8,
         warmup_bars=400,
     )
-    candles = deterministic_candles("BTCUSDT", 1_200)
+    candles = deterministic_candles("BTCUSDC", 1_200)
     expected = independent_pine_v6_reference(candles, parameters)
     actual = evaluate_batch(
-        "BTCUSDT",
+        "BTCUSDC",
         candles,
         parameters=parameters,
         semantics=StrategySemantics.PINE_V6,
@@ -96,15 +96,15 @@ def test_owner_pine_v6_semantics_match_independent_oracle() -> None:
 
 
 def test_batch_and_bar_by_bar_replay_are_identical() -> None:
-    candles = deterministic_candles("BTCUSDT", 1_000)
-    batch = evaluate_batch("BTCUSDT", candles)
-    replay_engine = HixtonStrategy("BTCUSDT")
+    candles = deterministic_candles("BTCUSDC", 1_000)
+    batch = evaluate_batch("BTCUSDC", candles)
+    replay_engine = HixtonStrategy("BTCUSDC")
     replay = [replay_engine.update(candle) for candle in candles]
     assert batch == replay
 
 
 def test_signal_id_is_stable_and_position_aware() -> None:
-    points = evaluate_batch("SOLUSDT", deterministic_candles("SOLUSDT", 1_200, 3))
+    points = evaluate_batch("SOLUSDC", deterministic_candles("SOLUSDC", 1_200, 3))
     entry_point = next(point for point in points if point.flip_up)
     entry = HixtonStrategy.signal_for(entry_point, is_long=False)
     duplicate = HixtonStrategy.signal_for(entry_point, is_long=False)
@@ -122,19 +122,19 @@ def test_signal_id_is_stable_and_position_aware() -> None:
 
 
 def test_provisional_invalid_and_gapped_candles_are_rejected() -> None:
-    candle = deterministic_candles("BTCUSDT", 2)[0]
-    engine = HixtonStrategy("BTCUSDT")
+    candle = deterministic_candles("BTCUSDC", 2)[0]
+    engine = HixtonStrategy("BTCUSDC")
     with pytest.raises(StrategyInputError, match="provisional"):
         engine.update(replace(candle, closed=False))
     with pytest.raises(StrategyInputError, match="invalid OHLCV"):
         engine.update(replace(candle, low=-1.0))
 
-    engine = HixtonStrategy("BTCUSDT")
+    engine = HixtonStrategy("BTCUSDC")
     engine.update(candle)
     with pytest.raises(StrategyInputError, match="non-contiguous"):
         engine.update(
             replace(
-                deterministic_candles("BTCUSDT", 2)[1],
+                deterministic_candles("BTCUSDC", 2)[1],
                 open_time_utc=candle.open_time_utc + timedelta(hours=2),
                 close_time_utc=candle.close_time_utc + timedelta(hours=2),
             )

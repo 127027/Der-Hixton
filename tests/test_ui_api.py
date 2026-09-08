@@ -21,13 +21,13 @@ def _config(tmp_path: Path) -> ProjectConfig:
         database_path=tmp_path / "hixton.sqlite3",
         run_output_root=tmp_path / "backtests" / "v2" / "runs",
         binance_base_url="https://api.binance.com",
-        starting_usdt_per_symbol=Decimal("250.00"),
-        target_notional_usdt=Decimal("250.00"),
+        starting_usdc_per_symbol=Decimal("250.00"),
+        target_notional_usdc=Decimal("250.00"),
         run_baseline_and_stress=True,
         paper_poll_seconds=30,
-        paper_starting_cash_usdt=Decimal("240.00"),
+        paper_starting_cash_usdc=Decimal("240.00"),
         paper_slot_count=3,
-        paper_target_notional_usdt=Decimal("80.00"),
+        paper_target_notional_usdc=Decimal("80.00"),
         daily_audit_utc="00:05",
         ui_bind="127.0.0.1",
         ui_port=8765,
@@ -89,7 +89,7 @@ def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: P
     )
     payload = {
         "slot_count": 2,
-        "target_notional_usdt": "60.00",
+        "target_notional_usdc": "60.00",
         "emergency_stop": True,
         "confirmation": "ANWENDEN",
     }
@@ -104,7 +104,7 @@ def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: P
     with PaperStore(config.database_path) as store:
         settings = store.load_settings()
     assert settings.slot_count == 2
-    assert settings.target_notional_usdt == Decimal("60.00")
+    assert settings.target_notional_usdc == Decimal("60.00")
     assert settings.emergency_stop is True
 
 
@@ -157,20 +157,31 @@ def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_pa
     def write_run(key: str, mode: str, day: int, symbols: tuple[str, ...]) -> None:
         path = config.run_output_root / key
         path.mkdir(parents=True)
-        (path / "manifest.json").write_text(json.dumps({
-            "run_id": key, "run_mode": mode,
-            "created_at_utc": f"2026-09-{day:02}T12:00:00+00:00",
-        }), encoding="utf-8")
-        (path / "metrics.json").write_text(json.dumps({
-            "baseline": {"per_symbol": {symbol: {} for symbol in symbols}},
-        }), encoding="utf-8")
+        (path / "manifest.json").write_text(
+            json.dumps(
+                {
+                    "run_id": key,
+                    "run_mode": mode,
+                    "created_at_utc": f"2026-09-{day:02}T12:00:00+00:00",
+                }
+            ),
+            encoding="utf-8",
+        )
+        (path / "metrics.json").write_text(
+            json.dumps(
+                {
+                    "baseline": {"per_symbol": {symbol: {} for symbol in symbols}},
+                }
+            ),
+            encoding="utf-8",
+        )
         # Copied older directories look newer on disk; creation time must win.
         os.utime(path, (1_800_000_000 - day * 100, 1_800_000_000 - day * 100))
 
     write_run("portfolio-old", "portfolio", 1, ())
     write_run("portfolio-new", "portfolio", 6, ())
-    write_run("single-eth", "single", 2, ("ETHUSDT",))
-    write_run("single-btc", "single", 3, ("BTCUSDT",))
+    write_run("single-eth", "single", 2, ("ETHUSDC",))
+    write_run("single-btc", "single", 3, ("BTCUSDC",))
     # >25 other runs must not make the selected old portfolio disappear.
     for index in range(30):
         write_run(f"batch-{index}", "batch", 5, SYMBOLS)
@@ -178,19 +189,20 @@ def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_pa
     broken.mkdir()
     (broken / "manifest.json").write_text("[invalid", encoding="utf-8")
     client = TestClient(
-        create_app(config, RuntimeSupervisor(config)), base_url="http://127.0.0.1:8765",
+        create_app(config, RuntimeSupervisor(config)),
+        base_url="http://127.0.0.1:8765",
     )
     for query, expected in (
         ("mode=portfolio", ["portfolio-new", "portfolio-old"]),
-        ("mode=single&symbol=eth/usdt", ["single-eth"]),
-        ("mode=single&symbol=BTCUSDT", ["single-btc"]),
+        ("mode=single&symbol=eth/usdc", ["single-eth"]),
+        ("mode=single&symbol=BTCUSDC", ["single-btc"]),
         ("strategy=v6&mode=portfolio", []),
     ):
         response = client.get(f"/api/backtests?{query}")
         assert response.status_code == 200
         assert [r["manifest"]["run_id"] for r in response.json()["runs"]] == expected
     assert len(client.get("/api/backtests?mode=all").json()["runs"]) == 25
-    for query in ("mode=unknown", "mode=single", "mode=single&symbol=FAKE", "symbol=ETHUSDT"):
+    for query in ("mode=unknown", "mode=single", "mode=single&symbol=FAKE", "symbol=ETHUSDC"):
         assert client.get(f"/api/backtests?{query}").status_code == 400
     assert len(list(config.run_output_root.iterdir())) == 35  # Nothing deleted.
 
@@ -198,7 +210,8 @@ def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_pa
 def test_ui_documentation_uses_runtime_strategy_and_current_branch(tmp_path: Path) -> None:
     config = _config(tmp_path)
     client = TestClient(
-        create_app(config, RuntimeSupervisor(config)), base_url="http://127.0.0.1:8765",
+        create_app(config, RuntimeSupervisor(config)),
+        base_url="http://127.0.0.1:8765",
     )
     html = client.get("/").text
     assert 'id="doc-strategy-version"' in html
@@ -207,3 +220,23 @@ def test_ui_documentation_uses_runtime_strategy_and_current_branch(tmp_path: Pat
     assert "/blob/main/" not in html
     assert "BACKTEST V1" not in html
     assert "<strong>HIXTON-SPEC-1.0</strong>" not in html
+
+
+def test_legacy_backtest_currency_not_relabelled_or_written(tmp_path: Path) -> None:
+    from hixton.ui.api import _list_backtests
+
+    for quote in ("USDT", "USDC"):
+        directory = tmp_path / quote
+        directory.mkdir()
+        manifest = {"run_id": quote, "data": {"snapshot_sha256_by_symbol": {"BTC" + quote: "hash"}}}
+        original = json.dumps(manifest)
+        (directory / "manifest.json").write_text(original, encoding="utf-8")
+        (directory / "metrics.json").write_text('{"baseline":{"portfolio":{}}}', encoding="utf-8")
+    results = _list_backtests(tmp_path)
+    assert {r["manifest"]["run_id"]: r["manifest"]["quote_asset"] for r in results} == {
+        "USDT": "USDT",
+        "USDC": "USDC",
+    }
+    for quote in ("USDT", "USDC"):
+        stored = json.loads((tmp_path / quote / "manifest.json").read_text(encoding="utf-8"))
+        assert "quote_asset" not in stored

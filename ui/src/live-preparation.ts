@@ -95,7 +95,7 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
     const result = await response.json() as Record<string, unknown>;
     if (response.status === 409 && (path === "enable" || path === "trial/start")) {
       render(result as unknown as LiveStatus);
-      throw new Error("Noch nicht startbereit: USDC-Runtime, Kontoabgleich und Ausführungsabnahme fehlen. Kein Echtgeldauftrag gesendet. Details unter „Technische Freigabe prüfen“.");
+      throw new Error("Noch nicht startbereit: Echtgeld-Runtime-Anschluss, Kontoabgleich und Ausführungsabnahme fehlen. Kein Echtgeldauftrag gesendet. Details unter „Technische Freigabe prüfen“.");
     }
     if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : `Aktion fehlgeschlagen (${response.status}).`);
     return result;

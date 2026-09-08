@@ -390,10 +390,12 @@ class OrderJournal:
             "gross_quote": str(quote),
             # Compatibility only for genuinely USDT records, never relabel USDC.
             "gross_quote_usdt": str(quote) if quote_asset == "USDT" else None,
+            "gross_quote_usdc": str(quote) if quote_asset == "USDC" else None,
             "net_received_base": str(net_received),
             "fees_by_asset": {asset: str(value) for asset, value in fees.items()},
             "fees_fully_valued_in_quote": set(fees) <= {quote_asset},
             "fees_fully_valued_in_usdt": quote_asset == "USDT" and set(fees) <= {"USDT"},
+            "fees_fully_valued_in_usdc": quote_asset == "USDC" and set(fees) <= {"USDC"},
             "fills": [
                 {
                     key: row[key]

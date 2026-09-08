@@ -48,8 +48,8 @@
             <small id="runtime-detail">Die UI bleibt sichtbar, während die zehn Märkte geprüft werden.</small>
           </div>
           <div class="metric-grid">
-            <article class="metric-card"><span>Paper Equity</span><strong id="metric-equity">—</strong><small>USDT</small></article>
-            <article class="metric-card"><span>Freier Cash</span><strong id="metric-cash">—</strong><small>USDT</small></article>
+            <article class="metric-card"><span>Paper Equity</span><strong id="metric-equity">—</strong><small>USDC</small></article>
+            <article class="metric-card"><span>Freier Cash</span><strong id="metric-cash">—</strong><small>USDC</small></article>
             <article class="metric-card"><span>Freie Slots</span><strong id="metric-slots">—</strong><small>von 3</small></article>
             <article class="metric-card"><span>Drawdown</span><strong id="metric-drawdown">—</strong><small>20 % Haltgrenze</small></article>
           </div>
@@ -62,7 +62,7 @@
 
         <section id="chart-panel" class="page">
           <div class="section-heading chart-heading">
-            <div><p class="eyebrow">CHART & SIGNALE</p><h2><span id="chart-symbol">BTC/USDT</span></h2></div>
+            <div><p class="eyebrow">CHART & SIGNALE</p><h2><span id="chart-symbol">BTC/USDC</span></h2></div>
             <div class="chart-controls">
               <select id="coin-select" aria-label="Coin auswählen"></select>
               <select id="timezone-select" aria-label="Zeitzone">
@@ -107,7 +107,7 @@
         <section id="backtests" class="page">
           <div class="section-heading"><div><p id="backtest-eyebrow" class="eyebrow">BACKTEST</p><h2 id="backtest-title">Aktive Strategie wird geladen</h2></div></div>
           <article class="action-card">
-            <div><strong>Historischer Test</strong><p>Drei Jahre, 400 Warm-up-Bars, Baseline und Stress, Next-Bar-Open.</p></div>
+            <div><strong>Historischer Test</strong><p>Bis zu drei Jahre verfügbare Daten, 400 Warm-up-Bars, Baseline und Stress, Next-Bar-Open. Das tatsächliche Fenster steht beim Ergebnis.</p></div>
             <select id="backtest-strategy" aria-label="Backteststrategie"><option value="v6">V6 · Paper-Experiment / Coin-Mix</option><option value="v2">V2 · vorherige Referenz</option><option value="v1">V1 · Historie</option><option value="v3">V3 · Mehrfachslot verworfen</option></select>
             <select id="backtest-symbol" aria-label="Backtestart"><option value="PORTFOLIO">Gemeinsames Portfolio</option><option value="ALL">10×250 isoliert</option></select>
             <button id="backtest-button" class="button primary">Backtest starten</button>
@@ -125,7 +125,7 @@
         </section>
 
         <section id="quality" class="page">
-          <div class="section-heading"><div><p class="eyebrow">DATENQUALITÄT</p><h2>Drei Jahre plus Warm-up</h2></div></div>
+          <div class="section-heading"><div><p class="eyebrow">DATENQUALITÄT</p><h2>Verfügbare Historie einschließlich Warm-up</h2></div></div>
           <article class="table-card"><div class="table-scroll"><table><thead><tr><th>Coin</th><th>Status</th><th>Bars</th><th>Von</th><th>Bis</th><th>Lücken</th></tr></thead><tbody id="quality-body"></tbody></table></div></article>
         </section>
 
@@ -145,7 +145,7 @@
               <form id="trading-form" class="settings-form">
                 <div class="settings-fields">
                   <label>Maximal offene Trades<input id="slot-input" type="number" min="1" max="10" step="1" value="3" required /></label>
-                  <label>USDT pro Trade<input id="notional-input" type="number" min="1" step="1" value="80" required /></label>
+                  <label>USDC pro Trade<input id="notional-input" type="number" min="1" step="1" value="80" required /></label>
                 </div>
                 <p id="settings-validation" class="negative" role="alert"></p>
                 <button id="settings-button" type="submit" class="button primary">Übernehmen</button>
@@ -202,7 +202,7 @@
               <details>
                 <summary>Einmaliger 50-USDC-Test · Vorbereitung</summary>
                 <p>Ziel: ein neues Signal aus zehn USDC-Märkten abwarten, genau einen Trade mit 50 USDC Kaufbudget ausführen und regulär aussteigen. Gebühren separat. Danach keine weiteren Einstiege.</p>
-                <p>Paper läuft derzeit weiter auf USDT. Die USDC-Anbindung ist noch nicht freigegeben. Dieser Button prüft die fehlenden Voraussetzungen und startet momentan keinen Trade.</p>
+                <p>Die Echtgeld-Anbindung ist noch nicht freigegeben. Dieser Button prüft die fehlenden Voraussetzungen und startet momentan keinen Trade. Paper läuft unabhängig weiter.</p>
                 <button id="live-trial-start" type="button" class="button secondary" disabled>1 × 50 USDC · Startvoraussetzungen prüfen</button>
                 <p id="live-trial-status" role="status">Nicht gestartet.</p>
                 <p id="live-trial-result" role="alert"></p>

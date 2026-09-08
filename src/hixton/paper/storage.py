@@ -48,6 +48,26 @@ class PaperStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._connection = sqlite3.connect(self.path, timeout=30)
         self._connection.row_factory = sqlite3.Row
+        # Fail before any schema migration when pointed at the old USDT ledger.
+        # A new quote requires a separate account, never relabelling old cash.
+        tables = {
+            row[0]
+            for row in self._connection.execute("SELECT name FROM sqlite_master WHERE type='table'")
+        }
+        if (
+            "paper_account" in tables
+            and self._connection.execute("SELECT 1 FROM paper_account LIMIT 1").fetchone()
+        ):
+            markers: set[str] = set()
+            for table in ("paper_checkpoints", "paper_positions", "paper_events"):
+                if table in tables:
+                    markers.update(
+                        str(row[0])
+                        for row in self._connection.execute(f"SELECT DISTINCT symbol FROM {table}")
+                    )
+            if any(symbol.endswith("USDT") for symbol in markers):
+                self._connection.close()
+                raise RuntimeError("Legacy USDT Paper ledger: use a separate USDC database")
         self._connection.execute("PRAGMA journal_mode=WAL")
         self._connection.execute("PRAGMA foreign_keys=ON")
         self._connection.execute("PRAGMA synchronous=FULL")
@@ -77,11 +97,11 @@ class PaperStore:
         at: datetime | None = None,
         strategy_key: str = "v1",
         strategy_version: str = HIXTON_SPEC_VERSION,
-        starting_cash_usdt: Decimal | None = None,
+        starting_cash_usdc: Decimal | None = None,
     ) -> bool:
         moment = (at or _now()).astimezone(UTC)
         # Only INSERT a new seed; never top up or reset an existing ledger.
-        seed = starting_cash_usdt
+        seed = starting_cash_usdc
         if seed is None:
             seed = Decimal("250.00" if strategy_key == "v6" else "240.00")
         if not seed.is_finite() or seed <= 0:
@@ -152,7 +172,7 @@ class PaperStore:
             strategy_key=str(row["strategy_key"]),
             strategy_version=str(row["strategy_version"]),
             activated_at_utc=_parse_time(row["activated_at_utc"]),
-            starting_equity_usdt=Decimal(str(row["starting_equity_text"])),
+            starting_equity_usdc=Decimal(str(row["starting_equity_text"])),
         )
 
     def require_strategy(self, strategy_key: str, strategy_version: str) -> None:
@@ -169,10 +189,10 @@ class PaperStore:
         if row is None:
             raise RuntimeError("paper account is not initialized")
         return PaperAccount(
-            cash_usdt=Decimal(str(row["cash_text"])),
-            starting_cash_usdt=Decimal(str(row["starting_cash_text"])),
-            high_water_equity_usdt=Decimal(str(row["high_water_text"])),
-            day_start_equity_usdt=Decimal(str(row["day_start_equity_text"])),
+            cash_usdc=Decimal(str(row["cash_text"])),
+            starting_cash_usdc=Decimal(str(row["starting_cash_text"])),
+            high_water_equity_usdc=Decimal(str(row["high_water_text"])),
+            day_start_equity_usdc=Decimal(str(row["day_start_equity_text"])),
             day_start_date_utc=str(row["day_start_date_utc"]),
             halted=bool(row["halted"]),
             halt_reason=str(row["halt_reason"]) if row["halt_reason"] is not None else None,
@@ -191,10 +211,10 @@ class PaperStore:
                 WHERE singleton=1
                 """,
                 (
-                    str(account.cash_usdt),
-                    str(account.starting_cash_usdt),
-                    str(account.high_water_equity_usdt),
-                    str(account.day_start_equity_usdt),
+                    str(account.cash_usdc),
+                    str(account.starting_cash_usdc),
+                    str(account.high_water_equity_usdc),
+                    str(account.day_start_equity_usdc),
                     account.day_start_date_utc,
                     int(account.halted),
                     account.halt_reason,
@@ -208,7 +228,7 @@ class PaperStore:
             raise RuntimeError("paper settings are not initialized")
         return PaperSettings(
             slot_count=int(row["slot_count"]),
-            target_notional_usdt=Decimal(str(row["target_notional_text"])),
+            target_notional_usdc=Decimal(str(row["target_notional_text"])),
             emergency_stop=bool(row["emergency_stop"]),
         )
 
@@ -224,7 +244,7 @@ class PaperStore:
                 """,
                 (
                     settings.slot_count,
-                    str(settings.target_notional_usdt),
+                    str(settings.target_notional_usdc),
                     int(settings.emergency_stop),
                     _time(moment),
                 ),
@@ -242,12 +262,12 @@ class PaperStore:
                         {
                             "before": {
                                 "slot_count": previous.slot_count,
-                                "target_notional_usdt": str(previous.target_notional_usdt),
+                                "target_notional_usdc": str(previous.target_notional_usdc),
                                 "emergency_stop": previous.emergency_stop,
                             },
                             "after": {
                                 "slot_count": settings.slot_count,
-                                "target_notional_usdt": str(settings.target_notional_usdt),
+                                "target_notional_usdc": str(settings.target_notional_usdc),
                                 "emergency_stop": settings.emergency_stop,
                             },
                             "scope": "future_entries_only",
@@ -264,10 +284,10 @@ class PaperStore:
                 symbol=str(row["symbol"]),
                 quantity=Decimal(str(row["quantity_text"])),
                 average_price=Decimal(str(row["average_price_text"])),
-                cost_basis_usdt=Decimal(str(row["cost_basis_text"])),
+                cost_basis_usdc=Decimal(str(row["cost_basis_text"])),
                 entry_time_utc=_parse_time(row["entry_time_utc"]),
                 entry_signal_id=str(row["entry_signal_id"]),
-                entry_fee_usdt=Decimal(str(row["entry_fee_text"])),
+                entry_fee_usdc=Decimal(str(row["entry_fee_text"])),
                 updated_at_utc=_parse_time(row["updated_at_utc"]),
                 strategy_version=str(row["strategy_version"]),
                 slot_count=int(row["slot_count"]),
@@ -303,10 +323,10 @@ class PaperStore:
                     position.symbol,
                     str(position.quantity),
                     str(position.average_price),
-                    str(position.cost_basis_usdt),
+                    str(position.cost_basis_usdc),
                     _time(position.entry_time_utc),
                     position.entry_signal_id,
-                    str(position.entry_fee_usdt),
+                    str(position.entry_fee_usdc),
                     _time(position.updated_at_utc),
                     position.strategy_version,
                     position.slot_count,
@@ -344,9 +364,9 @@ class PaperStore:
                     str(event.reference_price),
                     str(event.execution_price) if event.execution_price is not None else None,
                     str(event.base_quantity) if event.base_quantity is not None else None,
-                    str(event.quote_amount_usdt) if event.quote_amount_usdt is not None else None,
-                    str(event.fee_usdt) if event.fee_usdt is not None else None,
-                    (str(event.realized_pnl_usdt) if event.realized_pnl_usdt is not None else None),
+                    str(event.quote_amount_usdc) if event.quote_amount_usdc is not None else None,
+                    str(event.fee_usdc) if event.fee_usdc is not None else None,
+                    (str(event.realized_pnl_usdc) if event.realized_pnl_usdc is not None else None),
                     (str(event.breakout_strength) if event.breakout_strength is not None else None),
                     event.strategy_version,
                 ),
@@ -390,10 +410,10 @@ class PaperStore:
                 WHERE singleton=1
                 """,
                 (
-                    str(account.cash_usdt),
-                    str(account.starting_cash_usdt),
-                    str(account.high_water_equity_usdt),
-                    str(account.day_start_equity_usdt),
+                    str(account.cash_usdc),
+                    str(account.starting_cash_usdc),
+                    str(account.high_water_equity_usdc),
+                    str(account.day_start_equity_usdc),
                     account.day_start_date_utc,
                     int(account.halted),
                     account.halt_reason,
@@ -414,10 +434,10 @@ class PaperStore:
                         position.symbol,
                         str(position.quantity),
                         str(position.average_price),
-                        str(position.cost_basis_usdt),
+                        str(position.cost_basis_usdc),
                         _time(position.entry_time_utc),
                         position.entry_signal_id,
-                        str(position.entry_fee_usdt),
+                        str(position.entry_fee_usdc),
                         _time(position.updated_at_utc),
                         position.strategy_version,
                         position.slot_count,
@@ -449,14 +469,14 @@ class PaperStore:
                         (str(event.execution_price) if event.execution_price is not None else None),
                         str(event.base_quantity) if event.base_quantity is not None else None,
                         (
-                            str(event.quote_amount_usdt)
-                            if event.quote_amount_usdt is not None
+                            str(event.quote_amount_usdc)
+                            if event.quote_amount_usdc is not None
                             else None
                         ),
-                        str(event.fee_usdt) if event.fee_usdt is not None else None,
+                        str(event.fee_usdc) if event.fee_usdc is not None else None,
                         (
-                            str(event.realized_pnl_usdt)
-                            if event.realized_pnl_usdt is not None
+                            str(event.realized_pnl_usdc)
+                            if event.realized_pnl_usdc is not None
                             else None
                         ),
                         (
@@ -549,7 +569,7 @@ class PaperStore:
         checkpoints: Mapping[str, datetime],
         strategy_key: str,
         strategy_version: str,
-        starting_equity_usdt: Decimal,
+        starting_equity_usdc: Decimal,
         at: datetime,
         dust: Mapping[str, Decimal] | None = None,
     ) -> None:
@@ -568,10 +588,10 @@ class PaperStore:
                     halted=?, halt_reason=?, updated_at_utc=? WHERE singleton=1
                 """,
                 (
-                    str(account.cash_usdt),
-                    str(account.starting_cash_usdt),
-                    str(account.high_water_equity_usdt),
-                    str(account.day_start_equity_usdt),
+                    str(account.cash_usdc),
+                    str(account.starting_cash_usdc),
+                    str(account.high_water_equity_usdc),
+                    str(account.day_start_equity_usdc),
                     account.day_start_date_utc,
                     int(account.halted),
                     account.halt_reason,
@@ -606,9 +626,9 @@ class PaperStore:
                         str(event.reference_price),
                         str(event.execution_price),
                         str(event.base_quantity),
-                        str(event.quote_amount_usdt),
-                        str(event.fee_usdt),
-                        str(event.realized_pnl_usdt),
+                        str(event.quote_amount_usdc),
+                        str(event.fee_usdc),
+                        str(event.realized_pnl_usdc),
                         None,
                         event.strategy_version,
                     )
@@ -648,7 +668,7 @@ class PaperStore:
                     strategy_key,
                     strategy_version,
                     _time(at),
-                    str(starting_equity_usdt),
+                    str(starting_equity_usdc),
                 ),
             )
             self._connection.execute(
@@ -670,7 +690,7 @@ class PaperStore:
                                 "key": strategy_key,
                                 "version": strategy_version,
                             },
-                            "starting_equity_usdt": str(starting_equity_usdt),
+                            "starting_equity_usdc": str(starting_equity_usdc),
                             "forced_paper_exits": len(events),
                             "decision": "DEC-043" if strategy_key == "v6" else "DEC-037",
                         },
@@ -971,9 +991,9 @@ class PaperStore:
             reference_price=Decimal(str(row["reference_price_text"])),
             execution_price=decimal_or_none("execution_price_text"),
             base_quantity=decimal_or_none("base_quantity_text"),
-            quote_amount_usdt=decimal_or_none("quote_amount_text"),
-            fee_usdt=decimal_or_none("fee_text"),
-            realized_pnl_usdt=decimal_or_none("realized_pnl_text"),
+            quote_amount_usdc=decimal_or_none("quote_amount_text"),
+            fee_usdc=decimal_or_none("fee_text"),
+            realized_pnl_usdc=decimal_or_none("realized_pnl_text"),
             breakout_strength=decimal_or_none("breakout_strength_text"),
             strategy_version=str(row["strategy_version"]),
             processed_at_utc=(

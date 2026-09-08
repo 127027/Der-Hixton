@@ -1,6 +1,16 @@
 # 12 – Tests und Abnahmekriterien
 
-## Abnahme 0.4.6 / DEC-052 – USDC-Prüfstand, keine Live-Abnahme
+## Prüfstand 0.4.7 / DEC-053 – keine Echtgeld-Abnahme
+
+Abschlussprüfung: **262 Python-Tests bestanden, 1 opt-in Windows-Vault-Test übersprungen; 16 UI-Tests bestanden; Ruff, Mypy (48 Quelldateien), TypeScript und Vite-Build bestanden.** Ein erster parallel zum Bundle-Build laufender Test wurde durch dessen temporär entfernten Assets-Ordner gestört; der vollständige sequenzielle Wiederholungslauf bestand. Kein Fehler wurde durch Entfernen eines Sicherheitstests umgangen.
+
+Zusätzlich echte lokal gespeicherte USDC-Kerzen geprüft: gemeinsamer Warm-up-Start 07.03.2024 08:00 UTC, Ende 08.09.2026 06:00 UTC, je Markt 21.958 Bars; zehn von zehn Qualitätsprüfungen und letzte Indikatorberechnungen gültig. Der Handelsbericht beginnt erst nach 400 Warm-up-Bars, am 24.03.2024 00:00 UTC. Dies ist kein aktueller Kontocheck, kein Echtgeldlauf und kein neuer Profitabilitätsbeleg. Das alte USDT-Ledger wird beim versehentlichen Öffnen mit dem neuen PaperStore vor einer Schemaänderung abgewiesen.
+
+Neue Offline-Regressionen: exaktes 50-USDC-Quote-Budget, keine USDT-/Kontoverwechslung, echter Antwortparser einschließlich BNB-Fee und gerundetem `quoteQty`, verlorenes ACK mit Wiederanlauf ohne zweiten POST, fehlende Filldetails, falsche Fremdfills/NaN, signierter POST-Body, feste HTTPS-Hosts/Endpunkte, redigierte Fehler ohne Retry, Ledger-Schemaerhalt, terminale Ergebnisse gegen konkurrierende Fehler geschützt, alle zehn USDC-Coin-Controller-Rundläufe und nicht durch abgelaufene Entry-Freigabe blockierter Ausgang.
+
+Migrationsregressionen prüfen gemeinsame verfügbare Historie/400-Warm-up, blockierte interne/Endlücken, erhaltenen Vault-Namespace und richtige Quote alter Reports ohne Umschreiben. Produktiver automatischer Bestandsabgleich, Restmengen-/Filterausführung, Runtime-Hydration und Binance-Testnet-Nachweis bleiben offen. Grüner Mock-Test ist keine Kontoprüfung und keine Startfreigabe.
+
+## Historie: Abnahme 0.4.6 / DEC-052 – USDC-Prüfstand, keine Live-Abnahme
 
 Abschließende Arbeitskopie: **224 Python-Tests bestanden**, ein opt-in Vault-Test übersprungen; **16 UI-Tests**, Ruff, mypy, TypeScript und Produktionsbuild erfolgreich. Auf dem laufenden Laptop zusätzlich **50/50 Chartkombinationen** (zehn Coins × fünf Zeiträume) mit nichtleeren Daten, zehn valide Marktkarten und zehn letzte Signalzeiten geprüft. Die vorher dokumentierten 222 Tests beziehen sich auf den Stand vor den zwei CLI-Größenregressionen.
 

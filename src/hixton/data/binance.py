@@ -69,12 +69,12 @@ class SymbolRules:
 
     @property
     def tradable_for_v1(self) -> bool:
-        return self.tradable_for_quote("USDT")
+        return self.tradable_for_quote("USDC")
 
     def tradable_for_quote(self, quote_asset: str) -> bool:
         return (
             self.status == "TRADING"
-            and quote_asset in {"USDT", "USDC"}
+            and quote_asset in {"USDC"}
             and self.quote_asset == quote_asset
             and self.symbol == self.base_asset + quote_asset
             and self.spot_allowed
@@ -137,6 +137,32 @@ class BinancePublicClient:
             min_qty=Decimal(str(lot_filter.get("minQty", "0"))),
             min_notional=Decimal(str(notional_filter.get("minNotional", "0"))),
         )
+
+    def first_available_open(
+        self, symbol: str, *, start: datetime, end_exclusive: datetime
+    ) -> datetime:
+        """Ask the provider for its first real bar in the requested history.
+
+        This is data availability, not proof of an original listing date. A
+        shorter prefix is reported; internal gaps still fail the normal audit.
+        """
+        payload = self._request_json(
+            "/api/v3/klines",
+            {
+                "symbol": symbol,
+                "interval": "1h",
+                "timeZone": "0",
+                "limit": 1,
+                "startTime": int(start.timestamp() * 1000),
+                "endTime": int(end_exclusive.timestamp() * 1000) - 1,
+            },
+        )
+        if not isinstance(payload, list) or len(payload) != 1:
+            raise BinanceApiError(f"{symbol}: no first available hourly candle")
+        candle = self._parse_kline(symbol, payload[0], int(end_exclusive.timestamp() * 1000))
+        if not candle.ohlc_is_valid or not start <= candle.open_time_utc < end_exclusive:
+            raise BinanceApiError(f"{symbol}: invalid first available candle")
+        return candle.open_time_utc
 
     def fetch_klines(
         self,

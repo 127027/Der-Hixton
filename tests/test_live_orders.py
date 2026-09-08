@@ -23,7 +23,7 @@ def buy() -> TrialIntent:
     return TrialIntent(
         "explicit-test-intent",
         "fake-account",
-        "ETHUSDT",
+        "ETHUSDC",
         "BUY",
         "test-profile",
         D("2500"),
@@ -99,7 +99,7 @@ def test_record_rejects_modified_persisted_intent(tmp_path: Path) -> None:
     intent = buy()
     journal.create(intent)
     journal.claim_submit(intent.intent_id)
-    modified = replace(intent, symbol="BTCUSDT")
+    modified = replace(intent, symbol="BTCUSDC")
     with pytest.raises(RuntimeError, match="differs from the persisted"):
         journal.record(modified, filled(modified))
     assert journal.fill_summary(intent.intent_id)["fill_count"] == 0
@@ -158,7 +158,7 @@ def test_one_submit_fill_fee_and_repeated_ui_calls(tmp_path: Path) -> None:
         assert executor.execute(intent.intent_id) == "FILLED"
     assert exchange.submits == 1
     summary = journal.fill_summary(intent.intent_id)
-    assert summary["gross_quote_usdt"] == "50.00"
+    assert summary["gross_quote_usdc"] == "50.00"
     assert summary["net_received_base"] == "0.01998"
     assert summary["fees_by_asset"] == {"ETH": "0.00002"}
 
@@ -198,7 +198,7 @@ def test_partial_fill_and_duplicate_query_book_each_trade_once(tmp_path: Path) -
     response = ExchangeOrder(
         intent.client_order_id,
         "1234",
-        "ETHUSDT",
+        "ETHUSDC",
         "BUY",
         "PARTIALLY_FILLED",
         D("0.01"),
@@ -259,7 +259,7 @@ def test_wrong_response_identity_is_unknown_not_filled(tmp_path: Path) -> None:
     assert journal.fill_summary(intent.intent_id)["fill_count"] == 0
 
 
-def test_bnb_commission_is_not_falsely_reported_as_usdt(tmp_path: Path) -> None:
+def test_bnb_commission_is_not_falsely_reported_as_usdc(tmp_path: Path) -> None:
     journal = OrderJournal(tmp_path / "orders.sqlite3")
     intent = buy()
     journal.create(intent)
@@ -271,7 +271,7 @@ def test_bnb_commission_is_not_falsely_reported_as_usdt(tmp_path: Path) -> None:
     summary = journal.fill_summary(intent.intent_id)
     assert summary["net_received_base"] == "0.02"
     assert summary["fees_by_asset"] == {"BNB": "0.00005"}
-    assert summary["fees_fully_valued_in_usdt"] is False
+    assert summary["fees_fully_valued_in_usdc"] is False
 
 
 def test_offline_buy_sell_cycle_only_sells_received_base(tmp_path: Path) -> None:
@@ -284,7 +284,7 @@ def test_offline_buy_sell_cycle_only_sells_received_base(tmp_path: Path) -> None
     exit_intent = TrialIntent(
         "explicit-test-exit",
         entry.account_fingerprint,
-        "ETHUSDT",
+        "ETHUSDC",
         "SELL",
         entry.strategy_version,
         D("2510"),
@@ -295,12 +295,12 @@ def test_offline_buy_sell_cycle_only_sells_received_base(tmp_path: Path) -> None
     response = ExchangeOrder(
         exit_intent.client_order_id,
         "1235",
-        "ETHUSDT",
+        "ETHUSDC",
         "SELL",
         "FILLED",
         received,
         quote,
-        (ExchangeFill("trade2", received, D("2510"), quote * D("0.001"), "USDT"),),
+        (ExchangeFill("trade2", received, D("2510"), quote * D("0.001"), "USDC"),),
     )
     exit_exchange = FakeExchange(response)
     closer = TrialOrderExecutor(
@@ -308,7 +308,7 @@ def test_offline_buy_sell_cycle_only_sells_received_base(tmp_path: Path) -> None
     )
     assert closer.execute(exit_intent.intent_id) == "FILLED"
     assert exit_exchange.submits == 1
-    assert D(str(journal.fill_summary(exit_intent.intent_id)["gross_quote_usdt"])) == quote
+    assert D(str(journal.fill_summary(exit_intent.intent_id)["gross_quote"])) == quote
 
 
 def test_quote_precision_uses_binance_cash_amount_and_rejects_changed_fill(tmp_path):

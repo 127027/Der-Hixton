@@ -36,7 +36,7 @@ class StrategyDefinition:
     paper_approved: bool
     slot_allocation: str
     coin_profiles: tuple[CoinProfile, ...] = ()
-    quote_asset: str = "USDT"
+    quote_asset: str = "USDC"
 
     @property
     def symbols(self) -> tuple[str, ...]:
@@ -91,8 +91,7 @@ class StrategyDefinition:
             payload["profiles"] = self.profiles_payload()
         else:
             payload.update(asdict(self.parameters))
-        if self.quote_asset != "USDT":
-            payload["quote_asset"] = self.quote_asset
+        payload["quote_asset"] = self.quote_asset
         return payload
 
 
@@ -138,7 +137,7 @@ V3_SLOT_STRATEGY = StrategyDefinition(
 
 _V6_PROFILES = (
     CoinProfile(
-        "BTCUSDT",
+        "BTCUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -150,7 +149,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0.2, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "ETHUSDT",
+        "ETHUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -162,7 +161,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=24, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "BNBUSDT",
+        "BNBUSDC",
         StrategyParameters(
             vidya_length=10,
             momentum_length=20,
@@ -174,7 +173,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "SOLUSDT",
+        "SOLUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -186,7 +185,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "XRPUSDT",
+        "XRPUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -198,7 +197,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=4, trail_atr=0),
     ),
     CoinProfile(
-        "ADAUSDT",
+        "ADAUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -210,7 +209,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "LINKUSDT",
+        "LINKUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -222,7 +221,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "AVAXUSDT",
+        "AVAXUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -234,7 +233,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "DOTUSDT",
+        "DOTUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -246,7 +245,7 @@ _V6_PROFILES = (
         TradePolicy(cmo_floor=0, slope_bars=0, stop_atr=0, trail_atr=0),
     ),
     CoinProfile(
-        "DOGEUSDT",
+        "DOGEUSDC",
         StrategyParameters(
             vidya_length=6,
             momentum_length=20,
@@ -284,7 +283,7 @@ V7_USDC_STRATEGY = StrategyDefinition(
     paper_approved=False,  # Validate USDC data/results before any runtime/account migration.
     slot_allocation=ONE_PER_SYMBOL,
     coin_profiles=tuple(
-        CoinProfile(p.symbol.removesuffix("USDT") + "USDC", p.parameters, p.trade_policy)
+        CoinProfile(p.symbol.removesuffix("USDC") + "USDC", p.parameters, p.trade_policy)
         for p in _V6_PROFILES
     ),
     quote_asset="USDC",

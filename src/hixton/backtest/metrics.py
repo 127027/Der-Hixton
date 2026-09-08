@@ -99,9 +99,7 @@ def calculate_metrics(
     win_rate = Decimal(len(wins)) / Decimal(len(trades)) * _HUNDRED if trades else None
     exposure_bars = sum(point.active_position for point in equity_curve)
     exposure = (
-        Decimal(exposure_bars) / Decimal(len(equity_curve)) * _HUNDRED
-        if equity_curve
-        else ZERO
+        Decimal(exposure_bars) / Decimal(len(equity_curve)) * _HUNDRED if equity_curve else ZERO
     )
     holding = [trade.holding_hours for trade in trades]
     daily_returns = _daily_returns(equity_curve)
@@ -112,9 +110,7 @@ def calculate_metrics(
         if annualized is not None and max_drawdown_pct > ZERO
         else None
     )
-    buy_hold_return = (
-        (buy_and_hold_ending_equity / starting_equity - Decimal("1")) * _HUNDRED
-    )
+    buy_hold_return = (buy_and_hold_ending_equity / starting_equity - Decimal("1")) * _HUNDRED
     return BacktestMetrics(
         starting_equity=starting_equity,
         ending_equity=ending_equity,
@@ -132,9 +128,7 @@ def calculate_metrics(
         average_loss=sum(losses, ZERO) / Decimal(len(losses)) if losses else None,
         exposure_pct=exposure,
         total_fees=sum((fill.fee_quote_equivalent for fill in fills), ZERO),
-        modeled_spread_slippage=sum(
-            (fill.modeled_spread_slippage for fill in fills), ZERO
-        ),
+        modeled_spread_slippage=sum((fill.modeled_spread_slippage for fill in fills), ZERO),
         average_holding_hours=sum(holding, ZERO) / Decimal(len(holding)) if holding else None,
         max_holding_hours=max(holding) if holding else None,
         sharpe=sharpe,

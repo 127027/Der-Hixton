@@ -42,10 +42,10 @@ def test_symbol_rules_parse_required_binance_filters() -> None:
     response = {
         "symbols": [
             {
-                "symbol": "ETHUSDT",
+                "symbol": "ETHUSDC",
                 "status": "TRADING",
                 "baseAsset": "ETH",
-                "quoteAsset": "USDT",
+                "quoteAsset": "USDC",
                 "isSpotTradingAllowed": True,
                 "orderTypes": ["LIMIT", "MARKET"],
                 "filters": [
@@ -61,7 +61,7 @@ def test_symbol_rules_parse_required_binance_filters() -> None:
         ]
     }
     client = StubBinance([response])
-    rules = client.symbol_rules("ETH/USDT")
+    rules = client.symbol_rules("ETH/USDC")
     assert rules.tradable_for_v1
     assert str(rules.tick_size) == "0.01000000"
     assert str(rules.step_size) == "0.00010000"
@@ -79,7 +79,7 @@ def test_kline_download_uses_utc_and_marks_final_bars() -> None:
         ]
     )
     candles = client.fetch_klines(
-        "BTCUSDT", start=start, end_exclusive=start + timedelta(hours=2)
+        "BTCUSDC", start=start, end_exclusive=start + timedelta(hours=2)
     )
     assert len(candles) == 2
     assert all(candle.closed for candle in candles)
@@ -91,18 +91,18 @@ def test_kline_download_uses_utc_and_marks_final_bars() -> None:
 
 def test_bad_kline_shape_is_rejected() -> None:
     with pytest.raises(BinanceApiError, match="shape"):
-        BinancePublicClient._parse_kline("BTCUSDT", [1, 2], server_ms=3)
+        BinancePublicClient._parse_kline("BTCUSDC", [1, 2], server_ms=3)
 
 
 def test_websocket_kline_preserves_provisional_status() -> None:
     payload = {
-        "stream": "btcusdt@kline_1h",
+        "stream": "btcusdc@kline_1h",
         "data": {
             "e": "kline",
             "k": {
                 "t": 1_700_000_000_000,
                 "T": 1_700_003_599_999,
-                "s": "BTCUSDT",
+                "s": "BTCUSDC",
                 "i": "1h",
                 "o": "100.0",
                 "h": "102.0",
@@ -116,6 +116,6 @@ def test_websocket_kline_preserves_provisional_status() -> None:
         },
     }
     candle = parse_websocket_kline(payload)
-    assert candle.symbol == "BTCUSDT"
+    assert candle.symbol == "BTCUSDC"
     assert candle.closed is False
     assert candle.source == "binance_spot_stream"

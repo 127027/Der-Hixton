@@ -58,13 +58,13 @@ def config_for(tmp_path: Path) -> ProjectConfig:
         database_path=tmp_path / "hixton.sqlite3",
         run_output_root=tmp_path / "backtests" / "v6" / "runs",
         binance_base_url="https://api.binance.com",
-        starting_usdt_per_symbol=Decimal("250"),
-        target_notional_usdt=Decimal("250"),
+        starting_usdc_per_symbol=Decimal("250"),
+        target_notional_usdc=Decimal("250"),
         run_baseline_and_stress=True,
         paper_poll_seconds=30,
-        paper_starting_cash_usdt=Decimal("250"),
+        paper_starting_cash_usdc=Decimal("250"),
         paper_slot_count=3,
-        paper_target_notional_usdt=Decimal("80"),
+        paper_target_notional_usdc=Decimal("80"),
         daily_audit_utc="00:05",
         ui_bind="127.0.0.1",
         ui_port=8765,
@@ -81,7 +81,7 @@ def client_for(tmp_path: Path, vault: MemoryVault | None = None):
         store.initialize(
             strategy_key="v6",
             strategy_version=supervisor.strategy.version,
-            starting_cash_usdt=Decimal("250"),
+            starting_cash_usdc=Decimal("250"),
         )
         checkpoints = dict.fromkeys(SYMBOLS, datetime.now(UTC))
         store.save_checkpoints(checkpoints)
@@ -133,7 +133,7 @@ def account_fixture():
         "canTrade": True,
         "accountType": "SPOT",
         "balances": [
-            {"asset": "USDT", "free": "100", "locked": "0"},
+            {"asset": "USDC", "free": "100", "locked": "0"},
             {"asset": "BNB", "free": "0.03", "locked": "0"},
         ],
     }
@@ -141,8 +141,8 @@ def account_fixture():
         "symbols": [
             {
                 "symbol": symbol,
-                "baseAsset": symbol.removesuffix("USDT"),
-                "quoteAsset": "USDT",
+                "baseAsset": symbol.removesuffix("USDC"),
+                "quoteAsset": "USDC",
                 "status": "TRADING",
                 "isSpotTradingAllowed": True,
                 "orderTypes": ["MARKET"],
@@ -185,7 +185,7 @@ def test_trial_route_is_authenticated_and_fail_closed_without_runtime_adapter(
     assert response.json()["trial_dispatch_available"] is False
     assert response.json()["paper_settings_preview"] == {
         "slot_count": 3,
-        "target_notional_usdt": "80.00",
+        "target_notional_usdc": "80.00",
     }
     assert response.json()["trial"]["state"] == "NOT_STARTED"
     assert service.trial is None
@@ -247,7 +247,7 @@ def test_one_by_fifty_persists_without_reset(tmp_path: Path) -> None:
         headers=HEADERS,
         json={
             "slot_count": 1,
-            "target_notional_usdt": "50.00",
+            "target_notional_usdc": "50.00",
             "emergency_stop": False,
             "confirmation": "ANWENDEN",
         },
@@ -259,8 +259,8 @@ def test_one_by_fifty_persists_without_reset(tmp_path: Path) -> None:
     )
     after = restarted.get("/api/status").json()["paper"]
     assert after["settings"]["slot_count"] == 1
-    assert after["settings"]["target_notional_usdt"] == "50.00"
-    for field in ("cash_usdt", "equity_usdt", "positions", "strategy_session", "soak"):
+    assert after["settings"]["target_notional_usdc"] == "50.00"
+    for field in ("cash_usdc", "equity_usdc", "positions", "strategy_session", "soak"):
         assert before[field] == after[field]
 
 
@@ -271,7 +271,7 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
     before = client.get("/api/status").json()["paper"]
     payload = {
         "slot_count": 1,
-        "target_notional_usdt": "50.00",
+        "target_notional_usdc": "50.00",
         "emergency_stop": False,
         "confirmation": "ANWENDEN",
     }
@@ -309,7 +309,7 @@ def test_expanded_slot_allocation_persists_without_inventing_cash(
     before = client.get("/api/status").json()["paper"]
     payload = {
         "slot_count": slots,
-        "target_notional_usdt": amount,
+        "target_notional_usdc": amount,
         "emergency_stop": False,
         "confirmation": "ANWENDEN",
     }
@@ -320,9 +320,9 @@ def test_expanded_slot_allocation_persists_without_inventing_cash(
     )
     after = restarted.get("/api/status").json()["paper"]
     assert after["settings"]["slot_count"] == slots
-    assert after["settings"]["target_notional_usdt"] == amount
+    assert after["settings"]["target_notional_usdc"] == amount
     assert restarted.get("/api/live/status").json()["trading_settings"] == after["settings"]
-    for field in ("cash_usdt", "positions", "strategy_session", "soak"):
+    for field in ("cash_usdc", "positions", "strategy_session", "soak"):
         assert after[field] == before[field]
     assert restarted.get("/").headers["cache-control"] == "no-store"
 
@@ -360,7 +360,7 @@ def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_f
             return {
                 "account_checks_passed": True,
                 "blockers": [],
-                "free_usdt": "250",
+                "free_usdc": "250",
                 "free_bnb": "0.01",
             }
 
@@ -387,7 +387,7 @@ def test_common_settings_reject_unapproved_limits_without_silent_fallback(
         headers=HEADERS,
         json={
             "slot_count": slot_count,
-            "target_notional_usdt": amount,
+            "target_notional_usdc": amount,
             "emergency_stop": False,
             "confirmation": "ANWENDEN",
         },
@@ -417,7 +417,7 @@ def test_shared_entry_pause_stops_only_entries_and_never_rearms_or_sells(
             headers=HEADERS,
             json={
                 "slot_count": 3,
-                "target_notional_usdt": "80.00",
+                "target_notional_usdc": "80.00",
                 "emergency_stop": pause,
                 "confirmation": "ANWENDEN",
             },
@@ -438,7 +438,7 @@ def test_invalid_paper_amount_fails_cleanly(tmp_path: Path, notional: str) -> No
         headers=HEADERS,
         json={
             "slot_count": 1,
-            "target_notional_usdt": notional,
+            "target_notional_usdc": notional,
             "confirmation": "ANWENDEN",
         },
     )
@@ -557,7 +557,7 @@ def test_clean_account_is_not_live_approval(tmp_path: Path) -> None:
     assert result.json()["state"] == "LIVE_DISABLED"
     status = client.get("/api/status").json()
     assert status["runtime"]["mode"] == "PAPER"
-    assert status["paper"]["cash_usdt"] == "250"
+    assert status["paper"]["cash_usdc"] == "250"
     assert client.post("/api/live/disable", headers=HEADERS, json={}).status_code == 200
 
 
@@ -581,16 +581,16 @@ def test_dangerous_key_rights_block(flag: str) -> None:
     assert flag in str(result["blockers"])
 
 
-def test_missing_permissions_foreign_inventory_and_insufficient_usdt_fail_closed() -> None:
+def test_missing_permissions_foreign_inventory_and_insufficient_usdc_fail_closed() -> None:
     permissions, account, orders, markets = account_fixture()
     del permissions["enableWithdrawals"]
     account["balances"][0]["free"] = "0"
-    account["balances"].append({"asset": "USDC", "free": "1000", "locked": "0"})
-    orders.append({"symbol": "BTCUSDT", "clientOrderId": "foreign"})
+    account["balances"].append({"asset": "BUSD", "free": "1000", "locked": "0"})
+    orders.append({"symbol": "BTCUSDC", "clientOrderId": "foreign"})
     result = assess_account(permissions, account, orders, markets, Decimal("50"))
     reasons = str(result["blockers"])
     assert all(term in reasons for term in ("enableWithdrawals", "Fremdbestände", "60", "Orders"))
-    assert result["free_usdt"] == "0"
+    assert result["free_usdc"] == "0"
 
 
 def test_usdc_preflight_checks_actual_quote_not_usdt_and_never_changes_paper(tmp_path):

@@ -14,14 +14,14 @@ export function initializeTradingSettings(save: (value: TradingSettings) => Prom
   let failure = "";
   const read = (): TradingSettings => ({
     slot_count: Number(item<HTMLInputElement>("slot-input").value),
-    target_notional_usdt: item<HTMLInputElement>("notional-input").value,
+    target_notional_usdc: item<HTMLInputElement>("notional-input").value,
     // Preserve a legacy safety latch; removing its UI must not silently clear it.
     emergency_stop: saved?.emergency_stop ?? false,
   });
   const draw = (): void => {
     if (saved && draft.acceptsPolling) {
       item<HTMLInputElement>("slot-input").value = String(saved.slot_count);
-      item<HTMLInputElement>("notional-input").value = String(Number(saved.target_notional_usdt));
+      item<HTMLInputElement>("notional-input").value = String(Number(saved.target_notional_usdc));
     }
     const value = read();
     for (const id of ["slot-input", "notional-input", "settings-button"])

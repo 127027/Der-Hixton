@@ -1,5 +1,13 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-053 – GitHub-USDC-Umbau übernehmen, Echtgeld-Einmaltest weiter vorbereiten, 09.09.2026
+
+Eigentümer verweist auf `codex/build-foundation-v1` (übernommen bis `ab4f83e`). Parameter/Policies werden nicht neu optimiert. Aktiver Code benutzt zehn USDC-Symbole, eine eigene `hixton-usdc.sqlite3` und eindeutige Quote im Strategie-Snapshot; alte USDT-Konten/Ergebnisse werden nicht umetikettiert. Die historische V6-USDT-ID `9734f240e873` unterscheidet sich von V6-USDC `d57f88ec2e5f`. Das ist keine neue Profitabilitätsfreigabe.
+
+Nachgewiesene Integrationskorrekturen: gemeinsame verfügbare Historie statt unmöglicher drei Jahre für sieben USDC-Paare, weiterhin strenger Lücken-/Endbar-/400-Warm-up-Check; gleiche Warm-up-Startgrenze für Paper und Portfolio-Backtest; tatsächliche Quote alter Berichte anzeigen; Windows-Vault-Namespace bei Wechsel der Standarddatenbank erhalten. Kein Zugriff auf Klartextschlüssel und keine Kontobewegung für diese Tests.
+
+Einmaltest-Ziel bleibt genau ein echter 50-USDC-Kauf nach neuem qualifiziertem Signal, danach zugehöriger regulärer Ausgang und überprüfter Abschluss. Paper läuft unabhängig weiter. Dauer-Live bleibt aus. Der neue HTTPS-Orderadapter ist offline geprüft, jedoch ausdrücklich noch nicht produktiv angeschlossen. Technische Abnahme-/Kontoreconciler-Gates bleiben wirksam; der Start-Endpunkt gibt HTTP 409 zurück. Nicht als fertigen Testbutton ausliefern oder dokumentieren.
+
 ## DEC-052 – USDC-Ziel, getrennte Migrationsprüfung, 08.09.2026
 
 Eigentümer beauftragt die Vorbereitung auf seine USDC-Mittel und später genau einen signalgesteuerten 50-USDC-Echtgeldtrade. **Keine Aktivierung des 3×80-Echtgeld-Dauerbetriebs.** Alte USDT-Konten, Backtests, Einstellungen und Schlüssel bleiben erhalten; weder bestehende Zahlen umetikettieren noch 1:1-Umtausch/Fills behaupten. Hebel ist nicht Bestandteil dieser Spot-Migration.

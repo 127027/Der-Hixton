@@ -18,11 +18,11 @@ def test_today_uses_selected_timezone_midnight() -> None:
 
 
 def test_one_year_is_display_only_four_hour_aggregation() -> None:
-    candles = deterministic_candles("BTCUSDT", 500)
-    points = tuple(evaluate_batch("BTCUSDT", candles))
+    candles = deterministic_candles("BTCUSDC", 500)
+    points = tuple(evaluate_batch("BTCUSDC", candles))
     now = candles[-1].close_time_utc + timedelta(milliseconds=1)
     payload = build_chart_payload(
-        symbol="BTCUSDT",
+        symbol="BTCUSDC",
         points=points,
         range_key="1y",
         timezone_name="Europe/Berlin",
@@ -37,11 +37,11 @@ def test_one_year_is_display_only_four_hour_aggregation() -> None:
 
 
 def test_three_year_signal_markers_align_to_daily_display_bars() -> None:
-    candles = deterministic_candles("ETHUSDT", 1_200)
-    points = tuple(evaluate_batch("ETHUSDT", candles))
+    candles = deterministic_candles("ETHUSDC", 1_200)
+    points = tuple(evaluate_batch("ETHUSDC", candles))
     now = candles[-1].close_time_utc + timedelta(milliseconds=1)
     payload = build_chart_payload(
-        symbol="ETHUSDT",
+        symbol="ETHUSDC",
         points=points,
         range_key="3y",
         timezone_name="UTC",

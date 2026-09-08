@@ -15,8 +15,8 @@ MAX_DRAWDOWN_LIMIT_PCT = Decimal("20")
 
 @dataclass(frozen=True, slots=True)
 class PortfolioRiskState:
-    high_water_equity_usdt: Decimal
-    day_start_equity_usdt: Decimal
+    high_water_equity_usdc: Decimal
+    day_start_equity_usdc: Decimal
     day_start_date_utc: str
     halted: bool = False
     halt_reason: str | None = None
@@ -38,10 +38,10 @@ def evaluate_portfolio_risk(
     """Apply the frozen 5% UTC-day pause and persistent 20% drawdown halt."""
 
     date_text = at.astimezone(UTC).date().isoformat()
-    day_start = state.day_start_equity_usdt
+    day_start = state.day_start_equity_usdc
     if date_text != state.day_start_date_utc:
         day_start = equity
-    high_water = max(state.high_water_equity_usdt, equity)
+    high_water = max(state.high_water_equity_usdc, equity)
     daily_paused = equity <= day_start * (ONE - DAILY_LOSS_LIMIT_PCT / _HUNDRED)
     drawdown_pct = ZERO if high_water <= ZERO else (ONE - equity / high_water) * _HUNDRED
     halted = state.halted or drawdown_pct >= MAX_DRAWDOWN_LIMIT_PCT
@@ -50,8 +50,8 @@ def evaluate_portfolio_risk(
         halt_reason = "MAX_DRAWDOWN_20_PERCENT"
     return PortfolioRiskDecision(
         state=PortfolioRiskState(
-            high_water_equity_usdt=high_water,
-            day_start_equity_usdt=day_start,
+            high_water_equity_usdc=high_water,
+            day_start_equity_usdc=day_start,
             day_start_date_utc=date_text,
             halted=halted,
             halt_reason=halt_reason,

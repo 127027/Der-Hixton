@@ -1,6 +1,25 @@
 # 20 – Betriebsrunbook
 
-## USDC-Prüfung – 0.4.6 / DEC-052, kein Echtgeldstart
+## Übergabe 0.4.7 / DEC-053 – Code integriert, Echtgeld noch gesperrt
+
+GitHub-Stand `ab4f83e` und lokaler Orderadapter wurden zusammengeführt. Der Laptop wurde dabei nicht automatisch aktualisiert: letzter Nur-Lesen-Check 09.09.2026, 00:27 Berlin: HEALTHY, V6-USDT, 250 USDT Modellkapital, keine Position, keine abgeschlossenen Trades, LIVE_DISABLED, Test NOT_STARTED. Nicht behaupten, dort laufe schon der GitHub-USDC-Code.
+
+Neu implementiert: `live/exchange.py` mit explizitem Binance-/Spot-Testnet-Host, HTTPS ohne Redirect/Proxy/automatischen Retry, signiertem MARKET-Kauf mit `quoteOrderQty=50.00`, SELL mit ausdrücklich vorgegebener eigener Menge, stabiler Client-ID, ACK→Orderstatus→paginierten tatsächlichen Fills. Unklare Antworten bleiben UNKNOWN und werden nur abgefragt. Exakte Binance-Quote-Mengen/Gebührenwährungen werden gebucht; USDT/USDC sind getrennt. Späte Fehler überschreiben keinen terminalen Erfolg. Entry-Freigabeablauf verhindert keinen schon fälligen Exit; dessen eigene Sicherheitsprüfung bleibt zwingend. Alles bisher ausschließlich mit Fake-HTTP/Fake-Börse geprüft.
+
+Migration korrigiert: sieben Märkte haben keine vollständigen drei Jahre. Start fragt erste verfügbare reale Kerze ab, synchronisiert streng bis zur letzten geschlossenen Bar und verwendet einen gemeinsamen Warm-up-Start. Portfolio und CLI-Berichte geben den tatsächlich verfügbaren Zeitraum aus; keine aufgefüllten Kerzen. Alte Berichte erhalten beim Lesen ihre tatsächliche Quote, ohne Dateiumschreiben. `hixton-usdc.sqlite3` verwendet denselben Vault-Namespace wie die bisherige Standarddatenbank, ohne Schlüsselkopie/-Reset.
+
+**Restarbeit vor dem Benutzerklick, in dieser Reihenfolge:**
+
+1. Gemeinsames USDC-Paper-/Einmaltest-Runtime-Lifecycle anschließen. Controller muss nach Neustart alle offenen/ungeklärten Testzustände hydratisieren und Exits betreuen; Paper unabhängig weiterführen. Keine Übernahme von alten USDT-Paperpositionen als reale Bestände. Bestehendes USDT-Ledger unverändert archiviert lassen.
+2. Vor jedem echten BUY Kontofingerprint, explizite globale Einmalberechtigung, frisches Signal, Markt-/LOT_SIZE-/MARKET_LOT_SIZE-/Notionalfilter, freie USDC, BNB-Reserve und Preis-/Risikolimits prüfen. Kein direkter UI-Aufruf des Low-Level-Adapters. SELL nur testzugehörige verfügbare Menge; Filterschritte, Teilfills, Dust und eventuelle Restverkaufsaufträge dauerhaft modellieren, nicht still runden oder als fertig abhaken.
+3. Vertrauenswürdigen Kontoreconciler anschließen: Startbestand, Binance-Orders und vollständige Fills, Gebühren je Asset, heutige Bestände, Fremdorders/manueller Handel und Restmengen abgleichen. `confirm_reconciled` nicht durch einen UI-Boolean oder ungeprüftes True ersetzen. Bei BNB-Gebühren ohne Bewertung kein erfundener Netto-PnL.
+4. Ablauf in UI/Positionsboard/Chart sichtbar machen und Testnet-/Timeout-/Teilausführungs-/Restart-/Entry-aus-/Netzausfallfälle nachweisen. Erst nach bestandener technischer Abnahme darf der Benutzerbutton einen Test scharfstellen. Keine Ausführung durch den Entwicklungsagenten, keine Aktivierung des 3×80-Dauer-Live-Modus.
+
+Bis dahin ist HTTP 409 korrekt. Der Button heißt ausdrücklich „1 × 50 USDC · Startvoraussetzungen prüfen“. Die Kontovorprüfung verwendet USDC, ist aber kein Fill-/Exit-/Profitabilitätsnachweis. Das normale Live-Soak-Gate ist nicht entfernt. Ein echter Test hat noch nicht stattgefunden.
+
+Adapterreferenz: [Binance Spot Trade API](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/trade) und [Account/Order/MyTrades API](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/account), geprüft am 09.09.2026. Die API-Dokumentation ersetzt nicht die noch ausstehenden Tests am tatsächlich verwendeten Konto.
+
+## Historie: USDC-Prüfung – 0.4.6 / DEC-052, kein Echtgeldstart
 
 Zum Spiegelverständnis: „Backtest aktuelle Einstellungen“ bedeutet dieselben Regeln mit einem frischen historischen Startkonto über das gewählte Zeitfenster. Es bedeutet nicht Übernahme historischer Gewinne/Positionen in ein heute neu gestartetes Paperkonto. Der direkte Drei-Jahres-Paper-Engine-Abgleich ist in DMS 18 dokumentiert. Portfolio über UI **und CLI** verwendet gespeicherte Slotzahl/Betrag; ohne initialisierte Settings dienen die Configwerte als ausdrücklich gewählte Defaults. Ein 4×45-Lauf ist entsprechend kein 3×80-Referenzlauf. Einzeltests bleiben 1×250.
 

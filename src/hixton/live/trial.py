@@ -79,7 +79,7 @@ class SignalTrial:
     def arm(self, trial_id: str, account: str, *, now: datetime, notional: Decimal) -> None:
         # No amount supplied by a caller can silently become 80, 500 or NaN.
         if not notional.is_finite() or notional != Decimal("50"):
-            raise ValueError("Einmaltest benötigt genau 50 USDT Kaufbudget")
+            raise ValueError("Einmaltest benötigt genau 50 USDC Kaufbudget")
         if str(UUID(trial_id)) != trial_id or not account:
             raise ValueError("Invalid trial identity")
         now = _utc(now)
@@ -452,6 +452,7 @@ class SignalTrial:
             }
         # Fees in BNB/other assets must not be labelled USDT or silently valued at zero.
         result["net_pnl_usdt"] = None
+        result["net_pnl_usdc"] = None
         result["net_pnl_quote"] = None
         entry, exit_order = result["buy"], result["sell"]
         if isinstance(entry, dict) and isinstance(exit_order, dict):
@@ -475,4 +476,6 @@ class SignalTrial:
                 )
                 if quote_asset == "USDT":
                     result["net_pnl_usdt"] = result["net_pnl_quote"]
+                elif quote_asset == "USDC":
+                    result["net_pnl_usdc"] = result["net_pnl_quote"]
         return result

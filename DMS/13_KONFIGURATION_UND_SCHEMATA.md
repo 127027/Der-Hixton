@@ -1,5 +1,7 @@
 # 13 – Konfiguration und Schemata
 
+Aktueller Vorrang: **DMS 1.12.0 / DEC-053 / Anwendung 0.4.7**. Der integrierte Code verwendet USDC (250 Modellstart, Standard 3×80; später genau ein 50-USDC-Test). Alte datierte USDT-Anforderungen/Ergebnisse sind Historie, keine umgerechneten USDC-Nachweise. Runtime- und Laptop-Deployment sind getrennt zu prüfen. Kein Echtgeldstart: technischer Restarbeitsplan in [DMS 20](20_BETRIEBSRUNBOOK.md), tatsächlicher Testnachweis in [DMS 12](12_TESTS_ABNAHMEKRITERIEN.md). Bestehende Live-Sicherheitsgates bleiben wirksam.
+
 ## Aktueller Einstellungsvertrag 0.4.5 / DEC-051
 
 Persistente Einstellungen weiter in einer bestehenden paper_settings-Zeile; kein zweiter Live-Speicher. Gültig 1–10 Slots und positives endliches Zielnotional ohne feste 240-USDT-Grenze. `/api/status.trading_limits` liefert nur `max_slots: 10`; verfügbares Kontocash ist davon getrennt. UI verwendet 1-USDT-Schritte; interne Dezimalwerte bleiben kompatibel. 4×45, 5×50 und 10×100 sind gültig, erzeugen aber kein Cash und keine sofortigen Trades. Konfigurationsdatei-Startbaseline 3×80 wird nicht umgeschrieben. Gemeinsamer Portfoliobacktest muss die gespeicherte Aufteilung im Manifest nennen, frühere Runs bleiben unverändert.

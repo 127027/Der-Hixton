@@ -1,5 +1,7 @@
 # 08 – UI-/UX-Spezifikation
 
+Aktueller Vorrang: **DMS 1.12.0 / DEC-053 / Anwendung 0.4.7**. Der integrierte Code verwendet USDC (250 Modellstart, Standard 3×80; später genau ein 50-USDC-Test). Alte datierte USDT-Anforderungen/Ergebnisse sind Historie, keine umgerechneten USDC-Nachweise. Runtime- und Laptop-Deployment sind getrennt zu prüfen. Kein Echtgeldstart: technischer Restarbeitsplan in [DMS 20](20_BETRIEBSRUNBOOK.md), tatsächlicher Testnachweis in [DMS 12](12_TESTS_ABNAHMEKRITERIEN.md). Bestehende Live-Sicherheitsgates bleiben wirksam.
+
 ## Ergänzung 0.4.6 / DEC-052
 
 Jede Marktkarte zeigt den letzten Indikator-Trendwechsel mit Kauf/Verkauf und Zeitpunkt in Europe/Berlin. Bei grünem Trend ohne Position erklären: alter Trend ist kein neuer Kauf; historische Signale werden nicht nachgehandelt. Kein Signal ist kein Fillnachweis. Ohne geladene Signalhistorie unbekannt/noch kein Wechsel anzeigen, nicht behaupten, es habe niemals einen gegeben.

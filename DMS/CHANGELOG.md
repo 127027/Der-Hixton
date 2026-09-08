@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.12.0 – 09.09.2026 / Anwendung 0.4.7
+
+- GitHub-USDC-Migration bis `ab4f83e` mit dem neuen, nicht produktiv angeschlossenen Orderadapter zusammengeführt; keine Echtgeldaktivierung.
+- USDC-Startprüfung für tatsächlich verfügbare Historie repariert, gemeinsame Paper-/Backtest-Warm-up-Grenze, historische Ergebnisquote und Standard-Vault-Zuordnung korrigiert.
+- Quote-eindeutiges Order-/Fill-Journal, Binance-cashgenaues `quoteQty`, UNKNOWN ohne Wiederkauf, terminale Antwort gegen konkurrierende Fehler und bestehende Ausgänge gegen Entry-Freigabeablauf abgesichert.
+- DMS 20 nennt konkrete noch fehlende Runtime-/Kontoreconciler-/Restmengen-/Testnet-Arbeiten. Laptop-Deployment und Code-Stand werden ausdrücklich getrennt; der Testbutton bleibt eine gesperrte Vorprüfung.
+
 ## 1.11.0 – 08.09.2026 / Anwendung 0.4.6
 
 - Auf Rückfrage direkter USDT-Spiegelnachweis: alter 739,52-Run exakt reproduziert; aktuelle drei Jahre 742,60, 384/384 produktive Paper-Engine-Fills identisch. Replay ab echtem Paperstart ebenfalls null Signale/Fills. Separate CLI-Defaultabweichung korrigiert: Portfolio nutzt wie UI gespeicherte Handelsgrößen, Regression 4×45 vs. Config 3×80. Kein Reset oder erzwungener Entry.

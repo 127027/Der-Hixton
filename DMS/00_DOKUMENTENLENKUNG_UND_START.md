@@ -1,6 +1,10 @@
 # 00 – Dokumentenlenkung und Start
 
-## Aktuell: DMS 1.11.0 / Anwendung 0.4.6, DEC-052
+## Aktuell: DMS 1.12.0 / Anwendung 0.4.7, DEC-053
+
+Der GitHub-USDC-Umbau wurde integriert und um Orderadapter-/Migrationsregressionen ergänzt. Codeziel: V6-USDC `d57f88ec2e5f`, getrennte Modell-Datenbank. Laptop-Deployment ist separat zu prüfen; zuletzt lief dort noch 0.4.6/V6-USDT. Genau ein späterer 50-USDC-Test ist beauftragt, aber noch nicht ausführbar: produktiver Controller-Anschluss, Kontoreconciler, Mengen-/Preisgates und Testnet-/Betriebsabnahme fehlen. Keine Freigabe durch grüne Unit-Tests. DMS 20 enthält die konkrete Übergabe. Alle nachfolgenden datierten Stände sind Historie, keine heutige Aktivierungsbehauptung.
+
+## Historie: DMS 1.11.0 / Anwendung 0.4.6, DEC-052
 
 USDC ist das vom Eigentümer gewünschte Ziel für den späteren 50-USDC-Einmaltest und Spotbetrieb. Der technische Stand ist ausdrücklich **Validierung, nicht vollzogene Migration**: V6-Paper/Config/Ledger bleiben USDT, V7 ist ein nicht aktivierbarer Forschungsstand mit unveränderten Coin-Profilen auf echten USDC-Kerzen. Datenverfügbarkeit, Kosten-Stress und gemeinsame 3×80-Tests werden getrennt ausgewiesen. Kein Echtgeldstart, keine neue Livefreigabe, keine Umbenennung alter Zahlen. Maßgeblicher Ergebnisnachweis: `backtests/v7/README.md` und DMS 18. Offene Umsetzung: währungseindeutiges Runtime-/Ledger-/UI-/Kontoprüfmodell sowie produktiver Orderadapter und Reconciliation. Sämtliche älteren datierten Stände unten sind Historie, auch wenn sie damals als aktuell bezeichnet wurden.
 

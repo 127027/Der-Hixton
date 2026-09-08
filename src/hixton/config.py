@@ -19,13 +19,13 @@ class ProjectConfig:
     database_path: Path
     run_output_root: Path
     binance_base_url: str
-    starting_usdt_per_symbol: Decimal
-    target_notional_usdt: Decimal
+    starting_usdc_per_symbol: Decimal
+    target_notional_usdc: Decimal
     run_baseline_and_stress: bool
     paper_poll_seconds: int
-    paper_starting_cash_usdt: Decimal
+    paper_starting_cash_usdc: Decimal
     paper_slot_count: int
-    paper_target_notional_usdt: Decimal
+    paper_target_notional_usdc: Decimal
     daily_audit_utc: str
     ui_bind: str
     ui_port: int
@@ -79,8 +79,8 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
     _reject_unknown(
         backtest,
         {
-            "starting_usdt_per_symbol",
-            "target_notional_usdt",
+            "starting_usdc_per_symbol",
+            "target_notional_usdc",
             "primary_window_years",
             "run_baseline_and_stress",
         },
@@ -88,25 +88,25 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
     )
     if backtest.get("primary_window_years") != 3:
         raise ValueError("primary_window_years must be 3")
-    starting = Decimal(str(backtest.get("starting_usdt_per_symbol")))
-    target = Decimal(str(backtest.get("target_notional_usdt")))
+    starting = Decimal(str(backtest.get("starting_usdc_per_symbol")))
+    target = Decimal(str(backtest.get("target_notional_usdc")))
     if starting != Decimal("250.00") or target != Decimal("250.00"):
-        raise ValueError("isolated backtests require fixed 250.00 USDT")
+        raise ValueError("isolated backtests require fixed 250.00 USDC")
 
     paper = _required_mapping(root.get("paper"), "paper")
     allowed_starting_cash = ("250.00",) if definition.coin_profiles else ("240.00", "250.00")
-    if paper.get("starting_cash_usdt") not in allowed_starting_cash:
+    if paper.get("starting_cash_usdc") not in allowed_starting_cash:
         raise ValueError("paper starting cash must be 250.00 (legacy V2 also accepts 240.00)")
     expected_paper: dict[str, object] = {
-        "starting_cash_usdt": paper["starting_cash_usdt"],
+        "starting_cash_usdc": paper["starting_cash_usdc"],
         "slot_count": 3,
-        "target_notional_usdt": "80.00",
+        "target_notional_usdc": "80.00",
         "poll_seconds": 30,
         "daily_audit_utc": "00:05",
     }
     _reject_unknown(paper, set(expected_paper), "paper")
     if paper != expected_paper:
-        raise ValueError("paper baseline must match the versioned starting cash with 3x80 USDT")
+        raise ValueError("paper baseline must match the versioned starting cash with 3x80 USDC")
 
     ui = _required_mapping(root.get("ui"), "ui")
     expected_ui: dict[str, object] = {
@@ -133,13 +133,13 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
         database_path=database_path,
         run_output_root=run_output_root,
         binance_base_url=str(runtime.get("binance_base_url", "https://api.binance.com")),
-        starting_usdt_per_symbol=starting,
-        target_notional_usdt=target,
+        starting_usdc_per_symbol=starting,
+        target_notional_usdc=target,
         run_baseline_and_stress=bool(backtest.get("run_baseline_and_stress", True)),
         paper_poll_seconds=int(paper["poll_seconds"]),
-        paper_starting_cash_usdt=Decimal(str(paper["starting_cash_usdt"])),
+        paper_starting_cash_usdc=Decimal(str(paper["starting_cash_usdc"])),
         paper_slot_count=int(paper["slot_count"]),
-        paper_target_notional_usdt=Decimal(str(paper["target_notional_usdt"])),
+        paper_target_notional_usdc=Decimal(str(paper["target_notional_usdc"])),
         daily_audit_utc=str(paper["daily_audit_utc"]),
         ui_bind=str(ui["bind"]),
         ui_port=int(ui["port"]),

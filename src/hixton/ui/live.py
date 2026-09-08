@@ -76,7 +76,7 @@ def install_live_routes(
                 settings = store.load_settings()
                 preview = {
                     "slot_count": settings.slot_count,
-                    "target_notional_usdt": str(settings.target_notional_usdt),
+                    "target_notional_usdc": str(settings.target_notional_usdc),
                 }
                 shared = {**preview, "emergency_stop": settings.emergency_stop}
         except (RuntimeError, sqlite3.DatabaseError, KeyError):

@@ -2,14 +2,15 @@
   "schema_version": 1,
   "strategy": {
     "key": "v6",
-    "version": "HIXTON-V6-COIN-PAPER-1-9734f240e873",
+    "quote_asset": "USDC",
+    "version": "HIXTON-V6-COIN-PAPER-1-d57f88ec2e5f",
     "timeframe": "1h",
     "source": "close",
     "slot_allocation": "one_per_symbol",
     "long_only": true,
     "compounding": false,
     "profiles": {
-      "BTCUSDT": {
+      "BTCUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -25,7 +26,7 @@
           "trail_atr": 0
         }
       },
-      "ETHUSDT": {
+      "ETHUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -41,7 +42,7 @@
           "trail_atr": 0
         }
       },
-      "BNBUSDT": {
+      "BNBUSDC": {
         "parameters": {
           "vidya_length": 10,
           "momentum_length": 20,
@@ -57,7 +58,7 @@
           "trail_atr": 0
         }
       },
-      "SOLUSDT": {
+      "SOLUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -73,7 +74,7 @@
           "trail_atr": 0
         }
       },
-      "XRPUSDT": {
+      "XRPUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -89,7 +90,7 @@
           "trail_atr": 0
         }
       },
-      "ADAUSDT": {
+      "ADAUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -105,7 +106,7 @@
           "trail_atr": 0
         }
       },
-      "LINKUSDT": {
+      "LINKUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -121,7 +122,7 @@
           "trail_atr": 0
         }
       },
-      "AVAXUSDT": {
+      "AVAXUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -137,7 +138,7 @@
           "trail_atr": 0
         }
       },
-      "DOTUSDT": {
+      "DOTUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -153,7 +154,7 @@
           "trail_atr": 0
         }
       },
-      "DOGEUSDT": {
+      "DOGEUSDC": {
         "parameters": {
           "vidya_length": 6,
           "momentum_length": 20,
@@ -172,27 +173,27 @@
     }
   },
   "markets": [
-    "BTCUSDT",
-    "ETHUSDT",
-    "BNBUSDT",
-    "SOLUSDT",
-    "XRPUSDT",
-    "ADAUSDT",
-    "LINKUSDT",
-    "AVAXUSDT",
-    "DOTUSDT",
-    "DOGEUSDT"
+    "BTCUSDC",
+    "ETHUSDC",
+    "BNBUSDC",
+    "SOLUSDC",
+    "XRPUSDC",
+    "ADAUSDC",
+    "LINKUSDC",
+    "AVAXUSDC",
+    "DOTUSDC",
+    "DOGEUSDC"
   ],
   "backtest": {
-    "starting_usdt_per_symbol": "250.00",
-    "target_notional_usdt": "250.00",
+    "starting_usdc_per_symbol": "250.00",
+    "target_notional_usdc": "250.00",
     "primary_window_years": 3,
     "run_baseline_and_stress": true
   },
   "paper": {
-    "starting_cash_usdt": "250.00",
+    "starting_cash_usdc": "250.00",
     "slot_count": 3,
-    "target_notional_usdt": "80.00",
+    "target_notional_usdc": "80.00",
     "poll_seconds": 30,
     "daily_audit_utc": "00:05"
   },
@@ -203,7 +204,7 @@
     "default_range": "1m"
   },
   "runtime": {
-    "database_path": "data/hixton.sqlite3",
+    "database_path": "data/hixton-usdc.sqlite3",
     "run_output_root": "backtests/v6/runs",
     "binance_base_url": "https://api.binance.com"
   }

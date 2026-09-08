@@ -343,9 +343,9 @@ def run_coin_review(database: Path, output: Path) -> None:
     # Post-selection diagnosis announced only after the initial catalogue run:
     # isolate XRP's incremental effect; never reselect other coins on validation.
     xrp_parameters = dict.fromkeys(SYMBOLS, incumbent)
-    xrp_parameters["XRPUSDT"] = selected_parameters["XRPUSDT"]
+    xrp_parameters["XRPUSDC"] = selected_parameters["XRPUSDC"]
     xrp_policies = dict.fromkeys(SYMBOLS, TradePolicy())
-    xrp_policies["XRPUSDT"] = selected_policies["XRPUSDT"]
+    xrp_policies["XRPUSDC"] = selected_policies["XRPUSDC"]
     portfolios = {}
     for label, parameter_map, policies in (
         ("v2", None, None),
@@ -389,7 +389,7 @@ def run_coin_review(database: Path, output: Path) -> None:
                     "metrics": asdict(result_portfolio.metrics),
                     "halt": result_portfolio.risk_halted_at_utc,
                 }
-    xrp_base, xrp_policy = selected_parameters["XRPUSDT"], selected_policies["XRPUSDT"]
+    xrp_base, xrp_policy = selected_parameters["XRPUSDC"], selected_policies["XRPUSDC"]
     neighbors = {}
     for label, params, overlay in (
         ("center", xrp_base, xrp_policy),
@@ -402,17 +402,17 @@ def run_coin_review(database: Path, output: Path) -> None:
     ):
         neighbor_metrics = {}
         for window, data, lo, hi in (
-            ("full", markets["XRPUSDT"], START, END),
-            ("recent", markets["XRPUSDT"], YEAR2, END),
-            ("older", older_markets["XRPUSDT"], *OLDER),
+            ("full", markets["XRPUSDC"], START, END),
+            ("recent", markets["XRPUSDC"], YEAR2, END),
+            ("older", older_markets["XRPUSDC"], *OLDER),
         ):
             neighbor_result = run_single_backtest(
-                symbol="XRPUSDT",
+                symbol="XRPUSDC",
                 candles=data,
                 report_start_utc=lo,
                 report_end_utc=hi,
                 costs=STRESS_COSTS,
-                execution_rules=rules["XRPUSDT"],
+                execution_rules=rules["XRPUSDC"],
                 strategy_parameters=params,
                 strategy_semantics=StrategySemantics.PINE_V6,
                 trade_policy=overlay,
@@ -466,7 +466,7 @@ def run_frozen_profile_review(database: Path, output: Path) -> None:
             "Historical winners do not establish future profitability or all-ten robustness.",
             "Isolated accounts use strategy-only sizing; shared account applies Paper risk gates.",
             "Reserve is initial unallocated cash, not a guarantee against losses.",
-            "Existing Paper ledger remains unchanged; historical V2 240-USDT reports stay intact.",
+            "Existing Paper ledger remains unchanged; historical V2 240-USDC reports stay intact.",
             "V2 also starts at 250 here, separating the strategy effect from added capital.",
         ],
     }
