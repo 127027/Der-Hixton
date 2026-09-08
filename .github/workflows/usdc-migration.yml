@@ -38,11 +38,8 @@ jobs:
         run: |
           python - <<'PY'
           from __future__ import annotations
-
-          import json
-          import sys
+          import json, sys
           from pathlib import Path
-
           root = Path('.')
           targets: set[Path] = set()
           targets.update((root / 'src').rglob('*.py'))
@@ -51,73 +48,29 @@ jobs:
           targets.update((root / 'ui' / 'src').rglob('*.ts'))
           targets.update((root / 'ui' / 'tests').rglob('*.mjs'))
           targets.add(root / 'ui' / 'index.html')
-
           for path in sorted(targets):
-              if not path.exists():
-                  continue
+              if not path.exists(): continue
               text = path.read_text(encoding='utf-8')
               migrated = text.replace('USDT', 'USDC').replace('usdt', 'usdc')
-              migrated = migrated.replace(
-                  'HIXTON-V6-COIN-PAPER-1-',
-                  'HIXTON-V6-USDC-COIN-PAPER-1-',
-              )
-              if migrated != text:
-                  path.write_text(migrated, encoding='utf-8')
-
-          (root / 'src/hixton/constants.py').write_text(
-              '''"""Project-wide constants fixed by the active Hixton specification."""\n\n'''
-              '''from __future__ import annotations\n\n'''
-              '''from datetime import timedelta\n\n'''
-              '''HIXTON_SPEC_VERSION = "HIXTON-SPEC-1.0"\n'''
-              '''HIXTON_V2_RESEARCH_VERSION = "HIXTON-V2-RESEARCH-CANDIDATE-1"\n'''
-              '''HIXTON_V3_SLOT_VERSION = "HIXTON-V3-SLOT-CANDIDATE-1"\n'''
-              '''STRATEGY_ID = "hixton_vidya_atr"\n'''
-              '''EXCHANGE = "binance_spot"\n'''
-              '''TIMEFRAME = "1h"\n'''
-              '''TIMEFRAME_DELTA = timedelta(hours=1)\n\n'''
-              '''QUOTE_ASSET = "USDC"\n'''
-              '''BASE_ASSETS: tuple[str, ...] = (\n'''
-              '''    "BTC",\n    "ETH",\n    "BNB",\n    "SOL",\n    "XRP",\n'''
-              '''    "ADA",\n    "LINK",\n    "AVAX",\n    "DOT",\n    "DOGE",\n'''
-              ''')\n'''
-              '''SYMBOLS: tuple[str, ...] = tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\n'''
-              '''SYMBOL_TIE_BREAK: dict[str, int] = {symbol: rank for rank, symbol in enumerate(SYMBOLS)}\n''',
-              encoding='utf-8',
-          )
-
-          (root / 'src/hixton/domain/markets.py').write_text(
-              '''"""Canonical USDC market universe for the active bot runtime."""\n\n'''
-              '''from __future__ import annotations\n\n'''
-              '''from hixton.constants import BASE_ASSETS, QUOTE_ASSET, SYMBOLS\n\n'''
-              '''def symbols_for_quote(quote_asset: str) -> tuple[str, ...]:\n'''
-              '''    normalized = quote_asset.upper()\n'''
-              '''    if normalized != QUOTE_ASSET:\n'''
-              '''        raise ValueError(f"Only {QUOTE_ASSET} is supported by the active runtime")\n'''
-              '''    return tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\n\n'''
-              '''def validate_market_symbols(symbols: tuple[str, ...]) -> str:\n'''
-              '''    if symbols != SYMBOLS:\n'''
-              '''        raise ValueError("Ten ordered USDC markets required")\n'''
-              '''    return QUOTE_ASSET\n''',
-              encoding='utf-8',
-          )
-
+              migrated = migrated.replace('HIXTON-V6-COIN-PAPER-1-', 'HIXTON-V6-USDC-COIN-PAPER-1-')
+              if migrated != text: path.write_text(migrated, encoding='utf-8')
+          (root / 'src/hixton/constants.py').write_text('''"""Project-wide constants fixed by the active Hixton specification."""\n\nfrom __future__ import annotations\n\nfrom datetime import timedelta\n\nHIXTON_SPEC_VERSION = "HIXTON-SPEC-1.0"\nHIXTON_V2_RESEARCH_VERSION = "HIXTON-V2-RESEARCH-CANDIDATE-1"\nHIXTON_V3_SLOT_VERSION = "HIXTON-V3-SLOT-CANDIDATE-1"\nSTRATEGY_ID = "hixton_vidya_atr"\nEXCHANGE = "binance_spot"\nTIMEFRAME = "1h"\nTIMEFRAME_DELTA = timedelta(hours=1)\n\nQUOTE_ASSET = "USDC"\nBASE_ASSETS: tuple[str, ...] = (\n    "BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "LINK", "AVAX", "DOT", "DOGE",\n)\nSYMBOLS: tuple[str, ...] = tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\nSYMBOL_TIE_BREAK: dict[str, int] = {symbol: rank for rank, symbol in enumerate(SYMBOLS)}\n''', encoding='utf-8')
+          (root / 'src/hixton/domain/markets.py').write_text('''"""Canonical USDC market universe for the active bot runtime."""\n\nfrom __future__ import annotations\n\nfrom hixton.constants import BASE_ASSETS, QUOTE_ASSET, SYMBOLS\n\ndef symbols_for_quote(quote_asset: str) -> tuple[str, ...]:\n    normalized = quote_asset.upper()\n    if normalized != QUOTE_ASSET:\n        raise ValueError(f"Only {QUOTE_ASSET} is supported by the active runtime")\n    return tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\n\ndef validate_market_symbols(symbols: tuple[str, ...]) -> str:\n    if symbols != SYMBOLS:\n        raise ValueError("Ten ordered USDC markets required")\n    return QUOTE_ASSET\n''', encoding='utf-8')
           sys.path.insert(0, str((root / 'src').resolve()))
-          from hixton.constants import SYMBOLS  # noqa: E402
-          from hixton.domain.versions import strategy_definition  # noqa: E402
-
+          from hixton.constants import SYMBOLS
+          from hixton.domain.versions import strategy_definition
           config_path = root / 'config/examples/config.example.json'
           payload = json.loads(config_path.read_text(encoding='utf-8'))
           payload['strategy'] = strategy_definition('v6').config_payload()
           payload['markets'] = list(SYMBOLS)
           payload['runtime']['database_path'] = 'data/hixton-usdc.sqlite3'
-          config_path.write_text(
-              json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
-              encoding='utf-8',
-          )
+          config_path.write_text(json.dumps(payload, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
           PY
 
       - name: Install Python test dependencies
-        run: python -m pip install -e '.[dev]'
+        run: |
+          python -m pip install -e '.[dev]'
+          python -m pip install 'httpx>=0.27,<1'
 
       - name: Run Python tests
         run: pytest
@@ -152,17 +105,11 @@ jobs:
           from hixton.domain.versions import strategy_definition
           from hixton.config import load_project_config
           from pathlib import Path
-
           assert QUOTE_ASSET == 'USDC'
-          assert len(SYMBOLS) == 10
-          assert all(symbol.endswith('USDC') for symbol in SYMBOLS)
+          assert len(SYMBOLS) == 10 and all(symbol.endswith('USDC') for symbol in SYMBOLS)
           strategy = strategy_definition('v6')
-          assert strategy.quote_asset == 'USDC'
-          assert strategy.symbols == SYMBOLS
-          config = load_project_config(
-              Path('config/examples/config.example.json'),
-              project_root=Path('.').resolve(),
-          )
+          assert strategy.quote_asset == 'USDC' and strategy.symbols == SYMBOLS
+          config = load_project_config(Path('config/examples/config.example.json'), project_root=Path('.').resolve())
           assert config.database_path.name == 'hixton-usdc.sqlite3'
           print('USDC runtime:', ', '.join(SYMBOLS))
           PY
