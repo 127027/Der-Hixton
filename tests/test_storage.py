@@ -1,10 +1,30 @@
 from __future__ import annotations
 
+import sqlite3
 from dataclasses import replace
 from datetime import timedelta
 
+import pytest
+
 from hixton.data.storage import CandleStore
 from tests.golden_reference import deterministic_candles
+
+
+def test_read_only_store_never_creates_or_modifies_data(tmp_path) -> None:
+    path = tmp_path / "market.sqlite3"
+    candles = deterministic_candles("BTCUSDT", 4)
+    with CandleStore(path) as store:
+        store.put_candles(candles)
+    before = path.read_bytes()
+    with CandleStore(path, read_only=True) as store:
+        assert store.load_candles("BTCUSDT") == candles
+        with pytest.raises(sqlite3.OperationalError, match="readonly"):
+            store.put_candles([replace(candles[0], close=candles[0].close + 0.1)])
+    assert path.read_bytes() == before
+    missing = tmp_path / "absent" / "missing.sqlite3"
+    with pytest.raises(sqlite3.OperationalError):
+        CandleStore(missing, read_only=True)
+    assert not missing.parent.exists()
 
 
 def test_store_is_idempotent_and_keeps_revision_history(tmp_path) -> None:

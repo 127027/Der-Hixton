@@ -133,6 +133,7 @@ def write_report_bundle(
 
     manifest = {
         "schema_version": 1,
+        "quote_asset": strategy.quote_asset,
         "backtest_version": strategy.backtest_version,
         "run_id": run_id,
         "created_at_utc": created_at.isoformat(),

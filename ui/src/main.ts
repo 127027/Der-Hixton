@@ -17,6 +17,7 @@ import "./styles.css";
 import type { TradingSettings, TradingLimits } from "./settings-draft";
 import { initializeTradingSettings } from "./trading-settings";
 import { initializeLivePreparation } from "./live-preparation";
+import { marketSignalText } from "./market-signal";
 
 const symbols = ["BTCUSDT", "ETHUSDT", "BNBUSDT", "SOLUSDT", "XRPUSDT", "ADAUSDT", "LINKUSDT", "AVAXUSDT", "DOTUSDT", "DOGEUSDT"] as const;
 type SymbolName = (typeof symbols)[number];
@@ -250,6 +251,7 @@ function marketCard(market: Market): string {
     <div class="market-price">${formatPrice(market.price)} <small>USDT</small></div>
     <div class="market-meta"><span>${formatDate(market.price_time_utc)}</span><span class="${market.data.valid ? "good" : "warning"}">${market.data.valid ? "DATEN OK" : "PRÜFUNG"}</span></div>
     <div class="market-meta"><span>VIDYA ${p.vidya_length} · MOM ${p.momentum_length} · SMA ${p.smoothing_length} · ATR ${p.atr_length} · Band ${p.band_multiplier}${extras ? `<br>${extras}` : ""}</span></div>
+    <div class="market-meta"><span>${escapeHtml(marketSignalText(market.last_signal, formatDate))}${market.trend === "UP" && market.position_state !== "LONG" ? "<br>Grüner Trend ≠ neuer Kauf. Alte Signale werden nicht nachgehandelt." : ""}</span></div>
     <div class="market-foot"><span>${signal}</span><span class="${market.position_state === "LONG" ? "good" : ""}">${market.position_state}</span></div>
   </article>`;
 }

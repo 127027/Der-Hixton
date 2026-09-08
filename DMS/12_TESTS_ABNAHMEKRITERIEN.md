@@ -1,5 +1,11 @@
 # 12 – Tests und Abnahmekriterien
 
+## Abnahme 0.4.6 / DEC-052 – USDC-Prüfstand, keine Live-Abnahme
+
+Regressionen für getrennte USDT-/USDC-Universen, unveränderte V6-Identität und Coin-Profile, gemischte/falsche Märkte, spätere Listings, Lücken, fehlende letzte Bars, Duplikate, falsche OHLCV, vorläufige Kerzen und zu wenig Warm-up. Beide kanonischen Backtest-Engines mit USDC, tatsächlich erzeugten synthetischen Fills, nichtnegativem Cash und expliziter Quote im Manifest geprüft. Offline-Gesamtlauf einschließlich zeitraumgleichem USDT-Kontrolllauf; bestehendes Konto und Kontroll-Datenbank bleiben unverändert. SQLite-Nur-Lesen verhindert Änderungen und legt keine fehlenden Datenbanken an. UI-Regression unterscheidet letzten Trendwechsel von einem ausgeführten Trade.
+
+Markt-/Backtestergebnisse separat in DMS 18/V7; erfolgreiche Softwaretests sind keine Profit- oder Echtgeldfreigabe. Produktive Runtime-Migration und Live-Order-/Reconciliation-Abnahme bleiben offen.
+
 ## Abnahme 0.4.5 / DEC-051
 
 207 Python-Tests bestanden, ein opt-in Vault-Test übersprungen; 15 UI-Tests, Ruff, mypy (45 Quelldateien), TypeScript und Produktionsbuild erfolgreich. Neue Regressionen: vollständige simulierte Read-only-Prüfkette mit kompakter Zehn-Coin-Liste ohne Key im öffentlichen Request; phasen-/codespezifische Fehler ohne Secret-/Rohtextleak; 250-/1000-USDT-Aufteilungen über API/UI, Neustartpersistenz ohne Cashmutation; Engine überschreitet vorhandenes Cash auch bei größerem Plan nicht. Ungültige Slots/NaN/Infinity/negative Beträge weiter abweisen.

@@ -1,5 +1,13 @@
 # 20 – Betriebsrunbook
 
+## USDC-Prüfung – 0.4.6 / DEC-052, kein Echtgeldstart
+
+Der bisherige Bot läuft unverändert als V6-USDT-Paperkonto. Nicht versuchen, den USDT-Testbutton mit USDC-Guthaben als fertig migrierten Ablauf zu verwenden. V7 ist nur ein Prüfstand; weder `paper-activate` noch normale Backtest-/UI-Auswahl geben ihn frei. Einmaltest und Dauer-Live bleiben gesperrt.
+
+Ein technischer Einstieg bleibt `src/main.py`: `python src/main.py backtest usdc-review --end 2026-09-08T06:00:00Z`. Optional `--usdt-control-db "ABSOLUTER PFAD ZUR BESTEHENDEN DATENBANK"` für den zeitraumgleichen USDT-Kontrolllauf. Dieser liest nur Kerzen mittels SQLite `mode=ro`, führt keine Migration aus und schreibt keine Kontotabellen. Öffentliche USDC-Kerzen werden ausschließlich in `data/usdc-validation.sqlite3` gespeichert, nicht im aktiven Ledger. Jeder Bericht landet unveränderlich unter `backtests/v7/runs/<id>/`; kompakte kuratierte Nachweise stehen eine Ebene darüber. Keine zusätzliche Startdatei, keine großen Kerzendaten auf GitHub.
+
+Bei „keine Papertrades“ zuerst Gesundheit, letzte geschlossene Bar, letzten Trendwechsel, Aktivierungszeit, vorhandene Positionen und Risiko-/Cashblocker prüfen. Grün allein ist kein neuer Entry. Marktkarten zeigen ab 0.4.6 den letzten Indikatorwechsel; das ist ausdrücklich kein Fillnachweis. Alte Signale werden nicht nachgekauft und der Risikohalt nicht wegen geringer Tradezahl gelöscht.
+
 ## Einstellungen bedienen – gültig ab 0.4.5 / DEC-051
 
 - Browser einmal neu laden (bei alter Ansicht Strg+F5). Unter Handel gewünschte Slots und USDT pro Trade einstellen, dann **Übernehmen**. Positionsbudget ist deren Produkt, keine feste 240-USDT-Grenze. 5×50 ergibt 250; 10×100 ergibt 1000, aber kein neues Kontoguthaben. Keine neuen Positionen allein durch Speichern; Auslieferung setzt selbst keine Betreiberwerte um.

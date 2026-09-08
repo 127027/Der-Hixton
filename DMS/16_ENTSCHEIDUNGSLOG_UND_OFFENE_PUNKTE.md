@@ -1,5 +1,13 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-052 – USDC-Ziel, getrennte Migrationsprüfung, 08.09.2026
+
+Eigentümer beauftragt die Vorbereitung auf seine USDC-Mittel und später genau einen signalgesteuerten 50-USDC-Echtgeldtrade. **Keine Aktivierung des 3×80-Echtgeld-Dauerbetriebs.** Alte USDT-Konten, Backtests, Einstellungen und Schlüssel bleiben erhalten; weder bestehende Zahlen umetikettieren noch 1:1-Umtausch/Fills behaupten. Hebel ist nicht Bestandteil dieser Spot-Migration.
+
+V7 ist zunächst `HIXTON-V7-USDC-VALIDATION-1-9734f240e873`, nicht Paper-/Live-freigegeben. Übernahme der zehn V6-Coin-Parameter und Zusatzregeln ohne neue Optimierung, Prüfung ausschließlich auf echten USDC-1h-Kerzen. Gemeinsamer Zeitraum allein anhand Datenverfügbarkeit einschließlich 400 Warm-up-Bars; zusätzlich vorab festgelegte 365-/90-Tage-Fenster, Baseline und Stress, zehn Einzelkonten à 250 sowie 250 Startcash/3×80 gemeinsam. Nicht verfügbare drei Jahre nicht durch USDT-Kerzen oder künstliche Bars ergänzen. Ein USDT-Kontrolllauf verwendet dieselben Start-/Endzeitpunkte, um Zeitraum- und Quote-Effekte nicht zu verwechseln. Keine Behauptung unberührter Out-of-sample-Daten für bereits auf USDT erforschte Einstellungen.
+
+Vor Echtgeld bleiben Runtime-/Ledger-Migration, echte kontospezifische USDC-Handelbarkeit/Filter/Gebühren, Orderadapter, genau-einmal-Versand, Timeout-/Teilfill-/Restart-Abgleich, Ausgänge und Abnahme offen. Ein positiver öffentlicher Marktcheck ist keine Kontofreigabe. Kein Sicherheitsgate zum Erzwingen von Trades entfernen. Die aktive UI zeigt weiterhin zutreffend USDT, bis die Runtime tatsächlich migriert ist. DMS 18 und `backtests/v7/README.md` halten Ergebnisse und nächste Schritte fest.
+
 ## DEC-051 – Betreiberbudget, eindeutiger Livestatus und Binance-Fehler, 08.09.2026
 
 Eigentümer hebt die feste 240-USDT-Positionsbudgetgrenze ausdrücklich auf. Gewähltes Budget ergibt sich aus 1–10 Slots × Zielnotional; kein zusätzliches Budgetfeld. Beispiel 5×50 = 250 oder später 10×100 = 1000 ist speicherbar. Das Update setzt selbst keine dieser Größen. Baseline bleibt 3×80 bei anfänglich 250 USDT, keine Einzahlung oder Übernahme fremder Binance-Guthaben ins Paperkonto. Ausführung bleibt durch verfügbares Cash, Börsenfilter, Signale und Risikogates begrenzt; Settings gelten für neue Entries, offene Positionen laufen unverändert aus. Das Positionsbudget ist keine garantierte Verlustobergrenze.

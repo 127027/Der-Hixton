@@ -109,7 +109,7 @@ def _cost_scenarios(selection: str, config: ProjectConfig) -> tuple[CostModel, .
 
 def _code_commit() -> str:
     completed = subprocess.run(
-        ["git", "rev-parse", "HEAD"],
+        ["git", "-c", f"safe.directory={PROJECT_ROOT.as_posix()}", "rev-parse", "HEAD"],
         cwd=PROJECT_ROOT,
         capture_output=True,
         check=False,
@@ -405,6 +405,12 @@ def build_parser() -> argparse.ArgumentParser:
 
     backtest = commands.add_parser("backtest", help="Backtest v1 aus lokalen Daten")
     backtest_commands = backtest.add_subparsers(dest="backtest_command", required=True)
+    usdc = backtest_commands.add_parser(
+        "usdc-review", help="USDC-Daten und eingefrorene Coin-Profile separat pruefen; kein Live",
+    )
+    usdc.add_argument("--end", type=parse_utc)
+    usdc.add_argument("--usdt-control-db", type=Path,
+                      help="Vorhandene USDT-Kerzen nur lesend im selben Zeitraum vergleichen")
     single = backtest_commands.add_parser("single", help="einen Coin mit 250 USDT testen")
     single.add_argument("--symbol", required=True)
     single.add_argument("--end", type=parse_utc)
@@ -471,6 +477,15 @@ def main(argv: list[str] | None = None) -> int:
             return command_data_audit(args, config)
         if args.command == "backtest" and args.backtest_command == "single":
             return command_backtest_single(args, config)
+        if args.command == "backtest" and args.backtest_command == "usdc-review":
+            from hixton.backtest.usdc_review import run_usdc_review
+
+            output = run_usdc_review(
+                PROJECT_ROOT, args.end or latest_safe_report_end(), code_commit=_code_commit(),
+                usdt_control_database=args.usdt_control_db,
+            )
+            print(f"USDC review saved: {output}")
+            return 0
         if args.command == "backtest" and args.backtest_command == "all":
             return command_backtest_all(args, config)
         if args.command == "backtest" and args.backtest_command == "portfolio":

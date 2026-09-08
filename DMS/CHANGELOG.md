@@ -1,5 +1,12 @@
 # DMS-Changelog
 
+## 1.11.0 – 08.09.2026 / Anwendung 0.4.6
+
+- DEC-052: USDC-Ziel und geplanter 50-USDC-Einmaltest ausdrücklich von noch aktiver V6-USDT-Runtime getrennt. Keine Konto-/Key-/Profiländerung, kein Echtgeldstart.
+- V7-Validierung mit echten USDC-Kerzen, Datenverfügbarkeitsprüfung, unveränderten Coin-Profilen, Baseline/Stress, Einzel-/Portfoliofenstern und optionalem zeitraumgleichen USDT-Kontrolllauf. Quote im Manifest, Quellcodehashes, kein Umetikettieren oder Auffüllen fehlender Historie. Nur-lesender Zugriff auf Kontrollkerzen.
+- Marktübersicht zeigt letzten Hixton-Trendwechsel und erklärt alte grüne Trends ohne nachträglichen Kauf. Veraltete 240-USDT-Zielgrenze und Anwenden/Verwerfen-Beschreibung im Haupt-README korrigiert.
+- Ergebnisse und Auslieferungsnachweise in DMS 18 und `backtests/v7/README.md`. Positive Softwaretests ersetzen keine Robustheits-/Livefreigabe; weitere Runtime-/Ledger-/Adapter-Arbeit bleibt offen.
+
 ## 1.10.1 – 08.09.2026 / Anwendung 0.4.5
 
 - DEC-051: feste 240-USDT-Grenze aufgehoben, Positionsbudget aus Slots × Betrag; keine automatische Änderung gespeicherter Settings oder Guthaben. UI ohne redundante Grenz-/Beispieltexte.

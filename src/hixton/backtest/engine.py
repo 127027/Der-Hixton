@@ -23,6 +23,7 @@ from hixton.backtest.models import (
 )
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.quality import audit_candles
+from hixton.domain.markets import validate_market_symbols
 from hixton.domain.models import (
     Candle,
     Signal,
@@ -114,7 +115,7 @@ def run_single_backtest(
     if (
         trade_policy is not None
         and trade_policy != TradePolicy()
-        and not (strategy_version or "").startswith(("HIXTON-V5-", "HIXTON-V6-"))
+        and not (strategy_version or "").startswith(("HIXTON-V5-", "HIXTON-V6-", "HIXTON-V7-"))
     ):
         raise ValueError(
             "trade policy requires an explicit HIXTON-V5 or HIXTON-V6 strategy version"
@@ -334,14 +335,16 @@ def run_isolated_batch(
     trade_policies_by_symbol: dict[str, TradePolicy] | None = None,
     strategy_semantics: StrategySemantics = StrategySemantics.DMS_V1,
     strategy_version: str | None = None,
+    symbols: tuple[str, ...] = SYMBOLS,
 ) -> BatchResult:
-    if len(candles_by_symbol) != len(SYMBOLS) or set(candles_by_symbol) != set(SYMBOLS):
+    validate_market_symbols(symbols)
+    if len(candles_by_symbol) != len(symbols) or set(candles_by_symbol) != set(symbols):
         raise ValueError("batch input must contain all ten symbols in the fixed DMS order")
     if strategy_parameters_by_symbol is not None and set(strategy_parameters_by_symbol) != set(
-        SYMBOLS
+        symbols
     ):
         raise ValueError("per-coin parameters require all ten symbols")
-    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(SYMBOLS):
+    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(symbols):
         raise ValueError("trade policies require all ten symbols")
     rules = execution_rules or {}
     results = tuple(
@@ -359,7 +362,7 @@ def run_isolated_batch(
             strategy_semantics=strategy_semantics,
             strategy_version=strategy_version,
         )
-        for symbol in SYMBOLS
+        for symbol in symbols
     )
     starting = sum((result.metrics.starting_equity for result in results), ZERO)
     ending = sum((result.metrics.ending_equity for result in results), ZERO)

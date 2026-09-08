@@ -22,6 +22,7 @@ from hixton.backtest.models import (
 from hixton.constants import SYMBOLS, TIMEFRAME_DELTA
 from hixton.data.quality import audit_candles
 from hixton.domain.allocation import ONE_PER_SYMBOL, allocate_entry_slots
+from hixton.domain.markets import validate_market_symbols
 from hixton.domain.models import Candle, Signal, SignalAction, StrategyParameters, StrategySemantics
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 from hixton.domain.strategy import HixtonStrategy, rank_strength
@@ -55,9 +56,10 @@ def _equal_weight_buy_and_hold(
     starting_cash: Decimal,
     costs: CostModel,
 ) -> Decimal:
-    allocation = starting_cash / Decimal(len(SYMBOLS))
+    symbols = tuple(candles_by_symbol)
+    allocation = starting_cash / Decimal(len(symbols))
     ending = ZERO
-    for symbol in SYMBOLS:
+    for symbol in symbols:
         candles = candles_by_symbol[symbol]
         entry = _d(candles[0].open) * (ONE + costs.adverse_price_rate)
         net_quantity = allocation / entry * (ONE - costs.fee_rate)
@@ -82,10 +84,12 @@ def run_shared_portfolio_backtest(
     strategy_version: str | None = None,
     slot_allocation: str = ONE_PER_SYMBOL,
     apply_risk_limits: bool = True,
+    symbols: tuple[str, ...] = SYMBOLS,
 ) -> PortfolioBacktestResult:
     """Replay ten aligned markets against one non-compounding shared ledger."""
 
-    if tuple(candles_by_symbol) != SYMBOLS:
+    validate_market_symbols(symbols)
+    if tuple(candles_by_symbol) != symbols:
         raise ValueError("portfolio input must contain all ten symbols in fixed DMS order")
     if starting_cash <= ZERO or target_notional <= ZERO or slot_count <= 0:
         raise ValueError("portfolio capital and slot_count must be positive")
@@ -93,19 +97,19 @@ def run_shared_portfolio_backtest(
         raise ValueError("report_start_utc must be before report_end_utc")
 
     parameters = strategy_parameters or StrategyParameters()
-    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(SYMBOLS):
+    if trade_policies_by_symbol is not None and set(trade_policies_by_symbol) != set(symbols):
         raise ValueError("trade policies require all ten symbols")
     if any(p != TradePolicy() for p in (trade_policies_by_symbol or {}).values()) and not (
         strategy_version or ""
-    ).startswith(("HIXTON-V5-", "HIXTON-V6-")):
+    ).startswith(("HIXTON-V5-", "HIXTON-V6-", "HIXTON-V7-")):
         raise ValueError(
             "trade policies require an explicit HIXTON-V5 or HIXTON-V6 strategy version"
         )
     policy_gates = {
-        symbol: TradePolicyGate((trade_policies_by_symbol or {}).get(symbol)) for symbol in SYMBOLS
+        symbol: TradePolicyGate((trade_policies_by_symbol or {}).get(symbol)) for symbol in symbols
     }
     if strategy_parameters_by_symbol is not None:
-        if set(strategy_parameters_by_symbol) != set(SYMBOLS):
+        if set(strategy_parameters_by_symbol) != set(symbols):
             raise ValueError("per-coin parameters require all ten symbols")
         if any(
             p.warmup_bars != parameters.warmup_bars for p in strategy_parameters_by_symbol.values()
@@ -115,7 +119,7 @@ def run_shared_portfolio_backtest(
     selected_by_symbol: dict[str, list[Candle]] = {}
     report_by_symbol: dict[str, list[Candle]] = {}
     rules = execution_rules or {}
-    for symbol in SYMBOLS:
+    for symbol in symbols:
         selected = [
             candle
             for candle in candles_by_symbol[symbol]
@@ -132,7 +136,7 @@ def run_shared_portfolio_backtest(
             candle for candle in selected if candle.open_time_utc >= report_start_utc
         ]
 
-    rows = tuple(zip(*(selected_by_symbol[symbol] for symbol in SYMBOLS), strict=True))
+    rows = tuple(zip(*(selected_by_symbol[symbol] for symbol in symbols), strict=True))
     for row in rows:
         if len({candle.open_time_utc for candle in row}) != 1:
             raise ValueError("portfolio candles are not aligned by open_time_utc")
@@ -144,11 +148,11 @@ def run_shared_portfolio_backtest(
             semantics=strategy_semantics,
             strategy_version=strategy_version,
         )
-        for symbol in SYMBOLS
+        for symbol in symbols
     }
     cash = starting_cash
     positions: dict[str, _OpenTrade] = {}
-    dust = dict.fromkeys(SYMBOLS, ZERO)
+    dust = dict.fromkeys(symbols, ZERO)
     pending: list[Signal] = []
     signals: list[Signal] = []
     fills: list[Fill] = []
@@ -163,7 +167,7 @@ def run_shared_portfolio_backtest(
     )
     risk_halted_at: datetime | None = None
     daily_paused_bars = 0
-    order = {symbol: index for index, symbol in enumerate(SYMBOLS)}
+    order = {symbol: index for index, symbol in enumerate(symbols)}
 
     for row in rows:
         open_time = row[0].open_time_utc
@@ -298,7 +302,7 @@ def run_shared_portfolio_backtest(
 
         points = {}
         decisions = {}
-        for symbol in SYMBOLS:
+        for symbol in symbols:
             points[symbol] = strategies[symbol].update(candles[symbol])
             position = positions.get(symbol)
             if position is not None:
@@ -318,7 +322,7 @@ def run_shared_portfolio_backtest(
                 (
                     ((positions[symbol].quantity if symbol in positions else ZERO) + dust[symbol])
                     * _d(candles[symbol].close)
-                    for symbol in SYMBOLS
+                    for symbol in symbols
                 ),
                 ZERO,
             )
@@ -337,7 +341,7 @@ def run_shared_portfolio_backtest(
                 daily_paused_bars += int(daily_paused)
 
             new_pending: list[Signal] = []
-            for symbol in SYMBOLS:
+            for symbol in symbols:
                 new_signal = decisions[symbol].signal
                 if new_signal is None:
                     continue
@@ -381,7 +385,7 @@ def run_shared_portfolio_backtest(
         ),
     )
     return PortfolioBacktestResult(
-        symbols=SYMBOLS,
+        symbols=symbols,
         report_start_utc=report_start_utc,
         report_end_utc=report_end_utc,
         warmup_start_utc=warmup_start,
@@ -396,7 +400,7 @@ def run_shared_portfolio_backtest(
         equity_curve=tuple(equity_curve),
         blocked_signals=tuple(blocked),
         pending_signals_at_end=tuple(pending),
-        open_symbols_at_end=tuple(symbol for symbol in SYMBOLS if symbol in positions),
+        open_symbols_at_end=tuple(symbol for symbol in symbols if symbol in positions),
         dust_quantity_by_symbol=dust,
         max_concurrent_positions=max_concurrent,
         risk_limits_applied=apply_risk_limits,
@@ -404,6 +408,6 @@ def run_shared_portfolio_backtest(
         daily_paused_bars=daily_paused_bars,
         metrics=metrics,
         data_snapshot_sha256_by_symbol={
-            symbol: candle_snapshot_sha256(selected_by_symbol[symbol]) for symbol in SYMBOLS
+            symbol: candle_snapshot_sha256(selected_by_symbol[symbol]) for symbol in symbols
         },
     )

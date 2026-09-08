@@ -1,6 +1,10 @@
 # 00 – Dokumentenlenkung und Start
 
-## Aktuell: DMS 1.10.1 / Anwendung 0.4.5, DEC-051
+## Aktuell: DMS 1.11.0 / Anwendung 0.4.6, DEC-052
+
+USDC ist das vom Eigentümer gewünschte Ziel für den späteren 50-USDC-Einmaltest und Spotbetrieb. Der technische Stand ist ausdrücklich **Validierung, nicht vollzogene Migration**: V6-Paper/Config/Ledger bleiben USDT, V7 ist ein nicht aktivierbarer Forschungsstand mit unveränderten Coin-Profilen auf echten USDC-Kerzen. Datenverfügbarkeit, Kosten-Stress und gemeinsame 3×80-Tests werden getrennt ausgewiesen. Kein Echtgeldstart, keine neue Livefreigabe, keine Umbenennung alter Zahlen. Maßgeblicher Ergebnisnachweis: `backtests/v7/README.md` und DMS 18. Offene Umsetzung: währungseindeutiges Runtime-/Ledger-/UI-/Kontoprüfmodell sowie produktiver Orderadapter und Reconciliation. Sämtliche älteren datierten Stände unten sind Historie, auch wenn sie damals als aktuell bezeichnet wurden.
+
+## Historie: DMS 1.10.1 / Anwendung 0.4.5, DEC-051
 
 Eigentümer wählt Positionsbudget über 1–10 Slots × USDT je Trade ohne feste 240-USDT-Obergrenze. Keine automatische Änderung der gespeicherten Werte oder Kontoguthaben. Live-Anzeige folgt dem Serverzustand, Einmaltest genau ein 50-USDT-Trade ohne Zusatzhäkchen. Binance-Marktfilterabfrage von JSON-Leerzeichen befreit; Fehlerphase und Codes sicher unterscheidbar. Echtgeld bleibt ohne produktiven Adapter/Abgleich gesperrt. Konten, Passwort und Schlüssel bleiben erhalten. Ältere datierte Grenzen/Checkbox-Anleitungen unten sind Historie und durch DEC-051 ersetzt.
 

@@ -58,8 +58,13 @@ class StoredSymbolRules:
 class CandleStore:
     """Owned SQLite connection; use as a context manager."""
 
-    def __init__(self, path: Path | str) -> None:
+    def __init__(self, path: Path | str, *, read_only: bool = False) -> None:
         self.path = Path(path)
+        if read_only:
+            self._connection = sqlite3.connect(self.path.resolve().as_uri() + "?mode=ro", uri=True)
+            self._connection.row_factory = sqlite3.Row
+            self._connection.execute("PRAGMA query_only=ON")
+            return  # No mkdir, migrations, journal-mode changes or account writes.
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self._connection = sqlite3.connect(self.path)
         self._connection.row_factory = sqlite3.Row
