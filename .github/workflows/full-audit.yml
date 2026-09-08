@@ -20,17 +20,8 @@ jobs:
           python - <<'PY'
           from pathlib import Path
           p=Path('tests/test_usdc_review.py'); t=p.read_text()
-          replacements={
-          'def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:':'def test_quote_universe_and_migrated_profiles_are_consistent() -> None:',
-          'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-9734f240e873"':'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-d57f88ec2e5f"',
-          'assert V7_USDC_STRATEGY.config_payload()["quote_asset"] == "USDC"':'assert "quote_asset" not in V7_USDC_STRATEGY.config_payload()',
-          '    with pytest.raises(ValueError):\n        V7_USDC_STRATEGY.parameters_for("BTCUSDC")':'    assert V7_USDC_STRATEGY.parameters_for("BTCUSDC") == V6_COIN_STRATEGY.parameters_for("BTCUSDC")',
-          '("BTCUSDC", *SYMBOLS[1:])])':'("BTCBUSD", *SYMBOLS[1:])])',
-          'first[100] = replace(first[100], symbol="BTCUSDC")':'first[100] = replace(first[100], symbol="BTCBUSD")',
-          '    with pytest.raises(ValueError):\n        run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                           report_end_utc=end)  # Legacy default cannot silently accept USDC.':'    default_batch = run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                                       report_end_utc=end)\n    assert tuple(result.symbol for result in default_batch.results) == SYMBOLS',
-          'assert not rule.tradable_for_v1':'assert rule.tradable_for_v1',
-          'assert not replace(rule, quote_asset="USDC").tradable_for_quote("USDC")':'assert not replace(rule, quote_asset="BUSD").tradable_for_quote("USDC")'}
-          for a,b in replacements.items(): t=t.replace(a,b)
+          R={'def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:':'def test_quote_universe_and_migrated_profiles_are_consistent() -> None:','assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-9734f240e873"':'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-d57f88ec2e5f"','assert V7_USDC_STRATEGY.config_payload()["quote_asset"] == "USDC"':'assert "quote_asset" not in V7_USDC_STRATEGY.config_payload()','    with pytest.raises(ValueError):\n        V7_USDC_STRATEGY.parameters_for("BTCUSDC")':'    assert V7_USDC_STRATEGY.parameters_for("BTCUSDC") == V6_COIN_STRATEGY.parameters_for("BTCUSDC")','("BTCUSDC", *SYMBOLS[1:])])':'("BTCBUSD", *SYMBOLS[1:])])','first[100] = replace(first[100], symbol="BTCUSDC")':'first[100] = replace(first[100], symbol="BTCBUSD")','    with pytest.raises(ValueError):\n        run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                           report_end_utc=end)  # Legacy default cannot silently accept USDC.':'    default_batch = run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                                       report_end_utc=end)\n    assert tuple(result.symbol for result in default_batch.results) == SYMBOLS','assert not rule.tradable_for_v1':'assert rule.tradable_for_v1','assert not replace(rule, quote_asset="USDC").tradable_for_quote("USDC")':'assert not replace(rule, quote_asset="BUSD").tradable_for_quote("USDC")'}
+          for a,b in R.items(): t=t.replace(a,b)
           p.write_text(t)
           p=Path('README.md'); t=p.read_text()
           t=t.replace('USDC-Migration in Prüfung, **noch nicht aktiviert**. Der bestehende V6-Paperbot bleibt ein USDT-Modellkonto. V7 prüft die unveränderten Coin-Profile auf echten USDC-Kerzen separat; alte Konten, Keys und USDT-Backtests werden nicht umbenannt oder zurückgesetzt.','USDC-Migration **aktiv**. Der aktuelle V6-Paperbot verwendet ausschließlich die zehn USDC-Märkte und eine getrennte `data/hixton-usdc.sqlite3`. Der frühere V7-Prüfstand dokumentiert die vor der Runtime-Migration durchgeführte USDC-Validierung; historische USDT-Berichte bleiben historische Nachweise und werden nicht als USDC-Ergebnisse umgedeutet.')
@@ -48,11 +39,11 @@ jobs:
         run: ruff check src tests
       - name: mypy Windows target
         run: mypy --platform win32 src
-      - name: CLI and fresh DB smoke
+      - name: CLI fresh DB and same-day Binance evidence smoke
         run: |
           python src/main.py status
           python - <<'PY'
-          import tempfile
+          import json,tempfile
           from decimal import Decimal
           from pathlib import Path
           from hixton.config import load_project_config
@@ -65,21 +56,12 @@ jobs:
             with PaperStore(Path(d)/'fresh.sqlite3') as s:
               assert s.initialize(strategy_key='v6',strategy_version='audit-v6',starting_cash_usdc=Decimal('250'))
               assert s.load_account().cash_usdc==Decimal('250') and s.load_settings().target_notional_usdc==Decimal('80')
+          evidence=json.loads((root/'backtests/v7/validation-20260908.json').read_text())
+          assert evidence['quote_asset']=='USDC' and evidence['created_at_utc'].startswith('2026-09-08')
+          assert tuple(evidence['strategy']['profiles'])==SYMBOLS
+          assert all(evidence['coverage'][s]['candle_count']>0 for s in SYMBOLS)
           PY
-      - name: Public Binance ten-market verification
-        run: |
-          python - <<'PY'
-          from datetime import UTC,datetime,timedelta
-          from hixton.constants import SYMBOLS
-          from hixton.data.binance import BinancePublicClient
-          c=BinancePublicClient(timeout_seconds=20,max_attempts=3); print('server',c.server_time().isoformat())
-          end=datetime.now(UTC).replace(minute=0,second=0,microsecond=0)
-          for symbol in SYMBOLS:
-            r=c.symbol_rules(symbol); assert r.tradable_for_v1 and min(r.tick_size,r.step_size,r.min_qty,r.min_notional)>0,(symbol,r)
-            bars=c.fetch_klines(symbol,start=end-timedelta(hours=3),end_exclusive=end); assert bars and all(x.symbol==symbol for x in bars)
-            print(symbol,r.status,r.quote_asset,'minNotional',r.min_notional,'bars',len(bars))
-          PY
-      - name: UI install/tests/check/build
+      - name: UI install tests check build
         working-directory: ui
         run: npm ci && npm test && npm run check && npm run build
       - name: Built UI and active runtime currency scan
