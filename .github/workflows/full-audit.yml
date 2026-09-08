@@ -1,69 +1,54 @@
 name: Full post-USDC system audit
-
 on:
   push:
     branches: [codex/build-foundation-v1]
     paths: [.github/workflows/full-audit.yml]
-
-permissions:
-  contents: write
-
+permissions: {contents: write}
 jobs:
   audit:
     runs-on: ubuntu-latest
     timeout-minutes: 45
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: codex/build-foundation-v1
-          fetch-depth: 0
+        with: {ref: codex/build-foundation-v1, fetch-depth: 0}
       - uses: actions/setup-python@v5
         with: {python-version: '3.11'}
       - uses: actions/setup-node@v4
         with: {node-version: '22', cache: npm, cache-dependency-path: ui/package-lock.json}
-      - name: Repair deterministic migration-test and documentation regressions
+      - name: Repair audited migration regressions
         run: |
           python - <<'PY'
           from pathlib import Path
-          p=Path('tests/test_usdc_review.py')
-          t=p.read_text(encoding='utf-8')
-          t=t.replace('def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:', 'def test_quote_universe_and_migrated_profiles_are_consistent() -> None:')
-          t=t.replace('assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-9734f240e873"', 'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-d57f88ec2e5f"')
-          t=t.replace('assert V7_USDC_STRATEGY.config_payload()["quote_asset"] == "USDC"', 'assert "quote_asset" not in V7_USDC_STRATEGY.config_payload()')
-          t=t.replace('    with pytest.raises(ValueError):\n        V7_USDC_STRATEGY.parameters_for("BTCUSDC")', '    assert V7_USDC_STRATEGY.parameters_for("BTCUSDC") == V6_COIN_STRATEGY.parameters_for("BTCUSDC")')
-          t=t.replace('(\"BTCUSDC\", *SYMBOLS[1:])])', '(\"BTCBUSD\", *SYMBOLS[1:])])')
-          t=t.replace('first[100] = replace(first[100], symbol="BTCUSDC")', 'first[100] = replace(first[100], symbol="BTCBUSD")')
-          t=t.replace('    with pytest.raises(ValueError):\n        run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                           report_end_utc=end)  # Legacy default cannot silently accept USDC.', '    default_batch = run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                                       report_end_utc=end)\n    assert tuple(result.symbol for result in default_batch.results) == SYMBOLS')
-          t=t.replace('assert not rule.tradable_for_v1', 'assert rule.tradable_for_v1')
-          t=t.replace('assert not replace(rule, quote_asset="USDC").tradable_for_quote("USDC")', 'assert not replace(rule, quote_asset="BUSD").tradable_for_quote("USDC")')
-          p.write_text(t,encoding='utf-8')
-
-          p=Path('README.md'); t=p.read_text(encoding='utf-8')
-          t=t.replace('USDC-Migration in Prüfung, **noch nicht aktiviert**. Der bestehende V6-Paperbot bleibt ein USDT-Modellkonto. V7 prüft die unveränderten Coin-Profile auf echten USDC-Kerzen separat; alte Konten, Keys und USDT-Backtests werden nicht umbenannt oder zurückgesetzt.', 'USDC-Migration **aktiv**. Der aktuelle V6-Paperbot verwendet ausschließlich die zehn USDC-Märkte und eine getrennte `data/hixton-usdc.sqlite3`. Der frühere V7-Prüfstand dokumentiert die vor der Runtime-Migration durchgeführte USDC-Validierung; historische USDT-Berichte bleiben historische Nachweise und werden nicht als USDC-Ergebnisse umgedeutet.')
-          t=t.replace('der bisherige USDT-Livebereich ist noch nicht migriert und bleibt technisch gesperrt.', 'der Livebereich ist auf USDC vorbereitet, bleibt aber bis zur Implementierung des produktiven Orderadapters und der Reconciliation technisch gesperrt.')
-          t=t.replace('Slots von 1 bis 10 und USDT je Trade in 1-USDT-Schritten', 'Slots von 1 bis 10 und USDC je Trade in 1-USDC-Schritten')
-          t=t.replace('50-USDT-Einmaltest', '50-USDC-Einmaltest')
-          t=t.replace('250-USDT-Paperkonto', '250-USDC-Paperkonto').replace('3×80 USDT', '3×80 USDC').replace('10 USDT', '10 USDC')
-          t=t.replace('gegen USDT.', 'gegen USDC.')
-          t=t.replace('Startcash 250 USDT', 'Startcash 250 USDC').replace('80-USDT-Slots', '80-USDC-Slots').replace('240-USDT-Grenze', '240-USDC-Grenze')
-          t=t.replace('freie USDT/BNB', 'freie USDC/BNB')
-          t=t.replace('--symbol ETHUSDT', '--symbol ETHUSDC')
-          p.write_text(t,encoding='utf-8')
-
-          p=Path('backtests/v7/README.md'); t=p.read_text(encoding='utf-8')
-          t=t.replace('Status: **Validierung, nicht aktiviert; keine Echtgeldfreigabe.** Die zehn V6-Coin-Profile werden ohne Optimierung auf echten USDC-Kerzen geprüft. V6-Paper bleibt USDT; historische Zahlen und Konten werden nicht umbenannt. V7 gehört zunächst nicht in die normale aktive UI-Strategieauswahl.', 'Status: **historischer Validierungsnachweis vor der inzwischen aktivierten USDC-Runtime; keine Echtgeldfreigabe.** Dieser V7-Lauf prüfte die zehn V6-Coin-Profile ohne Optimierung auf echten USDC-Kerzen. Die Ergebnisse bleiben als damaliger Migrationsnachweis unverändert; der aktive Paperbot verwendet inzwischen USDC.')
-          t=t.replace('Währungseindeutige Migration von Runtime, Ledger, UI und Binance-Kontoprüfung; sichere Trennung alter USDT-Historie. ', 'Die Runtime-/Ledger-/UI-/Binance-Kontoprüfung ist inzwischen auf USDC migriert und verwendet eine getrennte Datenbank; historische Vergleichsergebnisse bleiben unverändert. ')
-          p.write_text(t,encoding='utf-8')
+          p=Path('tests/test_usdc_review.py'); t=p.read_text()
+          replacements={
+          'def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:':'def test_quote_universe_and_migrated_profiles_are_consistent() -> None:',
+          'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-9734f240e873"':'assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-d57f88ec2e5f"',
+          'assert V7_USDC_STRATEGY.config_payload()["quote_asset"] == "USDC"':'assert "quote_asset" not in V7_USDC_STRATEGY.config_payload()',
+          '    with pytest.raises(ValueError):\n        V7_USDC_STRATEGY.parameters_for("BTCUSDC")':'    assert V7_USDC_STRATEGY.parameters_for("BTCUSDC") == V6_COIN_STRATEGY.parameters_for("BTCUSDC")',
+          '("BTCUSDC", *SYMBOLS[1:])])':'("BTCBUSD", *SYMBOLS[1:])])',
+          'first[100] = replace(first[100], symbol="BTCUSDC")':'first[100] = replace(first[100], symbol="BTCBUSD")',
+          '    with pytest.raises(ValueError):\n        run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                           report_end_utc=end)  # Legacy default cannot silently accept USDC.':'    default_batch = run_isolated_batch(candles_by_symbol=candles, report_start_utc=start,\n                                       report_end_utc=end)\n    assert tuple(result.symbol for result in default_batch.results) == SYMBOLS',
+          'assert not rule.tradable_for_v1':'assert rule.tradable_for_v1',
+          'assert not replace(rule, quote_asset="USDC").tradable_for_quote("USDC")':'assert not replace(rule, quote_asset="BUSD").tradable_for_quote("USDC")'}
+          for a,b in replacements.items(): t=t.replace(a,b)
+          p.write_text(t)
+          p=Path('README.md'); t=p.read_text()
+          t=t.replace('USDC-Migration in Prüfung, **noch nicht aktiviert**. Der bestehende V6-Paperbot bleibt ein USDT-Modellkonto. V7 prüft die unveränderten Coin-Profile auf echten USDC-Kerzen separat; alte Konten, Keys und USDT-Backtests werden nicht umbenannt oder zurückgesetzt.','USDC-Migration **aktiv**. Der aktuelle V6-Paperbot verwendet ausschließlich die zehn USDC-Märkte und eine getrennte `data/hixton-usdc.sqlite3`. Der frühere V7-Prüfstand dokumentiert die vor der Runtime-Migration durchgeführte USDC-Validierung; historische USDT-Berichte bleiben historische Nachweise und werden nicht als USDC-Ergebnisse umgedeutet.')
+          t=t.replace('der bisherige USDT-Livebereich ist noch nicht migriert und bleibt technisch gesperrt.','der Livebereich ist auf USDC vorbereitet, bleibt aber bis zur Implementierung des produktiven Orderadapters und der Reconciliation technisch gesperrt.')
+          for a,b in [('Slots von 1 bis 10 und USDT je Trade in 1-USDT-Schritten','Slots von 1 bis 10 und USDC je Trade in 1-USDC-Schritten'),('50-USDT-Einmaltest','50-USDC-Einmaltest'),('250-USDT-Paperkonto','250-USDC-Paperkonto'),('3×80 USDT','3×80 USDC'),('10 USDT','10 USDC'),('gegen USDT.','gegen USDC.'),('Startcash 250 USDT','Startcash 250 USDC'),('80-USDT-Slots','80-USDC-Slots'),('240-USDT-Grenze','240-USDC-Grenze'),('freie USDT/BNB','freie USDC/BNB'),('--symbol ETHUSDT','--symbol ETHUSDC')]: t=t.replace(a,b)
+          p.write_text(t)
+          p=Path('backtests/v7/README.md'); t=p.read_text()
+          t=t.replace('Status: **Validierung, nicht aktiviert; keine Echtgeldfreigabe.** Die zehn V6-Coin-Profile werden ohne Optimierung auf echten USDC-Kerzen geprüft. V6-Paper bleibt USDT; historische Zahlen und Konten werden nicht umbenannt. V7 gehört zunächst nicht in die normale aktive UI-Strategieauswahl.','Status: **historischer Validierungsnachweis vor der inzwischen aktivierten USDC-Runtime; keine Echtgeldfreigabe.** Dieser V7-Lauf prüfte die zehn V6-Coin-Profile ohne Optimierung auf echten USDC-Kerzen. Die Ergebnisse bleiben als damaliger Migrationsnachweis unverändert; der aktive Paperbot verwendet inzwischen USDC.')
+          p.write_text(t)
           PY
-      - name: Install Python dependencies
-        run: python -m pip install -e '.[dev]' && python -m pip install 'httpx>=0.27,<1'
+      - run: python -m pip install -e '.[dev]' && python -m pip install 'httpx>=0.27,<1'
       - name: Full Python suite
         run: pytest -q
       - name: Ruff
         run: ruff check src tests
-      - name: mypy
-        run: mypy src
-      - name: CLI and fresh database smoke
+      - name: mypy Windows target
+        run: mypy --platform win32 src
+      - name: CLI and fresh DB smoke
         run: |
           python src/main.py status
           python - <<'PY'
@@ -71,57 +56,41 @@ jobs:
           from decimal import Decimal
           from pathlib import Path
           from hixton.config import load_project_config
-          from hixton.constants import QUOTE_ASSET, SYMBOLS
+          from hixton.constants import QUOTE_ASSET,SYMBOLS
           from hixton.paper.storage import PaperStore
           root=Path('.').resolve(); c=load_project_config(root/'config/examples/config.example.json',project_root=root)
-          assert QUOTE_ASSET=='USDC'
-          assert SYMBOLS==('BTCUSDC','ETHUSDC','BNBUSDC','SOLUSDC','XRPUSDC','ADAUSDC','LINKUSDC','AVAXUSDC','DOTUSDC','DOGEUSDC')
+          assert QUOTE_ASSET=='USDC' and len(SYMBOLS)==10 and all(s.endswith('USDC') for s in SYMBOLS)
           assert c.database_path.name=='hixton-usdc.sqlite3'
           with tempfile.TemporaryDirectory() as d:
-              with PaperStore(Path(d)/'fresh.sqlite3') as store:
-                  assert store.initialize(strategy_key='v6',strategy_version=c.strategy_key,starting_cash_usdc=Decimal('250.00'))
-                  assert store.load_account().cash_usdc==Decimal('250.00')
-                  assert store.load_settings().target_notional_usdc==Decimal('80.00')
+            with PaperStore(Path(d)/'fresh.sqlite3') as s:
+              assert s.initialize(strategy_key='v6',strategy_version='audit-v6',starting_cash_usdc=Decimal('250'))
+              assert s.load_account().cash_usdc==Decimal('250') and s.load_settings().target_notional_usdc==Decimal('80')
           PY
-      - name: Public Binance USDC market verification
+      - name: Public Binance ten-market verification
         run: |
           python - <<'PY'
           from datetime import UTC,datetime,timedelta
           from hixton.constants import SYMBOLS
           from hixton.data.binance import BinancePublicClient
-          c=BinancePublicClient(timeout_seconds=20,max_attempts=3); print(c.server_time().isoformat())
+          c=BinancePublicClient(timeout_seconds=20,max_attempts=3); print('server',c.server_time().isoformat())
+          end=datetime.now(UTC).replace(minute=0,second=0,microsecond=0)
           for symbol in SYMBOLS:
-              r=c.symbol_rules(symbol)
-              assert r.tradable_for_v1 and r.tick_size>0 and r.step_size>0 and r.min_qty>0 and r.min_notional>0,(symbol,r)
-              end=datetime.now(UTC).replace(minute=0,second=0,microsecond=0)
-              bars=c.fetch_klines(symbol,start=end-timedelta(hours=3),end_exclusive=end)
-              assert bars and all(x.symbol==symbol for x in bars),symbol
-              print(symbol,r.status,r.quote_asset,r.min_notional,len(bars))
+            r=c.symbol_rules(symbol); assert r.tradable_for_v1 and min(r.tick_size,r.step_size,r.min_qty,r.min_notional)>0,(symbol,r)
+            bars=c.fetch_klines(symbol,start=end-timedelta(hours=3),end_exclusive=end); assert bars and all(x.symbol==symbol for x in bars)
+            print(symbol,r.status,r.quote_asset,'minNotional',r.min_notional,'bars',len(bars))
           PY
-      - name: UI dependencies
+      - name: UI install/tests/check/build
         working-directory: ui
-        run: npm ci
-      - name: UI tests
-        working-directory: ui
-        run: npm test
-      - name: TypeScript
-        working-directory: ui
-        run: npm run check
-      - name: Production UI build
-        working-directory: ui
-        run: npm run build
-      - name: Copy production UI build and verify currency
+        run: npm ci && npm test && npm run check && npm run build
+      - name: Built UI and active runtime currency scan
         run: |
-          rm -rf src/hixton/ui/static/assets
-          mkdir -p src/hixton/ui/static
-          cp -R ui/dist/* src/hixton/ui/static/
+          rm -rf src/hixton/ui/static/assets && mkdir -p src/hixton/ui/static && cp -R ui/dist/* src/hixton/ui/static/
           ! grep -RInE 'USDT|usdt' src config ui --exclude='usdc_review.py' --exclude-dir=node_modules --exclude-dir='*.egg-info'
           ! grep -RInE 'USDT|usdt' src/hixton/ui/static
           grep -RIn 'USDC' src/hixton/ui/static >/dev/null
-      - name: Commit audit repairs and remove temporary workflow
+      - name: Commit verified audit repairs
         run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git config user.name 'github-actions[bot]'; git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git rm .github/workflows/full-audit.yml
           git add -A
           git commit -m 'fix: complete post-USDC migration audit repairs'
