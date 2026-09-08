@@ -1,0 +1,183 @@
+name: One-shot USDC runtime migration
+
+on:
+  push:
+    branches:
+      - codex/build-foundation-v1
+    paths:
+      - .github/workflows/usdc-migration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  migrate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out current branch head
+        uses: actions/checkout@v4
+        with:
+          ref: codex/build-foundation-v1
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Migrate active code, schemas, tests and UI to USDC
+        shell: bash
+        run: |
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import sys
+          from pathlib import Path
+
+          root = Path('.')
+          targets: set[Path] = set()
+          targets.update((root / 'src').rglob('*.py'))
+          targets.update((root / 'tests').rglob('*.py'))
+          targets.update((root / 'config').rglob('*.json'))
+          targets.update((root / 'ui' / 'src').rglob('*.ts'))
+          targets.update((root / 'ui' / 'tests').rglob('*.mjs'))
+          targets.add(root / 'ui' / 'index.html')
+
+          for path in sorted(targets):
+              if not path.exists():
+                  continue
+              text = path.read_text(encoding='utf-8')
+              migrated = text.replace('USDT', 'USDC').replace('usdt', 'usdc')
+              migrated = migrated.replace(
+                  'HIXTON-V6-COIN-PAPER-1-',
+                  'HIXTON-V6-USDC-COIN-PAPER-1-',
+              )
+              if migrated != text:
+                  path.write_text(migrated, encoding='utf-8')
+
+          (root / 'src/hixton/constants.py').write_text(
+              '''"""Project-wide constants fixed by the active Hixton specification."""\n\n'''
+              '''from __future__ import annotations\n\n'''
+              '''from datetime import timedelta\n\n'''
+              '''HIXTON_SPEC_VERSION = "HIXTON-SPEC-1.0"\n'''
+              '''HIXTON_V2_RESEARCH_VERSION = "HIXTON-V2-RESEARCH-CANDIDATE-1"\n'''
+              '''HIXTON_V3_SLOT_VERSION = "HIXTON-V3-SLOT-CANDIDATE-1"\n'''
+              '''STRATEGY_ID = "hixton_vidya_atr"\n'''
+              '''EXCHANGE = "binance_spot"\n'''
+              '''TIMEFRAME = "1h"\n'''
+              '''TIMEFRAME_DELTA = timedelta(hours=1)\n\n'''
+              '''QUOTE_ASSET = "USDC"\n'''
+              '''BASE_ASSETS: tuple[str, ...] = (\n'''
+              '''    "BTC",\n    "ETH",\n    "BNB",\n    "SOL",\n    "XRP",\n'''
+              '''    "ADA",\n    "LINK",\n    "AVAX",\n    "DOT",\n    "DOGE",\n'''
+              ''')\n'''
+              '''SYMBOLS: tuple[str, ...] = tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\n'''
+              '''SYMBOL_TIE_BREAK: dict[str, int] = {symbol: rank for rank, symbol in enumerate(SYMBOLS)}\n''',
+              encoding='utf-8',
+          )
+
+          (root / 'src/hixton/domain/markets.py').write_text(
+              '''"""Canonical USDC market universe for the active bot runtime."""\n\n'''
+              '''from __future__ import annotations\n\n'''
+              '''from hixton.constants import BASE_ASSETS, QUOTE_ASSET, SYMBOLS\n\n'''
+              '''def symbols_for_quote(quote_asset: str) -> tuple[str, ...]:\n'''
+              '''    normalized = quote_asset.upper()\n'''
+              '''    if normalized != QUOTE_ASSET:\n'''
+              '''        raise ValueError(f"Only {QUOTE_ASSET} is supported by the active runtime")\n'''
+              '''    return tuple(base + QUOTE_ASSET for base in BASE_ASSETS)\n\n'''
+              '''def validate_market_symbols(symbols: tuple[str, ...]) -> str:\n'''
+              '''    if symbols != SYMBOLS:\n'''
+              '''        raise ValueError("Ten ordered USDC markets required")\n'''
+              '''    return QUOTE_ASSET\n''',
+              encoding='utf-8',
+          )
+
+          sys.path.insert(0, str((root / 'src').resolve()))
+          from hixton.constants import SYMBOLS  # noqa: E402
+          from hixton.domain.versions import strategy_definition  # noqa: E402
+
+          config_path = root / 'config/examples/config.example.json'
+          payload = json.loads(config_path.read_text(encoding='utf-8'))
+          payload['strategy'] = strategy_definition('v6').config_payload()
+          payload['markets'] = list(SYMBOLS)
+          payload['runtime']['database_path'] = 'data/hixton-usdc.sqlite3'
+          config_path.write_text(
+              json.dumps(payload, ensure_ascii=False, indent=2) + '\n',
+              encoding='utf-8',
+          )
+          PY
+
+      - name: Install Python test dependencies
+        run: python -m pip install -e '.[dev]'
+
+      - name: Run Python tests
+        run: pytest
+
+      - name: Run Ruff
+        run: ruff check src tests
+
+      - name: Run mypy
+        run: mypy src
+
+      - name: Install UI dependencies
+        working-directory: ui
+        run: npm ci
+
+      - name: Run UI tests
+        working-directory: ui
+        run: npm test
+
+      - name: Run TypeScript check
+        working-directory: ui
+        run: npm run check
+
+      - name: Build production UI
+        working-directory: ui
+        run: npm run build
+
+      - name: Verify canonical USDC runtime and no operational USDT fallback
+        shell: bash
+        run: |
+          PYTHONPATH=src python - <<'PY'
+          from hixton.constants import QUOTE_ASSET, SYMBOLS
+          from hixton.domain.versions import strategy_definition
+          from hixton.config import load_project_config
+          from pathlib import Path
+
+          assert QUOTE_ASSET == 'USDC'
+          assert len(SYMBOLS) == 10
+          assert all(symbol.endswith('USDC') for symbol in SYMBOLS)
+          strategy = strategy_definition('v6')
+          assert strategy.quote_asset == 'USDC'
+          assert strategy.symbols == SYMBOLS
+          config = load_project_config(
+              Path('config/examples/config.example.json'),
+              project_root=Path('.').resolve(),
+          )
+          assert config.database_path.name == 'hixton-usdc.sqlite3'
+          print('USDC runtime:', ', '.join(SYMBOLS))
+          PY
+          if grep -RInE 'USDT|usdt' src tests config ui --exclude-dir=node_modules; then
+            echo 'Operational USDT reference found after migration.' >&2
+            exit 1
+          fi
+
+      - name: Commit verified migration and remove one-shot workflow
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git rm .github/workflows/usdc-migration.yml
+          git add -A
+          git diff --cached --quiet && { echo 'No migration changes to commit.'; exit 1; }
+          git commit -m 'feat: migrate active Hixton runtime fully to USDC'
+          git push origin HEAD:codex/build-foundation-v1
