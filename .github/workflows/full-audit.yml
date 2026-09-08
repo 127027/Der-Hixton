@@ -1,0 +1,100 @@
+name: Full post-USDC system audit
+
+on:
+  push:
+    branches: [codex/build-foundation-v1]
+    paths: [.github/workflows/full-audit.yml]
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: codex/build-foundation-v1
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+      - name: Install Python dependencies
+        run: python -m pip install -e '.[dev]' && python -m pip install 'httpx>=0.27,<1'
+      - name: Full Python suite
+        run: pytest -q
+      - name: Ruff entire repository Python
+        run: ruff check src tests
+      - name: mypy
+        run: mypy src
+      - name: CLI and fresh database smoke
+        run: |
+          python src/main.py status
+          python - <<'PY'
+          import json, tempfile
+          from decimal import Decimal
+          from pathlib import Path
+          from hixton.config import load_project_config
+          from hixton.constants import QUOTE_ASSET, SYMBOLS
+          from hixton.paper.storage import PaperStore
+          root=Path('.').resolve()
+          c=load_project_config(root/'config/examples/config.example.json', project_root=root)
+          assert QUOTE_ASSET == 'USDC'
+          assert SYMBOLS == ('BTCUSDC','ETHUSDC','BNBUSDC','SOLUSDC','XRPUSDC','ADAUSDC','LINKUSDC','AVAXUSDC','DOTUSDC','DOGEUSDC')
+          with tempfile.TemporaryDirectory() as d:
+              db=Path(d)/'fresh.sqlite3'
+              with PaperStore(db) as store:
+                  assert store.initialize(strategy_key='v6', strategy_version='test-v6', starting_cash_usdc=Decimal('250.00'))
+                  a=store.load_account(); s=store.load_settings()
+                  assert a.cash_usdc == Decimal('250.00')
+                  assert s.target_notional_usdc == Decimal('80.00')
+          print('fresh-db-smoke: PASS')
+          PY
+      - name: Public Binance USDC market verification
+        run: |
+          python - <<'PY'
+          from datetime import UTC, datetime, timedelta
+          from hixton.constants import SYMBOLS
+          from hixton.data.binance import BinancePublicClient
+          c=BinancePublicClient(timeout_seconds=20,max_attempts=3)
+          print('server', c.server_time().isoformat())
+          for symbol in SYMBOLS:
+              r=c.symbol_rules(symbol)
+              assert r.tradable_for_v1, (symbol,r)
+              assert r.tick_size > 0 and r.step_size > 0 and r.min_qty > 0 and r.min_notional > 0, (symbol,r)
+              end=datetime.now(UTC).replace(minute=0,second=0,microsecond=0)
+              bars=c.fetch_klines(symbol,start=end-timedelta(hours=3),end_exclusive=end)
+              assert bars and all(x.symbol==symbol for x in bars), symbol
+              print(symbol, r.status, r.quote_asset, r.min_notional, len(bars))
+          PY
+      - name: UI dependencies
+        working-directory: ui
+        run: npm ci
+      - name: UI tests
+        working-directory: ui
+        run: npm test
+      - name: TypeScript
+        working-directory: ui
+        run: npm run check
+      - name: Production UI build
+        working-directory: ui
+        run: npm run build
+      - name: Operational USDT residue scan
+        run: |
+          echo 'Active runtime/UI/config USDT occurrences:'
+          if grep -RInE 'USDT|usdt' src config ui --exclude-dir=node_modules --exclude-dir='*.egg-info'; then
+            echo 'FAIL: active operational USDT residue detected'
+            exit 1
+          fi
+          echo 'operational-usdt-scan: PASS'
+      - name: Built UI USDC smoke
+        run: |
+          grep -RIn 'USDC' src/hixton/ui/static >/dev/null
+          if grep -RInE 'USDT|usdt' src/hixton/ui/static; then exit 1; fi
+          echo 'built-ui-currency-smoke: PASS'
