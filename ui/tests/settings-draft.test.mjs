@@ -6,7 +6,7 @@ const source=readFileSync(new URL("../src/settings-draft.ts",import.meta.url),"u
 const compiled=ts.transpileModule(source,{compilerOptions:{target:ts.ScriptTarget.ES2022,module:ts.ModuleKind.ES2022}}).outputText;
 const {SettingsDraft,settingsProblem}=await import(`data:text/javascript;base64,${Buffer.from(compiled).toString("base64")}`);
 
-test("simple form: one save, ten slots, one-USDT steps, no pause/discard/typing ceremony",()=>{
+test("simple form: one save, ten slots, one-USDC steps, no pause/discard/typing ceremony",()=>{
   const html=readFileSync(new URL("../index.html",import.meta.url),"utf8");
   assert.match(html,/id="notional-input"[^>]+step="1"/);
   assert.match(html,/id="slot-input"[^>]+max="10"/);
@@ -26,13 +26,13 @@ test("new controllers avoid native prompts and browser secret storage",()=>{
 });
 test("user chooses position budget, with valid slots and finite positive amounts",()=>{
   const limits={max_slots:10};
-  assert.equal(settingsProblem({slot_count:4,target_notional_usdt:"45",emergency_stop:false},limits),null);
-  assert.equal(settingsProblem({slot_count:10,target_notional_usdt:"24",emergency_stop:false},limits),null);
-  for(const slot_count of [0,11,1.5]) assert.match(settingsProblem({slot_count,target_notional_usdt:"10"},limits),/1 bis 10/);
-  assert.equal(settingsProblem({slot_count:5,target_notional_usdt:"50"},limits),null);
-  assert.equal(settingsProblem({slot_count:10,target_notional_usdt:"100"},limits),null);
-  for(const target_notional_usdt of ["0","-50","NaN","Infinity","1e309"])
-    assert.match(settingsProblem({slot_count:3,target_notional_usdt},limits),/positive, endliche/);
+  assert.equal(settingsProblem({slot_count:4,target_notional_usdc:"45",emergency_stop:false},limits),null);
+  assert.equal(settingsProblem({slot_count:10,target_notional_usdc:"24",emergency_stop:false},limits),null);
+  for(const slot_count of [0,11,1.5]) assert.match(settingsProblem({slot_count,target_notional_usdc:"10"},limits),/1 bis 10/);
+  assert.equal(settingsProblem({slot_count:5,target_notional_usdc:"50"},limits),null);
+  assert.equal(settingsProblem({slot_count:10,target_notional_usdc:"100"},limits),null);
+  for(const target_notional_usdc of ["0","-50","NaN","Infinity","1e309"])
+    assert.match(settingsProblem({slot_count:3,target_notional_usdc},limits),/positive, endliche/);
 });
 test("failed save preserves edit and concurrent save cannot start",()=>{
   const draft=new SettingsDraft();draft.edit();

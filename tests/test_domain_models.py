@@ -11,7 +11,7 @@ from hixton.domain.models import Candle, StrategyParameters
 def _candle() -> Candle:
     start = datetime(2025, 1, 1, tzinfo=UTC)
     return Candle(
-        symbol="eth/usdt",
+        symbol="eth/usdc",
         open_time_utc=start,
         close_time_utc=start + timedelta(hours=1) - timedelta(milliseconds=1),
         open=100.0,
@@ -24,7 +24,7 @@ def _candle() -> Candle:
 
 def test_candle_normalizes_symbol_and_validates_ohlcv() -> None:
     candle = _candle()
-    assert candle.symbol == "ETHUSDT"
+    assert candle.symbol == "ETHUSDC"
     assert candle.ohlc_is_valid
     assert not replace(candle, high=100.5).ohlc_is_valid
     assert not replace(candle, volume=-1.0).ohlc_is_valid

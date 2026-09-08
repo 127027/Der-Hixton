@@ -47,17 +47,17 @@ def test_profiles_are_complete_individual_and_strictly_configured(
 ) -> None:
     assert tuple(V6.parameter_map()) == SYMBOLS
     assert len(set(V6.parameter_map().values())) > 1
-    assert V6.parameters_for("btc/usdt").atr_length == 120
-    assert V6.policy_for("ETHUSDT").slope_bars == 24
-    assert V6.policy_for("XRPUSDT").stop_atr == 4
+    assert V6.parameters_for("btc/usdc").atr_length == 120
+    assert V6.policy_for("ETHUSDC").slope_bars == 24
+    assert V6.policy_for("XRPUSDC").stop_atr == 4
     payload = _payload()
     payload["strategy"] = V6.config_payload()
-    payload["paper"]["starting_cash_usdt"] = "250.00"
+    payload["paper"]["starting_cash_usdc"] = "250.00"
     path = tmp_path / "config.json"
     path.write_text(json.dumps(payload), encoding="utf-8")
     assert V6.paper_approved  # DEC-045: Paper experiment only.
     assert load_project_config(path, project_root=tmp_path).strategy_key == "v6"
-    payload["strategy"]["profiles"]["BTCUSDT"]["parameters"]["atr_length"] = 60
+    payload["strategy"]["profiles"]["BTCUSDC"]["parameters"]["atr_length"] = 60
     path.write_text(json.dumps(payload), encoding="utf-8")
     with pytest.raises(ValueError, match="deviates"):
         load_project_config(path, project_root=tmp_path)
@@ -143,7 +143,7 @@ def test_coin_profiles_paper_backtest_and_restart_are_exact(tmp_path: Path) -> N
             strategy_key=V6.key,
             strategy_version=V6.version,
         )
-        assert abs(actual.equity_usdt - expected.metrics.ending_equity) < Decimal("1e-20")
+        assert abs(actual.equity_usdc - expected.metrics.ending_equity) < Decimal("1e-20")
     assert accounts[0] == accounts[1]
 
 
@@ -194,21 +194,21 @@ def test_v6_activation_preserves_global_risk_history_and_dust(tmp_path: Path) ->
     with PaperStore(path) as store:
         account = replace(
             store.load_account(),
-            cash_usdt=Decimal("160.00"),
-            high_water_equity_usdt=Decimal("300"),
+            cash_usdc=Decimal("160.00"),
+            high_water_equity_usdc=Decimal("300"),
             halted=True,
             halt_reason="MAX_DRAWDOWN_20_PERCENT",
         )
         store.save_account(account)
         store.upsert_position(
             PaperPosition(
-                symbol="BTCUSDT",
+                symbol="BTCUSDC",
                 quantity=Decimal("0.80345"),
                 average_price=Decimal("100"),
-                cost_basis_usdt=Decimal("80"),
+                cost_basis_usdc=Decimal("80"),
                 entry_time_utc=start,
                 entry_signal_id="legacy-buy",
-                entry_fee_usdt=Decimal("0.08"),
+                entry_fee_usdc=Decimal("0.08"),
                 updated_at_utc=start,
             )
         )
@@ -218,14 +218,14 @@ def test_v6_activation_preserves_global_risk_history_and_dust(tmp_path: Path) ->
     assert len(events) == 1
     with PaperStore(path) as store:
         assert store.load_strategy_session().strategy_key == "v6"
-        assert store.load_account().high_water_equity_usdt == Decimal("300")
+        assert store.load_account().high_water_equity_usdc == Decimal("300")
         assert store.load_account().halted is True
-        assert store.load_account().starting_cash_usdt == Decimal("240.00")
-        assert store.load_account().cash_usdt == Decimal("160") + events[0].quote_amount_usdt
-        assert store.load_dust()["BTCUSDT"] == Decimal("0.00345")
+        assert store.load_account().starting_cash_usdc == Decimal("240.00")
+        assert store.load_account().cash_usdc == Decimal("160") + events[0].quote_amount_usdc
+        assert store.load_dust()["BTCUSDC"] == Decimal("0.00345")
         assert store.load_positions() == ()
-        assert store.load_strategy_session().starting_equity_usdt == (
-            store.load_account().cash_usdt + Decimal("0.00345") * 101
+        assert store.load_strategy_session().starting_equity_usdc == (
+            store.load_account().cash_usdc + Decimal("0.00345") * 101
         )
     assert activate_paper_strategy(path, _mapping(start), _rules(), approved, at=start) == ()
 
@@ -272,11 +272,11 @@ def test_xrp_stop_survives_restart_and_fills_at_next_open_not_stop_price(tmp_pat
         for s in SYMBOLS:
             p = replace(
                 _point(
-                    s, start + timedelta(hours=i), flip_up=s == "XRPUSDT" and i == 24, strength=1.0
+                    s, start + timedelta(hours=i), flip_up=s == "XRPUSDC" and i == 24, strength=1.0
                 ),
                 strategy_version=V6.version,
             )
-            if s == "XRPUSDT" and i == 25:
+            if s == "XRPUSDC" and i == 25:
                 # ATR expansion must not move the frozen entry-ATR stop away.
                 p = replace(p, candle=replace(p.candle, close=95, low=94), atr=100)
             points[s] += (p,)
@@ -316,10 +316,10 @@ def test_xrp_stop_survives_restart_and_fills_at_next_open_not_stop_price(tmp_pat
 def test_new_v6_account_has_reserve_but_reinitialization_never_gifts_cash(tmp_path: Path) -> None:
     with PaperStore(tmp_path / "cash.sqlite3") as store:
         store.initialize(strategy_key=V6.key, strategy_version=V6.version)
-        assert store.load_account().cash_usdt == Decimal("250")
-        store.save_account(replace(store.load_account(), cash_usdt=Decimal("231")))
+        assert store.load_account().cash_usdc == Decimal("250")
+        store.save_account(replace(store.load_account(), cash_usdc=Decimal("231")))
         store.initialize(strategy_key=V6.key, strategy_version=V6.version)
-        assert store.load_account().cash_usdt == Decimal("231")
+        assert store.load_account().cash_usdc == Decimal("231")
 
 
 def test_unapproved_mix_cannot_activate_or_start_paper(
@@ -335,20 +335,20 @@ def test_unapproved_mix_cannot_activate_or_start_paper(
 
 
 def test_ten_slots_bound_the_market_universe_within_the_existing_capital() -> None:
-    assert PaperSettings(slot_count=4, target_notional_usdt=Decimal("45")).slot_count == 4
+    assert PaperSettings(slot_count=4, target_notional_usdc=Decimal("45")).slot_count == 4
     with pytest.raises(ValueError, match="10 simultaneous"):
-        PaperSettings(slot_count=11, target_notional_usdt=Decimal("10"))
+        PaperSettings(slot_count=11, target_notional_usdc=Decimal("10"))
 
 
 @pytest.mark.parametrize("first_endpoint", ["/api/status", "/api/paper/events"])
 def test_new_v2_runtime_uses_configured_reserve_from_first_api_call(
     tmp_path: Path, first_endpoint: str,
 ) -> None:
-    config = replace(_config(tmp_path), paper_starting_cash_usdt=Decimal("250.00"))
+    config = replace(_config(tmp_path), paper_starting_cash_usdc=Decimal("250.00"))
     client = TestClient(create_app(config, RuntimeSupervisor(config)),
                         base_url="http://127.0.0.1:8765")
     assert client.get(first_endpoint).status_code == 200
     # Before data initialization there is intentionally no complete Paper/soak payload.
     client.get("/api/status")
     with PaperStore(config.database_path) as store:
-        assert store.load_account().cash_usdt == Decimal("250.00")
+        assert store.load_account().cash_usdc == Decimal("250.00")

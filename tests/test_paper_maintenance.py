@@ -18,18 +18,18 @@ from tests.test_ui_api import _config
 
 def _prepared(tmp_path: Path):
     config = replace(
-        _config(tmp_path), strategy_key="v6", paper_starting_cash_usdt=Decimal("250"),
+        _config(tmp_path), strategy_key="v6", paper_starting_cash_usdc=Decimal("250"),
         ui_port=0,
     )
     with PaperStore(config.database_path) as store:
         store.initialize(strategy_key="v2", strategy_version="old-v2")
-        store.save_account(replace(store.load_account(), cash_usdt=Decimal("123"), halted=True))
+        store.save_account(replace(store.load_account(), cash_usdc=Decimal("123"), halted=True))
     with sqlite3.connect(config.database_path) as connection:
         connection.execute("CREATE TABLE candles (data TEXT)")
         connection.execute("INSERT INTO candles VALUES ('preserve market data')")
-        connection.execute("INSERT INTO paper_dust VALUES ('ETHUSDT', '0.001')")
+        connection.execute("INSERT INTO paper_dust VALUES ('ETHUSDC', '0.001')")
         connection.execute(
-            "INSERT INTO paper_checkpoints VALUES ('ETHUSDT', '2026-09-06T12:00:00+00:00')"
+            "INSERT INTO paper_checkpoints VALUES ('ETHUSDC', '2026-09-06T12:00:00+00:00')"
         )
     return config, tmp_path / "backups" / "before-fresh.sqlite3"
 
@@ -57,13 +57,13 @@ def test_fresh_start_archives_everything_and_only_resets_paper(tmp_path: Path) -
         assert json.loads(audit[1]) == result
     with PaperStore(config.database_path) as store:
         store.require_strategy(V6.key, V6.version)
-        assert store.load_settings().target_notional_usdt == 80
+        assert store.load_settings().target_notional_usdc == 80
         assert store.load_settings().slot_count == 3
-        assert store.load_account().cash_usdt == 250
+        assert store.load_account().cash_usdc == 250
         assert not store.load_account().halted
-        store.save_account(replace(store.load_account(), cash_usdt=Decimal("231")))
+        store.save_account(replace(store.load_account(), cash_usdc=Decimal("231")))
         assert not store.initialize(strategy_key=V6.key, strategy_version=V6.version)
-        assert store.load_account().cash_usdt == 231  # Normal restart never resets.
+        assert store.load_account().cash_usdc == 231  # Normal restart never resets.
 
 
 @pytest.mark.parametrize("failure", ["confirmation", "existing", "outside", "schema", "port"])
@@ -90,7 +90,7 @@ def test_failed_preconditions_leave_account_untouched(tmp_path: Path, failure: s
                 config, project_root=tmp_path, archive=archive, confirmation=confirmation,
             )
     with PaperStore(config.database_path) as store:
-        assert store.load_account().cash_usdt == 123
+        assert store.load_account().cash_usdc == 123
         assert store.load_account().halted
     if failure == "existing":
         assert archive.read_text(encoding="utf-8") == "existing backup"
@@ -110,6 +110,6 @@ def test_reset_transaction_rolls_back_on_failure_and_keeps_archive(tmp_path: Pat
             config, project_root=tmp_path, archive=archive, confirmation="NEUSTART",
         )
     with PaperStore(config.database_path) as store:
-        assert store.load_account().cash_usdt == 123
+        assert store.load_account().cash_usdc == 123
         assert store.all_checkpoints()  # Original checkpoint also survived rollback.
     assert archive.is_file()

@@ -36,15 +36,15 @@ def _payload() -> dict[str, object]:
         },
         "markets": list(SYMBOLS),
         "backtest": {
-            "starting_usdt_per_symbol": "250.00",
-            "target_notional_usdt": "250.00",
+            "starting_usdc_per_symbol": "250.00",
+            "target_notional_usdc": "250.00",
             "primary_window_years": 3,
             "run_baseline_and_stress": True,
         },
         "paper": {
-            "starting_cash_usdt": "240.00",
+            "starting_cash_usdc": "240.00",
             "slot_count": 3,
-            "target_notional_usdt": "80.00",
+            "target_notional_usdc": "80.00",
             "poll_seconds": 30,
             "daily_audit_utc": "00:05",
         },
@@ -74,9 +74,9 @@ def test_valid_active_v2_config_resolves_runtime_paths(tmp_path: Path) -> None:
     assert config.strategy_key == "v2"
     assert config.ui_port == 8765
     assert config.paper_poll_seconds == 30
-    assert config.paper_starting_cash_usdt == Decimal("240.00")
+    assert config.paper_starting_cash_usdc == Decimal("240.00")
     assert config.paper_slot_count == 3
-    assert config.paper_target_notional_usdt == Decimal("80.00")
+    assert config.paper_target_notional_usdc == Decimal("80.00")
 
 
 def test_unknown_or_changed_paper_baseline_is_rejected(tmp_path: Path) -> None:

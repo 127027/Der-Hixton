@@ -56,7 +56,7 @@ class TrialIntent:
         _amount(self.quote_budget)
         _amount(self.base_quantity)
         if self.side == "BUY" and (self.quote_budget != Decimal("50") or self.base_quantity != 0):
-            raise ValueError("First trial BUY must use exactly 50 USDT, no base quantity")
+            raise ValueError("First trial BUY must use exactly 50 USDC, no base quantity")
         if self.side == "SELL" and (self.quote_budget != 0 or self.base_quantity <= 0):
             raise ValueError("Trial SELL requires an explicit owned base quantity")
 
@@ -346,7 +346,7 @@ class OrderJournal:
             fees[row["commission_asset"]] = fees.get(row["commission_asset"], _ZERO) + Decimal(
                 row["commission"]
             )
-        base = intent.symbol.removesuffix("USDT")
+        base = intent.symbol.removesuffix("USDC")
         net_received = quantity - fees.get(base, _ZERO) if intent.side == "BUY" else _ZERO
         return {
             "intent_id": intent_id,
@@ -357,10 +357,10 @@ class OrderJournal:
             "state": state,
             "fill_count": len(rows),
             "gross_quantity": str(quantity),
-            "gross_quote_usdt": str(quote),
+            "gross_quote_usdc": str(quote),
             "net_received_base": str(net_received),
             "fees_by_asset": {asset: str(value) for asset, value in fees.items()},
-            "fees_fully_valued_in_usdt": set(fees) <= {"USDT"},
+            "fees_fully_valued_in_usdc": set(fees) <= {"USDC"},
             "fills": [
                 {
                     key: row[key]

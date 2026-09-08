@@ -69,12 +69,12 @@ class SymbolRules:
 
     @property
     def tradable_for_v1(self) -> bool:
-        return self.tradable_for_quote("USDT")
+        return self.tradable_for_quote("USDC")
 
     def tradable_for_quote(self, quote_asset: str) -> bool:
         return (
             self.status == "TRADING"
-            and quote_asset in {"USDT", "USDC"}
+            and quote_asset in {"USDC"}
             and self.quote_asset == quote_asset
             and self.symbol == self.base_asset + quote_asset
             and self.spot_allowed

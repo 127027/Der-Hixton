@@ -26,9 +26,9 @@ from tests.golden_reference import deterministic_candles
 
 
 def _single(costs: CostModel = BASELINE_COSTS) -> tuple[list[Candle], BacktestResult]:
-    candles = deterministic_candles("ETHUSDT", 1_200, 1)
+    candles = deterministic_candles("ETHUSDC", 1_200, 1)
     return candles, run_single_backtest(
-        symbol="ETHUSDT",
+        symbol="ETHUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),
@@ -73,7 +73,7 @@ def test_final_signal_is_not_filled_outside_report_window() -> None:
     last_signal = full.signals[-1]
     end_exclusive = candles[last_signal.point_index].open_time_utc + timedelta(hours=1)
     partial = run_single_backtest(
-        symbol="ETHUSDT",
+        symbol="ETHUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=end_exclusive,
@@ -84,9 +84,9 @@ def test_final_signal_is_not_filled_outside_report_window() -> None:
 
 
 def test_exchange_minimum_blocks_entry_instead_of_inventing_fill() -> None:
-    candles = deterministic_candles("BTCUSDT", 1_000)
+    candles = deterministic_candles("BTCUSDC", 1_000)
     result = run_single_backtest(
-        symbol="BTCUSDT",
+        symbol="BTCUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),
@@ -97,7 +97,7 @@ def test_exchange_minimum_blocks_entry_instead_of_inventing_fill() -> None:
     assert result.metrics.ending_equity == Decimal("250.00")
 
 
-def test_batch_runs_exactly_ten_isolated_250_usdt_ledgers() -> None:
+def test_batch_runs_exactly_ten_isolated_250_usdc_ledgers() -> None:
     candles_by_symbol = {
         symbol: deterministic_candles(symbol, 1_000, market_index)
         for market_index, symbol in enumerate(SYMBOLS)
@@ -152,9 +152,9 @@ def test_batch_drawdown_aligns_bars_not_provider_close_milliseconds() -> None:
 def test_batch_rejects_missing_market() -> None:
     with pytest.raises(ValueError, match="all ten"):
         run_isolated_batch(
-            candles_by_symbol={"BTCUSDT": deterministic_candles("BTCUSDT", 500)},
-            report_start_utc=deterministic_candles("BTCUSDT", 500)[400].open_time_utc,
-            report_end_utc=deterministic_candles("BTCUSDT", 500)[-1].open_time_utc
+            candles_by_symbol={"BTCUSDC": deterministic_candles("BTCUSDC", 500)},
+            report_start_utc=deterministic_candles("BTCUSDC", 500)[400].open_time_utc,
+            report_end_utc=deterministic_candles("BTCUSDC", 500)[-1].open_time_utc
             + timedelta(hours=1),
         )
 
@@ -201,7 +201,7 @@ def test_shared_portfolio_is_deterministic() -> None:
 
 
 def test_research_parameters_and_pine_semantics_are_explicit_overrides() -> None:
-    candles = deterministic_candles("ETHUSDT", 1_200, 1)
+    candles = deterministic_candles("ETHUSDC", 1_200, 1)
     parameters = StrategyParameters(
         vidya_length=6,
         momentum_length=20,
@@ -210,7 +210,7 @@ def test_research_parameters_and_pine_semantics_are_explicit_overrides() -> None
         band_multiplier=2.0,
     )
     research = run_single_backtest(
-        symbol="ETHUSDT",
+        symbol="ETHUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),
@@ -218,7 +218,7 @@ def test_research_parameters_and_pine_semantics_are_explicit_overrides() -> None
         strategy_semantics=StrategySemantics.PINE_V6,
     )
     default = run_single_backtest(
-        symbol="ETHUSDT",
+        symbol="ETHUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),

@@ -8,8 +8,8 @@ from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
 
 def _state() -> PortfolioRiskState:
     return PortfolioRiskState(
-        high_water_equity_usdt=Decimal("240"),
-        day_start_equity_usdt=Decimal("240"),
+        high_water_equity_usdc=Decimal("240"),
+        day_start_equity_usdc=Decimal("240"),
         day_start_date_utc="2026-09-01",
     )
 
@@ -29,7 +29,7 @@ def test_five_percent_daily_loss_pauses_only_until_next_utc_day() -> None:
         at=datetime(2026, 9, 2, 0, tzinfo=UTC),
     )
     assert next_day.daily_paused is False
-    assert next_day.state.day_start_equity_usdt == Decimal("228")
+    assert next_day.state.day_start_equity_usdc == Decimal("228")
 
 
 def test_twenty_percent_high_water_drawdown_halt_is_persistent() -> None:

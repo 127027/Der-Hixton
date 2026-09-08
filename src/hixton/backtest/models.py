@@ -21,11 +21,14 @@ class CostModel:
     slippage_bps_per_side: Decimal
 
     def __post_init__(self) -> None:
-        if min(
-            self.fee_bps_per_side,
-            self.spread_bps_per_side,
-            self.slippage_bps_per_side,
-        ) < ZERO:
+        if (
+            min(
+                self.fee_bps_per_side,
+                self.spread_bps_per_side,
+                self.slippage_bps_per_side,
+            )
+            < ZERO
+        ):
             raise ValueError("cost basis points must be non-negative")
 
     @property
@@ -38,11 +41,7 @@ class CostModel:
 
     @property
     def total_bps_per_side(self) -> Decimal:
-        return (
-            self.fee_bps_per_side
-            + self.spread_bps_per_side
-            + self.slippage_bps_per_side
-        )
+        return self.fee_bps_per_side + self.spread_bps_per_side + self.slippage_bps_per_side
 
 
 BASELINE_COSTS = CostModel(

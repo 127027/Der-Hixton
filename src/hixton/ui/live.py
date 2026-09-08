@@ -76,7 +76,7 @@ def install_live_routes(
                 settings = store.load_settings()
                 preview = {
                     "slot_count": settings.slot_count,
-                    "target_notional_usdt": str(settings.target_notional_usdt),
+                    "target_notional_usdc": str(settings.target_notional_usdc),
                 }
                 shared = {**preview, "emergency_stop": settings.emergency_stop}
         except (RuntimeError, sqlite3.DatabaseError, KeyError):
@@ -201,17 +201,17 @@ def install_live_routes(
         require_session(request)
         data = await payload(request)
         if (
-            set(data) != {"confirmation", "notional_usdt"}
-            or data.get("confirmation") != "TEST 50 USDT"
-            or not isinstance(data.get("notional_usdt"), str)
+            set(data) != {"confirmation", "notional_usdc"}
+            or data.get("confirmation") != "TEST 50 USDC"
+            or not isinstance(data.get("notional_usdc"), str)
         ):
-            raise HTTPException(400, "Genau einen 50-USDT-Test ausdrücklich bestätigen.")
+            raise HTTPException(400, "Genau einen 50-USDC-Test ausdrücklich bestätigen.")
         try:
-            amount = Decimal(data["notional_usdt"])
+            amount = Decimal(data["notional_usdc"])
             if not amount.is_finite() or amount != Decimal("50"):
                 raise ValueError
         except (InvalidOperation, ValueError):
-            raise HTTPException(400, "Einmaltest: ausschließlich 50 USDT Kaufbudget.") from None
+            raise HTTPException(400, "Einmaltest: ausschließlich 50 USDC Kaufbudget.") from None
         # No URL parameter, key presence or green preflight bypasses incomplete implementation.
         # SignalTrial is offline-tested; production adapter/account reconciliation remain open.
         result = await run_in_threadpool(get_status, True)

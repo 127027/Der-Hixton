@@ -176,13 +176,13 @@ def assess_account(
     foreign = [
         asset
         for asset, (free, locked) in balances.items()
-        if asset not in {"USDT", "BNB"} and free + locked > 0
+        if asset not in {"USDC", "BNB"} and free + locked > 0
     ]
     if foreign:
         blockers.append("Fremdbestände vorhanden; separaten Bot-Account verwenden/Bestände klären.")
-    free_usdt = balances.get("USDT", (Decimal(0), Decimal(0)))[0]
-    if free_usdt < notional + Decimal("10"):
-        blockers.append("Für den ersten 1x50-Test werden mindestens 60 freie USDT benötigt.")
+    free_usdc = balances.get("USDC", (Decimal(0), Decimal(0)))[0]
+    if free_usdc < notional + Decimal("10"):
+        blockers.append("Für den ersten 1x50-Test werden mindestens 60 freie USDC benötigt.")
     raw_symbols = markets.get("symbols")
     if not isinstance(raw_symbols, list):
         raise BinanceCheckError("Binance-Symbolfilter fehlen.")
@@ -210,11 +210,11 @@ def assess_account(
             blockers.append(f"{symbol}: Mengenfilter unvollständig.")
         notionals = [by_kind[k] for k in ("MIN_NOTIONAL", "NOTIONAL") if k in by_kind]
         if not notionals or any(_amount(f.get("minNotional")) > notional for f in notionals):
-            blockers.append(f"{symbol}: Mindestnotional fehlt oder liegt über 50 USDT.")
+            blockers.append(f"{symbol}: Mindestnotional fehlt oder liegt über 50 USDC.")
     return {
         "account_checks_passed": not blockers,
         "blockers": blockers,
-        "free_usdt": str(free_usdt),
+        "free_usdc": str(free_usdc),
         "free_bnb": str(balances.get("BNB", (Decimal(0), Decimal(0)))[0]),
         "open_order_count": len(orders),
         "checked_symbols": list(SYMBOLS),

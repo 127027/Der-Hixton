@@ -212,8 +212,8 @@ def _run_single_scenarios(
             candles=candles,
             report_start_utc=report_start,
             report_end_utc=report_end,
-            starting_cash=config.starting_usdt_per_symbol,
-            target_notional=config.target_notional_usdt,
+            starting_cash=config.starting_usdc_per_symbol,
+            target_notional=config.target_notional_usdc,
             costs=cost,
             execution_rules=rules,
             strategy_parameters=strategy.parameters_for(symbol),
@@ -306,7 +306,7 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
         except RuntimeError:
             paper_settings = PaperSettings(
                 slot_count=config.paper_slot_count,
-                target_notional_usdt=config.paper_target_notional_usdt,
+                target_notional_usdc=config.paper_target_notional_usdc,
                 emergency_stop=False,
             )
     candles_by_symbol = {}
@@ -325,8 +325,8 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
             candles_by_symbol=candles_by_symbol,
             report_start_utc=report_start,
             report_end_utc=report_end,
-            starting_cash=config.paper_starting_cash_usdt,
-            target_notional=paper_settings.target_notional_usdt,
+            starting_cash=config.paper_starting_cash_usdc,
+            target_notional=paper_settings.target_notional_usdc,
             slot_count=paper_settings.slot_count,
             costs=cost,
             execution_rules=rules_by_symbol,
@@ -346,8 +346,10 @@ def command_backtest_portfolio(args: argparse.Namespace, config: ProjectConfig) 
         report_end_utc=report_end,
         strategy=strategy,
     )
-    print(f"Portfolio {paper_settings.slot_count}x{paper_settings.target_notional_usdt} "
-          f"gespeichert: {output}")
+    print(
+        f"Portfolio {paper_settings.slot_count}x{paper_settings.target_notional_usdc} "
+        f"gespeichert: {output}"
+    )
     return 0
 
 
@@ -420,22 +422,26 @@ def build_parser() -> argparse.ArgumentParser:
     backtest = commands.add_parser("backtest", help="Backtest v1 aus lokalen Daten")
     backtest_commands = backtest.add_subparsers(dest="backtest_command", required=True)
     usdc = backtest_commands.add_parser(
-        "usdc-review", help="USDC-Daten und eingefrorene Coin-Profile separat pruefen; kein Live",
+        "usdc-review",
+        help="USDC-Daten und eingefrorene Coin-Profile separat pruefen; kein Live",
     )
     usdc.add_argument("--end", type=parse_utc)
-    usdc.add_argument("--usdt-control-db", type=Path,
-                      help="Vorhandene USDT-Kerzen nur lesend im selben Zeitraum vergleichen")
-    single = backtest_commands.add_parser("single", help="einen Coin mit 250 USDT testen")
+    usdc.add_argument(
+        "--usdc-control-db",
+        type=Path,
+        help="Vorhandene USDC-Kerzen nur lesend im selben Zeitraum vergleichen",
+    )
+    single = backtest_commands.add_parser("single", help="einen Coin mit 250 USDC testen")
     single.add_argument("--symbol", required=True)
     single.add_argument("--end", type=parse_utc)
     single.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
     single.add_argument("--strategy", choices=("v1", "v2", "v3", "v6"))
-    all_ten = backtest_commands.add_parser("all", help="10x250-USDT-Batch testen")
+    all_ten = backtest_commands.add_parser("all", help="10x250-USDC-Batch testen")
     all_ten.add_argument("--end", type=parse_utc)
     all_ten.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
     all_ten.add_argument("--strategy", choices=("v1", "v2", "v3", "v6"))
     portfolio = backtest_commands.add_parser(
-        "portfolio", help="gemeinsames Konto mit 3x80-USDT-Slots und Startcash laut Config testen"
+        "portfolio", help="gemeinsames Konto mit 3x80-USDC-Slots und Startcash laut Config testen"
     )
     portfolio.add_argument("--end", type=parse_utc)
     portfolio.add_argument("--cost", choices=("baseline", "stress", "both"), default="both")
@@ -455,7 +461,8 @@ def build_parser() -> argparse.ArgumentParser:
     activate.add_argument("--strategy", choices=("v2", "v6"), required=True)
     activate.add_argument("--confirmation", required=True)
     fresh = commands.add_parser(
-        "paper-fresh-start", help="offline: altes Paperkonto archivieren und neu mit 250 starten",
+        "paper-fresh-start",
+        help="offline: altes Paperkonto archivieren und neu mit 250 starten",
     )
     fresh.add_argument("--archive", type=Path, required=True)
     fresh.add_argument("--confirmation", required=True)
@@ -481,7 +488,10 @@ def main(argv: list[str] | None = None) -> int:
 
             archive = args.archive if args.archive.is_absolute() else PROJECT_ROOT / args.archive
             result = fresh_start_paper(
-                config, project_root=PROJECT_ROOT, archive=archive, confirmation=args.confirmation,
+                config,
+                project_root=PROJECT_ROOT,
+                archive=archive,
+                confirmation=args.confirmation,
             )
             print(json.dumps(result, ensure_ascii=False, indent=2))
             return 0
@@ -495,8 +505,10 @@ def main(argv: list[str] | None = None) -> int:
             from hixton.backtest.usdc_review import run_usdc_review
 
             output = run_usdc_review(
-                PROJECT_ROOT, args.end or latest_safe_report_end(), code_commit=_code_commit(),
-                usdt_control_database=args.usdt_control_db,
+                PROJECT_ROOT,
+                args.end or latest_safe_report_end(),
+                code_commit=_code_commit(),
+                usdc_control_database=args.usdc_control_db,
             )
             print(f"USDC review saved: {output}")
             return 0

@@ -1,18 +1,18 @@
 /** Polling may update the saved state, never an unsaved or in-flight edit. */
 export interface TradingSettings {
   slot_count: number;
-  target_notional_usdt: string;
+  target_notional_usdc: string;
   emergency_stop: boolean;
 }
 
 export interface TradingLimits { max_slots: number }
 
 export function settingsProblem(settings: TradingSettings, limits: TradingLimits): string | null {
-  const amount = Number(settings.target_notional_usdt);
+  const amount = Number(settings.target_notional_usdc);
   if (!Number.isInteger(settings.slot_count) || settings.slot_count < 1 || settings.slot_count > limits.max_slots)
     return `Freigegeben sind 1 bis ${limits.max_slots} Slots. Dieser Entwurf kann nicht übernommen werden.`;
   if (!Number.isFinite(amount) || amount <= 0 || !Number.isFinite(settings.slot_count * amount))
-    return "Positionsgröße muss eine positive, endliche USDT-Zahl sein.";
+    return "Positionsgröße muss eine positive, endliche USDC-Zahl sein.";
   return null;
 }
 
@@ -22,7 +22,7 @@ function formatBudget(value: string | number): string {
 }
 
 export function describeSettings(value: TradingSettings): string {
-  return `${value.slot_count} × ${formatBudget(value.target_notional_usdt)} USDT = ${formatBudget(value.slot_count * Number(value.target_notional_usdt))} USDT${value.emergency_stop ? " · bestehende Einstiegssperre aktiv" : ""}`;
+  return `${value.slot_count} × ${formatBudget(value.target_notional_usdc)} USDC = ${formatBudget(value.slot_count * Number(value.target_notional_usdc))} USDC${value.emergency_stop ? " · bestehende Einstiegssperre aktiv" : ""}`;
 }
 
 export function describeLivePlan(saved: TradingSettings | null, draft: TradingSettings, dirty: boolean, saving: boolean, limits: TradingLimits | null): string {

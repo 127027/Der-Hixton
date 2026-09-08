@@ -19,11 +19,11 @@ from tests.test_ui_api import _config
 def test_cli_portfolio_mirrors_saved_sizes_not_installation_defaults(
     tmp_path: Path, monkeypatch: pytest.MonkeyPatch, initialized: bool,
 ) -> None:
-    config = replace(_config(tmp_path), paper_starting_cash_usdt=Decimal("250"))
+    config = replace(_config(tmp_path), paper_starting_cash_usdc=Decimal("250"))
     if initialized:
         with PaperStore(config.database_path) as store:
-            store.initialize(starting_cash_usdt=Decimal("250"))
-            store.save_settings(PaperSettings(slot_count=4, target_notional_usdt=Decimal("45")))
+            store.initialize(starting_cash_usdc=Decimal("250"))
+            store.save_settings(PaperSettings(slot_count=4, target_notional_usdc=Decimal("45")))
             before = store.load_account()
     calls = []
     monkeypatch.setattr(cli, "PROJECT_ROOT", tmp_path)

@@ -158,7 +158,7 @@ def test_production_paper_and_portfolio_match_with_gaps_rounding_and_mixed_close
     actual = load_paper_portfolio(
         path, prices, strategy_key=strategy.key, strategy_version=strategy.version
     )
-    assert abs(actual.equity_usdt - reference.metrics.ending_equity) < Decimal("1e-20")
+    assert abs(actual.equity_usdc - reference.metrics.ending_equity) < Decimal("1e-20")
     with PaperStore(path) as store:
         assert sum(store.load_dust().values()) > 0
     # The same replay split by a process restart must produce the identical ledger.
@@ -238,5 +238,5 @@ def test_coin_parameter_map_requires_all_ten_symbols() -> None:
             candles_by_symbol={symbol: [] for symbol in SYMBOLS},
             report_start_utc=datetime(2023, 1, 1, tzinfo=UTC),
             report_end_utc=datetime(2026, 1, 1, tzinfo=UTC),
-            strategy_parameters_by_symbol={"BTCUSDT": V2_RESEARCH_STRATEGY.parameters},
+            strategy_parameters_by_symbol={"BTCUSDC": V2_RESEARCH_STRATEGY.parameters},
         )

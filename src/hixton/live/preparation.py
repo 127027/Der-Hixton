@@ -157,7 +157,7 @@ class LivePreparation:
                 else {"state": "NOT_STARTED" if self.trial is None else "LOCKED"},
                 "first_live_trial": {
                     "slot_count": 1,
-                    "target_notional_usdt": "50.00",
-                    "minimum_free_usdt": "60.00",
+                    "target_notional_usdc": "50.00",
+                    "minimum_free_usdc": "60.00",
                 },
             }

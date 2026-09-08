@@ -79,9 +79,7 @@ class HixtonStrategy:
         self._previous_upper: float | None = None
         self._previous_lower: float | None = None
         self._trend = (
-            TrendState.DOWN
-            if semantics is StrategySemantics.PINE_V6
-            else TrendState.UNINITIALIZED
+            TrendState.DOWN if semantics is StrategySemantics.PINE_V6 else TrendState.UNINITIALIZED
         )
 
     @property
@@ -114,9 +112,7 @@ class HixtonStrategy:
             pos_sum = sum(self._positive)
             neg_sum = sum(self._negative)
             denominator = pos_sum + neg_sum
-            abs_cmo = (
-                0.0 if denominator == 0.0 else abs((pos_sum - neg_sum) / denominator)
-            )
+            abs_cmo = 0.0 if denominator == 0.0 else abs((pos_sum - neg_sum) / denominator)
 
         alpha = 2.0 / (self.parameters.vidya_length + 1.0)
         effective_alpha = alpha * abs_cmo if abs_cmo is not None else None
@@ -127,8 +123,7 @@ class HixtonStrategy:
             vidya_raw = None
         else:
             vidya_raw = (
-                effective_alpha * candle.close
-                + (1.0 - effective_alpha) * self._previous_vidya_raw
+                effective_alpha * candle.close + (1.0 - effective_alpha) * self._previous_vidya_raw
             )
         if vidya_raw is not None:
             self._vidya_raw_window.append(vidya_raw)
@@ -185,12 +180,10 @@ class HixtonStrategy:
                 ):
                     raise StrategyInputError("bands are invalid after warm-up")
                 flip_up = (
-                    candle.close > upper
-                    and self._previous_candle.close <= self._previous_upper
+                    candle.close > upper and self._previous_candle.close <= self._previous_upper
                 )
                 flip_down = (
-                    candle.close < lower
-                    and self._previous_candle.close >= self._previous_lower
+                    candle.close < lower and self._previous_candle.close >= self._previous_lower
                 )
                 if flip_up:
                     self._trend = TrendState.UP
@@ -204,13 +197,9 @@ class HixtonStrategy:
             and self._previous_candle is not None
         ):
             previous_trend = self._trend
-            cross_up = (
-                candle.close > upper
-                and self._previous_candle.close <= self._previous_upper
-            )
+            cross_up = candle.close > upper and self._previous_candle.close <= self._previous_upper
             cross_down = (
-                candle.close < lower
-                and self._previous_candle.close >= self._previous_lower
+                candle.close < lower and self._previous_candle.close >= self._previous_lower
             )
             if cross_up:
                 self._trend = TrendState.UP

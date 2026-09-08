@@ -15,9 +15,9 @@ from tests.golden_reference import deterministic_candles
 def test_v2_report_is_written_only_to_v2_with_full_strategy_snapshot(
     tmp_path: Path,
 ) -> None:
-    candles = deterministic_candles("BTCUSDT", 500)
+    candles = deterministic_candles("BTCUSDC", 500)
     result = run_single_backtest(
-        symbol="BTCUSDT",
+        symbol="BTCUSDC",
         candles=candles,
         report_start_utc=candles[400].open_time_utc,
         report_end_utc=candles[-1].open_time_utc + timedelta(hours=1),

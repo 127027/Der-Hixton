@@ -200,7 +200,7 @@ class RuntimeSupervisor:
                         points,
                         strategy_key=self.strategy.key,
                         strategy_version=self.strategy.version,
-                        starting_cash_usdt=self.config.paper_starting_cash_usdt,
+                        starting_cash_usdc=self.config.paper_starting_cash_usdc,
                     )
                     if not first_start:
                         events = await asyncio.to_thread(
@@ -350,8 +350,8 @@ class RuntimeSupervisor:
                     candles_by_symbol=candles,
                     report_start_utc=report_start,
                     report_end_utc=report_end,
-                    starting_cash=self.config.paper_starting_cash_usdt,
-                    target_notional=paper_settings.target_notional_usdt,
+                    starting_cash=self.config.paper_starting_cash_usdc,
+                    target_notional=paper_settings.target_notional_usdc,
                     slot_count=paper_settings.slot_count,
                     costs=costs,
                     execution_rules=rules,
@@ -370,8 +370,8 @@ class RuntimeSupervisor:
                     candles=candles[symbol],
                     report_start_utc=report_start,
                     report_end_utc=report_end,
-                    starting_cash=self.config.starting_usdt_per_symbol,
-                    target_notional=self.config.target_notional_usdt,
+                    starting_cash=self.config.starting_usdc_per_symbol,
+                    target_notional=self.config.target_notional_usdc,
                     costs=costs,
                     execution_rules=rules[symbol],
                     strategy_parameters=strategy.parameters_for(symbol),

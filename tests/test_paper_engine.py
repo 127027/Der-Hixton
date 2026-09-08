@@ -115,7 +115,7 @@ def test_startup_arms_at_latest_without_historical_orders(tmp_path: Path) -> Non
     emitted = process_new_closed_points(str(path), points, _rules())
     assert emitted == ()
     with PaperStore(path) as store:
-        assert store.load_account().cash_usdt == Decimal("240.00")
+        assert store.load_account().cash_usdc == Decimal("240.00")
         assert store.load_positions() == ()
 
 
@@ -158,9 +158,9 @@ def test_paper_soak_gate_is_persistent_and_requires_all_three_thresholds(
             reference_price=Decimal("100"),
             execution_price=Decimal("100"),
             base_quantity=Decimal("1"),
-            quote_amount_usdt=Decimal("100"),
-            fee_usdt=Decimal("0.10"),
-            realized_pnl_usdt=Decimal("1"),
+            quote_amount_usdc=Decimal("100"),
+            fee_usdc=Decimal("0.10"),
+            realized_pnl_usdc=Decimal("1"),
             breakout_strength=None,
         )
         for index in range(20)
@@ -213,7 +213,7 @@ def test_slot_priority_is_deterministic_and_cycle_is_idempotent(tmp_path: Path) 
     with PaperStore(path) as store:
         positions = store.load_positions()
         assert [position.symbol for position in positions] == sorted(SYMBOLS[:3])
-        assert store.load_account().cash_usdt >= Decimal("0")
+        assert store.load_account().cash_usdc >= Decimal("0")
         assert len(store.load_events()) == 5
 
 
@@ -249,16 +249,16 @@ def test_larger_planned_budget_never_creates_account_cash(tmp_path: Path) -> Non
     start = datetime(2026, 1, 1, 0, tzinfo=UTC)
     initialize_paper_at_latest(str(path), _mapping(start), at=start)
     with PaperStore(path) as store:
-        before = store.load_account().cash_usdt
-        store.save_settings(PaperSettings(slot_count=10, target_notional_usdt=Decimal("100")))
-        assert store.load_account().cash_usdt == before
+        before = store.load_account().cash_usdc
+        store.save_settings(PaperSettings(slot_count=10, target_notional_usdc=Decimal("100")))
+        assert store.load_account().cash_usdc == before
     signal_time = start + timedelta(hours=1)
     points = {symbol: (_point(symbol, signal_time, flip_up=True, strength=1.0),)
               for symbol in SYMBOLS}
     process_new_closed_points(str(path), points, _rules())
     with PaperStore(path) as store:
-        assert store.load_account().cash_usdt >= 0
-        assert sum(p.cost_basis_usdt for p in store.load_positions()) <= before
+        assert store.load_account().cash_usdc >= 0
+        assert sum(p.cost_basis_usdc for p in store.load_positions()) <= before
         assert len(store.load_positions()) < 10
 
 
@@ -267,7 +267,7 @@ def test_four_slots_of_45_really_open_four_positions_and_keep_the_budget(tmp_pat
     start = datetime(2026, 1, 1, 0, tzinfo=UTC)
     initialize_paper_at_latest(str(path), _mapping(start), at=start)
     with PaperStore(path) as store:
-        store.save_settings(PaperSettings(slot_count=4, target_notional_usdt=Decimal("45")))
+        store.save_settings(PaperSettings(slot_count=4, target_notional_usdc=Decimal("45")))
     signal_time = start + timedelta(hours=1)
     points = _mapping(signal_time)
     for symbol in SYMBOLS[:5]:
@@ -275,11 +275,11 @@ def test_four_slots_of_45_really_open_four_positions_and_keep_the_budget(tmp_pat
     emitted = process_new_closed_points(str(path), points, _rules())
     filled = [event for event in emitted if event.status is PaperEventStatus.FILLED]
     assert [event.symbol for event in filled] == list(SYMBOLS[:4])
-    assert all(event.quote_amount_usdt <= Decimal("45") for event in filled)
+    assert all(event.quote_amount_usdc <= Decimal("45") for event in filled)
     assert any(event.reason == "NO_FREE_SLOT" for event in emitted)
     with PaperStore(path) as store:
         assert len(store.load_positions()) == 4
-        assert store.load_account().cash_usdt > Decimal("59")
+        assert store.load_account().cash_usdc > Decimal("59")
 
 
 def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
@@ -314,7 +314,7 @@ def test_explicit_strategy_activation_closes_old_position_and_resets_soak(
         all_events = store.load_events()
     assert session.strategy_key == "v2"
     assert session.strategy_version == V2_RESEARCH_STRATEGY.version
-    assert session.starting_equity_usdt > Decimal("0")
+    assert session.starting_equity_usdc > Decimal("0")
     assert progress.minimum_processed_closed_bars == 0
     assert progress.completed_trades == 0
     assert len(all_events) == 2

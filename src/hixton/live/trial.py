@@ -79,7 +79,7 @@ class SignalTrial:
     def arm(self, trial_id: str, account: str, *, now: datetime, notional: Decimal) -> None:
         # No amount supplied by a caller can silently become 80, 500 or NaN.
         if not notional.is_finite() or notional != Decimal("50"):
-            raise ValueError("Einmaltest benötigt genau 50 USDT Kaufbudget")
+            raise ValueError("Einmaltest benötigt genau 50 USDC Kaufbudget")
         if str(UUID(trial_id)) != trial_id or not account:
             raise ValueError("Invalid trial identity")
         now = _utc(now)
@@ -229,7 +229,7 @@ class SignalTrial:
                 self._set(state="FAILED", reason="NO_NET_ENTRY_FILL", entries_enabled=0)
                 return
             gross = Decimal(str(summary["gross_quantity"]))
-            price = Decimal(str(summary["gross_quote_usdt"])) / gross
+            price = Decimal(str(summary["gross_quote_usdc"])) / gross
             self._set(
                 from_state="ENTRY_PENDING",
                 state="OPEN",
@@ -246,7 +246,7 @@ class SignalTrial:
             owned = Decimal(row["owned_quantity"])
             fees = summary["fees_by_asset"]
             assert isinstance(fees, dict)
-            consumed = sold + Decimal(str(fees.get(row["symbol"].removesuffix("USDT"), "0")))
+            consumed = sold + Decimal(str(fees.get(row["symbol"].removesuffix("USDC"), "0")))
             if consumed != owned:
                 self._set(
                     from_state="EXIT_PENDING",
@@ -417,7 +417,7 @@ class SignalTrial:
             "mode": "ONE_SHOT_50",
             "state": row["state"],
             "symbol": row["symbol"],
-            "quote_budget_usdt": "50.00",
+            "quote_budget_usdc": "50.00",
             "entries_enabled": bool(row["entries_enabled"]),
             "reason": row["reason"],
             "armed_at_utc": row["armed_at"],
@@ -441,24 +441,24 @@ class SignalTrial:
                 "fixed_take_profit": False,
                 "exchange_hosted_stop": False,
             }
-        # Fees in BNB/other assets must not be labelled USDT or silently valued at zero.
-        result["net_pnl_usdt"] = None
+        # Fees in BNB/other assets must not be labelled USDC or silently valued at zero.
+        result["net_pnl_usdc"] = None
         entry, exit_order = result["buy"], result["sell"]
         if isinstance(entry, dict) and isinstance(exit_order, dict):
             fees: dict[str, Decimal] = {}
             for order in (entry, exit_order):
                 for asset, amount in order["fees_by_asset"].items():
                     fees[asset] = fees.get(asset, Decimal(0)) + Decimal(amount)
-            base = row["symbol"].removesuffix("USDT")
+            base = row["symbol"].removesuffix("USDC")
             unvalued = [
-                asset for asset, amount in fees.items() if amount and asset not in {base, "USDT"}
+                asset for asset, amount in fees.items() if amount and asset not in {base, "USDC"}
             ]
             result["unvalued_fee_assets"] = unvalued
             result["fees_by_asset"] = {asset: str(amount) for asset, amount in fees.items()}
             if row["state"] == "COMPLETED" and not unvalued:
-                result["net_pnl_usdt"] = str(
-                    Decimal(exit_order["gross_quote_usdt"])
-                    - Decimal(entry["gross_quote_usdt"])
-                    - fees.get("USDT", Decimal(0))
+                result["net_pnl_usdc"] = str(
+                    Decimal(exit_order["gross_quote_usdc"])
+                    - Decimal(entry["gross_quote_usdc"])
+                    - fees.get("USDC", Decimal(0))
                 )
         return result

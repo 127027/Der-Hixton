@@ -82,7 +82,7 @@ def _paper_payload(
             _latest_prices(supervisor),
             strategy_key=supervisor.strategy.key,
             strategy_version=supervisor.strategy.version,
-            starting_cash_usdt=config.paper_starting_cash_usdt,
+            starting_cash_usdc=config.paper_starting_cash_usdc,
         )
         with PaperStore(config.database_path) as store:
             soak = store.load_soak_progress()
@@ -90,25 +90,25 @@ def _paper_payload(
     except (OSError, RuntimeError, sqlite3.DatabaseError):
         return None
     return {
-        "cash_usdt": str(portfolio.account.cash_usdt),
-        "starting_cash_usdt": str(portfolio.account.starting_cash_usdt),
-        "equity_usdt": str(portfolio.equity_usdt),
-        "unrealized_pnl_usdt": str(portfolio.unrealized_pnl_usdt),
+        "cash_usdc": str(portfolio.account.cash_usdc),
+        "starting_cash_usdc": str(portfolio.account.starting_cash_usdc),
+        "equity_usdc": str(portfolio.equity_usdc),
+        "unrealized_pnl_usdc": str(portfolio.unrealized_pnl_usdc),
         "strategy_session": {
             "key": session.strategy_key,
             "version": session.strategy_version,
             "activated_at_utc": _iso(session.activated_at_utc),
-            "starting_equity_usdt": str(session.starting_equity_usdt),
-            "pnl_usdt": str(portfolio.equity_usdt - session.starting_equity_usdt),
+            "starting_equity_usdc": str(session.starting_equity_usdc),
+            "pnl_usdc": str(portfolio.equity_usdc - session.starting_equity_usdc),
         },
-        "high_water_equity_usdt": str(portfolio.account.high_water_equity_usdt),
+        "high_water_equity_usdc": str(portfolio.account.high_water_equity_usdc),
         "drawdown_pct": str(portfolio.drawdown_pct),
         "daily_loss_paused": portfolio.daily_loss_paused,
         "halted": portfolio.account.halted,
         "halt_reason": portfolio.account.halt_reason,
         "settings": {
             "slot_count": portfolio.settings.slot_count,
-            "target_notional_usdt": str(portfolio.settings.target_notional_usdt),
+            "target_notional_usdc": str(portfolio.settings.target_notional_usdc),
             "emergency_stop": portfolio.settings.emergency_stop,
         },
         "soak": {
@@ -130,12 +130,12 @@ def _paper_payload(
                 "symbol": position.symbol,
                 "quantity": str(position.quantity),
                 "average_price": str(position.average_price),
-                "cost_basis_usdt": str(position.cost_basis_usdt),
+                "cost_basis_usdc": str(position.cost_basis_usdc),
                 "entry_time_utc": _iso(position.entry_time_utc),
                 "entry_signal_id": position.entry_signal_id,
                 "strategy_version": position.strategy_version,
                 "slot_count": position.slot_count,
-                "market_value_usdt": str(
+                "market_value_usdc": str(
                     position.quantity
                     * _latest_prices(supervisor).get(position.symbol, position.average_price)
                 ),
@@ -184,7 +184,7 @@ def _market_payloads(
         payloads.append(
             {
                 "symbol": symbol,
-                "display_symbol": symbol.removesuffix("USDT") + "/USDT",
+                "display_symbol": symbol.removesuffix("USDC") + "/USDC",
                 "strategy_profile": {
                     "parameters": asdict(supervisor.strategy.parameters_for(symbol)),
                     "trade_policy": asdict(supervisor.strategy.policy_for(symbol)),
@@ -386,7 +386,7 @@ def create_app(
             store.initialize(
                 strategy_key=supervisor.strategy.key,
                 strategy_version=supervisor.strategy.version,
-                starting_cash_usdt=config.paper_starting_cash_usdt,
+                starting_cash_usdc=config.paper_starting_cash_usdc,
             )
             store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             events = store.load_events(symbol=symbol, limit=limit)
@@ -416,7 +416,7 @@ def create_app(
                 raise ValueError("Not-Aus muss wahr oder falsch sein")
             settings = PaperSettings(
                 slot_count=payload["slot_count"],
-                target_notional_usdt=Decimal(str(payload["target_notional_usdt"])),
+                target_notional_usdc=Decimal(str(payload["target_notional_usdc"])),
                 emergency_stop=payload.get("emergency_stop", False),
             )
         except (KeyError, TypeError, ValueError, InvalidOperation):
@@ -431,7 +431,7 @@ def create_app(
             store.initialize(
                 strategy_key=supervisor.strategy.key,
                 strategy_version=supervisor.strategy.version,
-                starting_cash_usdt=config.paper_starting_cash_usdt,
+                starting_cash_usdc=config.paper_starting_cash_usdc,
             )
             store.require_strategy(supervisor.strategy.key, supervisor.strategy.version)
             store.save_settings(settings)

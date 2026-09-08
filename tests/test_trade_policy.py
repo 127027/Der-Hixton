@@ -17,9 +17,9 @@ from tests.test_paper_engine import _point
 
 
 def test_identity_overlay_preserves_original_engine_exactly() -> None:
-    candles = deterministic_candles("BTCUSDT", 1000)
+    candles = deterministic_candles("BTCUSDC", 1000)
     kwargs = {
-        "symbol": "BTCUSDT",
+        "symbol": "BTCUSDC",
         "candles": candles,
         "report_start_utc": candles[400].open_time_utc,
         "report_end_utc": candles[-1].open_time_utc + timedelta(hours=1),
@@ -31,7 +31,7 @@ def test_identity_overlay_preserves_original_engine_exactly() -> None:
 
 def test_stop_requires_a_closed_price_and_never_changes_indicator() -> None:
     at = datetime(2026, 1, 1, tzinfo=UTC)
-    point = _point("BTCUSDT", at)
+    point = _point("BTCUSDC", at)
     gate = TradePolicyGate(TradePolicy(stop_atr=4))
     wick = replace(point, candle=replace(point.candle, low=80, close=99))
     assert gate.decide(wick, entry_price=100, entry_atr=1, highest_close=103).signal is None
@@ -45,7 +45,7 @@ def test_stop_requires_a_closed_price_and_never_changes_indicator() -> None:
 def test_filtered_buy_is_not_deferred_to_a_later_green_bar() -> None:
     at = datetime(2026, 1, 1, tzinfo=UTC)
     gate = TradePolicyGate(TradePolicy(cmo_floor=0.2))
-    buy = replace(_point("BTCUSDT", at, flip_up=True), abs_cmo=0.1)
+    buy = replace(_point("BTCUSDC", at, flip_up=True), abs_cmo=0.1)
     assert gate.decide(buy).block_reason == "POLICY_CMO"
     assert gate.decide(replace(buy, flip_up=False, abs_cmo=0.9)).signal is None
 
@@ -54,22 +54,22 @@ def test_vidya_slope_uses_only_preceding_24_bars() -> None:
     at = datetime(2026, 1, 1, tzinfo=UTC)
     gate = TradePolicyGate(TradePolicy(slope_bars=24))
     for i in range(24):
-        gate.decide(replace(_point("BTCUSDT", at + timedelta(hours=i)), vidya=100.0))
-    buy = replace(_point("BTCUSDT", at + timedelta(hours=24), flip_up=True), vidya=99.0)
+        gate.decide(replace(_point("BTCUSDC", at + timedelta(hours=i)), vidya=100.0))
+    buy = replace(_point("BTCUSDC", at + timedelta(hours=24), flip_up=True), vidya=99.0)
     assert gate.decide(buy).block_reason == "POLICY_VIDYA_SLOPE"
 
 
 def test_screen_and_decimal_policy_engine_match_without_rounding() -> None:
-    candles = deterministic_candles("BTCUSDT", 1600)
+    candles = deterministic_candles("BTCUSDC", 1600)
     parameters = replace(StrategyParameters(), band_multiplier=0.8)
     policy = TradePolicy(trail_atr=4, slope_bars=24)
     start, end = candles[400].open_time_utc, candles[-1].open_time_utc + timedelta(hours=1)
     points = evaluate_batch(
-        "BTCUSDT", candles, parameters=parameters, semantics=StrategySemantics.PINE_V6
+        "BTCUSDC", candles, parameters=parameters, semantics=StrategySemantics.PINE_V6
     )
     screened = screen_policy(points, start, end, policy)
     exact = run_single_backtest(
-        symbol="BTCUSDT",
+        symbol="BTCUSDC",
         candles=candles,
         report_start_utc=start,
         report_end_utc=end,
@@ -89,10 +89,10 @@ def test_screen_and_decimal_policy_engine_match_without_rounding() -> None:
 
 
 def test_overlay_cannot_masquerade_as_active_v2() -> None:
-    candles = deterministic_candles("BTCUSDT", 500)
+    candles = deterministic_candles("BTCUSDC", 500)
     with pytest.raises(ValueError, match="explicit HIXTON-V5"):
         run_single_backtest(
-            symbol="BTCUSDT",
+            symbol="BTCUSDC",
             candles=candles,
             report_start_utc=candles[400].open_time_utc,
             report_end_utc=candles[-1].close_time_utc,
@@ -113,7 +113,7 @@ def test_portfolio_identity_and_policy_match_isolated_execution() -> None:
     # All ten identical markets, ten independent equal budgets, risk disabled only
     # in this parity fixture: allocation cannot hide a policy-engine divergence.
     markets = {s: deterministic_candles(s, 1200) for s in SYMBOLS}
-    candles = markets["BTCUSDT"]
+    candles = markets["BTCUSDC"]
     parameters = replace(StrategyParameters(), band_multiplier=0.8)
     kwargs = {
         "candles_by_symbol": markets,
@@ -139,7 +139,7 @@ def test_portfolio_identity_and_policy_match_isolated_execution() -> None:
         strategy_version=version,
     )
     isolated = run_single_backtest(
-        symbol="BTCUSDT",
+        symbol="BTCUSDC",
         candles=candles,
         report_start_utc=kwargs["report_start_utc"],
         report_end_utc=kwargs["report_end_utc"],
@@ -150,15 +150,15 @@ def test_portfolio_identity_and_policy_match_isolated_execution() -> None:
         costs=STRESS_COSTS,
     )
     assert isolated.trades
-    assert tuple(t for t in combined.trades if t.symbol == "BTCUSDT") == isolated.trades
+    assert tuple(t for t in combined.trades if t.symbol == "BTCUSDC") == isolated.trades
 
 
 def test_future_candles_cannot_change_past_policy_fills() -> None:
-    candles = deterministic_candles("BTCUSDT", 1600)
+    candles = deterministic_candles("BTCUSDC", 1600)
     parameters = replace(StrategyParameters(), band_multiplier=0.8)
     policy = TradePolicy(trail_atr=4, slope_bars=24)
     common = {
-        "symbol": "BTCUSDT",
+        "symbol": "BTCUSDC",
         "candles": candles,
         "report_start_utc": candles[400].open_time_utc,
         "strategy_parameters": parameters,

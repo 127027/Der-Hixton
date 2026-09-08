@@ -33,7 +33,7 @@ def continuous_window(
 ) -> tuple[datetime, dict[str, object]]:
     """Choose the common continuous suffix solely by data availability, never PnL.
 
-    Preserve and report every excluded gap; never interpolate or substitute USDT.
+    Preserve and report every excluded gap; never interpolate or substitute USDC.
     Missing latest bars, duplicates, invalid prices or ordering errors fail closed.
     """
     if tuple(candles_by_symbol) != V7_USDC_STRATEGY.symbols:
@@ -70,8 +70,11 @@ def continuous_window(
 
 
 def run_usdc_review(
-    project_root: Path, end: datetime, *, code_commit: str,
-    usdt_control_database: Path | None = None,
+    project_root: Path,
+    end: datetime,
+    *,
+    code_commit: str,
+    usdc_control_database: Path | None = None,
 ) -> Path:
     """Download/cache real USDC candles, run frozen profiles, retain immutable evidence."""
     if end.tzinfo is None:
@@ -90,14 +93,16 @@ def run_usdc_review(
     candles_by_symbol: dict[str, list[Candle]] = {}
     rules: dict[str, ExecutionRules] = {}
     market_checks = {}
-    # Dedicated cache has no Paper/account/credential tables. Existing USDT DB is untouched.
+    # Dedicated cache has no Paper/account/credential tables. Existing USDC DB is untouched.
     for symbol in strategy.symbols:
         rule = client.symbol_rules(symbol)
         if not rule.tradable_for_quote("USDC"):
             raise ValueError(f"{symbol}: USDC spot market not confirmed")
         rules[symbol] = ExecutionRules(
-            tick_size=rule.tick_size, step_size=rule.step_size,
-            min_qty=rule.min_qty, min_notional=rule.min_notional,
+            tick_size=rule.tick_size,
+            step_size=rule.step_size,
+            min_qty=rule.min_qty,
+            min_notional=rule.min_notional,
         )
         market_checks[symbol] = asdict(rule)
         with CandleStore(database) as store:
@@ -110,7 +115,9 @@ def run_usdc_review(
         with CandleStore(database) as store:
             store.put_candles(fetched)
             candles_by_symbol[symbol] = store.load_candles(
-                symbol, start=warmup_start, end_exclusive=end,
+                symbol,
+                start=warmup_start,
+                end_exclusive=end,
             )
         print(f"USDC data: {symbol}, {len(candles_by_symbol[symbol])} closed bars", flush=True)
     start, coverage = continuous_window(candles_by_symbol, requested_start, end)
@@ -125,99 +132,142 @@ def run_usdc_review(
         "study": "USDC_FROZEN_PROFILE_TRANSFER",
         "quote_asset": "USDC",
         "created_at_utc": datetime.now(UTC),
-        "strategy": strategy.config_payload(), "code_commit": code_commit,
-        "requested_start_utc": requested_start, "report_end_utc": end,
+        "strategy": strategy.config_payload(),
+        "code_commit": code_commit,
+        "requested_start_utc": requested_start,
+        "report_end_utc": end,
         "actual_common_start_utc": start,
         "full_three_years_available": start == requested_start,
-        "coverage": coverage, "public_market_checks": market_checks,
-        "account_tradability_verified": False, "live_ready": False,
+        "coverage": coverage,
+        "public_market_checks": market_checks,
+        "account_tradability_verified": False,
+        "live_ready": False,
         "source_file_sha256": {
-            path.relative_to(Path(__file__).parents[2]).as_posix():
-                hashlib.sha256(path.read_bytes()).hexdigest()
+            path.relative_to(Path(__file__).parents[2]).as_posix(): hashlib.sha256(
+                path.read_bytes()
+            ).hexdigest()
             for path in sorted(Path(__file__).parents[1].rglob("*.py"))
         },
         "limitations": [
-            "Frozen settings transferred from USDT research; not untouched out-of-sample.",
+            "Frozen settings transferred from USDC research; not untouched out-of-sample.",
             "Current exchange filters, not point-in-time historical filters.",
             "Baseline/stress are model assumptions, not verified account commissions.",
-            "No USDT candles substituted, no gap filling, no account/strategy activation.",
+            "No USDC candles substituted, no gap filling, no account/strategy activation.",
             "Normal live adapter/reconciliation and USDC runtime migration not completed.",
         ],
     }
     outcomes = {}
     for label, (window_start, window_end) in windows.items():
         outcomes[label] = _evaluate_window(
-            strategy, candles_by_symbol, rules, window_start, window_end,
-            output / label, code_commit,
+            strategy,
+            candles_by_symbol,
+            rules,
+            window_start,
+            window_end,
+            output / label,
+            code_commit,
         )
         print(f"USDC review: {label} complete", flush=True)
     summary["windows"] = outcomes
-    if usdt_control_database is not None:
+    if usdc_control_database is not None:
         control = V6_COIN_STRATEGY
-        with CandleStore(usdt_control_database, read_only=True) as store:
+        with CandleStore(usdc_control_database, read_only=True) as store:
             control_candles = {
-                symbol: store.load_candles(symbol, start=start - 400 * TIMEFRAME_DELTA,
-                                          end_exclusive=end)
+                symbol: store.load_candles(
+                    symbol, start=start - 400 * TIMEFRAME_DELTA, end_exclusive=end
+                )
                 for symbol in control.symbols
             }
         control_rules = {}
         for symbol in control.symbols:
             rule = client.symbol_rules(symbol)
-            if not rule.tradable_for_quote("USDT"):
+            if not rule.tradable_for_quote("USDC"):
                 raise ValueError(f"{symbol}: control market not confirmed")
             control_rules[symbol] = ExecutionRules(
-                tick_size=rule.tick_size, step_size=rule.step_size,
-                min_qty=rule.min_qty, min_notional=rule.min_notional,
+                tick_size=rule.tick_size,
+                step_size=rule.step_size,
+                min_qty=rule.min_qty,
+                min_notional=rule.min_notional,
             )
         controls = {}
         for label, (window_start, window_end) in windows.items():
             controls[label] = _evaluate_window(
-                control, control_candles, control_rules, window_start, window_end,
-                output / "usdt_same_window_control" / label, code_commit,
+                control,
+                control_candles,
+                control_rules,
+                window_start,
+                window_end,
+                output / "usdc_same_window_control" / label,
+                code_commit,
             )
-            print(f"USDT same-window control: {label} complete", flush=True)
-        summary["usdt_same_window_control"] = controls
+            print(f"USDC same-window control: {label} complete", flush=True)
+        summary["usdc_same_window_control"] = controls
     (output / "summary.json").write_text(
-        json.dumps(_primitive(summary), ensure_ascii=False, indent=2) + "\n", encoding="utf-8",
+        json.dumps(_primitive(summary), ensure_ascii=False, indent=2) + "\n",
+        encoding="utf-8",
     )
     return output
 
 
 def _evaluate_window(
-    strategy: StrategyDefinition, candles: dict[str, list[Candle]],
-    rules: dict[str, ExecutionRules], start: datetime, end: datetime,
-    output: Path, code_commit: str,
+    strategy: StrategyDefinition,
+    candles: dict[str, list[Candle]],
+    rules: dict[str, ExecutionRules],
+    start: datetime,
+    end: datetime,
+    output: Path,
+    code_commit: str,
 ) -> dict[str, object]:
     batch_scenarios = {}
     portfolio_scenarios = {}
     for costs in (BASELINE_COSTS, STRESS_COSTS):
         batch_scenarios[costs.name] = run_isolated_batch(
-            candles_by_symbol=candles, report_start_utc=start, report_end_utc=end,
-            costs=costs, execution_rules=rules, strategy_parameters=strategy.parameters,
+            candles_by_symbol=candles,
+            report_start_utc=start,
+            report_end_utc=end,
+            costs=costs,
+            execution_rules=rules,
+            strategy_parameters=strategy.parameters,
             strategy_parameters_by_symbol=strategy.parameter_map(),
-            trade_policies_by_symbol=strategy.policy_map(), strategy_semantics=strategy.semantics,
-            strategy_version=strategy.version, symbols=strategy.symbols,
+            trade_policies_by_symbol=strategy.policy_map(),
+            strategy_semantics=strategy.semantics,
+            strategy_version=strategy.version,
+            symbols=strategy.symbols,
         )
         portfolio_scenarios[costs.name] = run_shared_portfolio_backtest(
-            candles_by_symbol=candles, report_start_utc=start, report_end_utc=end,
-            costs=costs, execution_rules=rules, strategy_parameters=strategy.parameters,
+            candles_by_symbol=candles,
+            report_start_utc=start,
+            report_end_utc=end,
+            costs=costs,
+            execution_rules=rules,
+            strategy_parameters=strategy.parameters,
             strategy_parameters_by_symbol=strategy.parameter_map(),
-            trade_policies_by_symbol=strategy.policy_map(), strategy_semantics=strategy.semantics,
-            strategy_version=strategy.version, symbols=strategy.symbols,
-            starting_cash=Decimal("250"), target_notional=Decimal("80"),
-            slot_count=3, slot_allocation=strategy.slot_allocation,
+            trade_policies_by_symbol=strategy.policy_map(),
+            strategy_semantics=strategy.semantics,
+            strategy_version=strategy.version,
+            symbols=strategy.symbols,
+            starting_cash=Decimal("250"),
+            target_notional=Decimal("80"),
+            slot_count=3,
+            slot_allocation=strategy.slot_allocation,
         )
     for mode, scenarios in (("batch", batch_scenarios), ("portfolio", portfolio_scenarios)):
         report_scenarios: dict[str, RunResult] = dict(scenarios)
         write_report_bundle(
-            scenarios=report_scenarios, output_root=output / mode,
+            scenarios=report_scenarios,
+            output_root=output / mode,
             config_sha256=hashlib.sha256(
                 json.dumps(strategy.config_payload(), sort_keys=True).encode()
-            ).hexdigest(), code_commit=code_commit,
-            report_start_utc=start, report_end_utc=end, strategy=strategy,
+            ).hexdigest(),
+            code_commit=code_commit,
+            report_start_utc=start,
+            report_end_utc=end,
+            strategy=strategy,
         )
     return {
-        "quote_asset": strategy.quote_asset, "start_utc": start, "end_utc": end,
+        "quote_asset": strategy.quote_asset,
+        "start_utc": start,
+        "end_utc": end,
         "per_coin": {
             scenario: {single.symbol: asdict(single.metrics) for single in batch.results}
             for scenario, batch in batch_scenarios.items()
@@ -231,7 +281,8 @@ def _evaluate_window(
                 "ending_cash": portfolio.equity_curve[-1].cash,
                 "ending_position_value": portfolio.equity_curve[-1].position_value,
                 "completed_trade_realized_pnl": sum(
-                    (trade.realized_pnl for trade in portfolio.trades), Decimal(0),
+                    (trade.realized_pnl for trade in portfolio.trades),
+                    Decimal(0),
                 ),
             }
             for scenario, portfolio in portfolio_scenarios.items()

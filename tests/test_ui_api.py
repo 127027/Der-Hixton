@@ -21,13 +21,13 @@ def _config(tmp_path: Path) -> ProjectConfig:
         database_path=tmp_path / "hixton.sqlite3",
         run_output_root=tmp_path / "backtests" / "v2" / "runs",
         binance_base_url="https://api.binance.com",
-        starting_usdt_per_symbol=Decimal("250.00"),
-        target_notional_usdt=Decimal("250.00"),
+        starting_usdc_per_symbol=Decimal("250.00"),
+        target_notional_usdc=Decimal("250.00"),
         run_baseline_and_stress=True,
         paper_poll_seconds=30,
-        paper_starting_cash_usdt=Decimal("240.00"),
+        paper_starting_cash_usdc=Decimal("240.00"),
         paper_slot_count=3,
-        paper_target_notional_usdt=Decimal("80.00"),
+        paper_target_notional_usdc=Decimal("80.00"),
         daily_audit_utc="00:05",
         ui_bind="127.0.0.1",
         ui_port=8765,
@@ -89,7 +89,7 @@ def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: P
     )
     payload = {
         "slot_count": 2,
-        "target_notional_usdt": "60.00",
+        "target_notional_usdc": "60.00",
         "emergency_stop": True,
         "confirmation": "ANWENDEN",
     }
@@ -104,7 +104,7 @@ def test_setting_write_requires_local_action_header_and_confirmation(tmp_path: P
     with PaperStore(config.database_path) as store:
         settings = store.load_settings()
     assert settings.slot_count == 2
-    assert settings.target_notional_usdt == Decimal("60.00")
+    assert settings.target_notional_usdc == Decimal("60.00")
     assert settings.emergency_stop is True
 
 
@@ -169,8 +169,8 @@ def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_pa
 
     write_run("portfolio-old", "portfolio", 1, ())
     write_run("portfolio-new", "portfolio", 6, ())
-    write_run("single-eth", "single", 2, ("ETHUSDT",))
-    write_run("single-btc", "single", 3, ("BTCUSDT",))
+    write_run("single-eth", "single", 2, ("ETHUSDC",))
+    write_run("single-btc", "single", 3, ("BTCUSDC",))
     # >25 other runs must not make the selected old portfolio disappear.
     for index in range(30):
         write_run(f"batch-{index}", "batch", 5, SYMBOLS)
@@ -182,15 +182,15 @@ def test_backtest_filters_mode_coin_and_sorts_creation_before_display_cap(tmp_pa
     )
     for query, expected in (
         ("mode=portfolio", ["portfolio-new", "portfolio-old"]),
-        ("mode=single&symbol=eth/usdt", ["single-eth"]),
-        ("mode=single&symbol=BTCUSDT", ["single-btc"]),
+        ("mode=single&symbol=eth/usdc", ["single-eth"]),
+        ("mode=single&symbol=BTCUSDC", ["single-btc"]),
         ("strategy=v6&mode=portfolio", []),
     ):
         response = client.get(f"/api/backtests?{query}")
         assert response.status_code == 200
         assert [r["manifest"]["run_id"] for r in response.json()["runs"]] == expected
     assert len(client.get("/api/backtests?mode=all").json()["runs"]) == 25
-    for query in ("mode=unknown", "mode=single", "mode=single&symbol=FAKE", "symbol=ETHUSDT"):
+    for query in ("mode=unknown", "mode=single", "mode=single&symbol=FAKE", "symbol=ETHUSDC"):
         assert client.get(f"/api/backtests?{query}").status_code == 400
     assert len(list(config.run_output_root.iterdir())) == 35  # Nothing deleted.
 

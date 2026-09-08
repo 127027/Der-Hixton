@@ -29,7 +29,7 @@ def _candles(count: int = 500) -> dict[str, list[Candle]]:
 
 
 def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:
-    assert symbols_for_quote("USDT") == SYMBOLS
+    assert symbols_for_quote("USDC") == SYMBOLS
     assert validate_market_symbols(V7_USDC_STRATEGY.symbols) == "USDC"
     assert V6_COIN_STRATEGY.version == "HIXTON-V6-COIN-PAPER-1-9734f240e873"
     assert "quote_asset" not in V6_COIN_STRATEGY.config_payload()
@@ -39,7 +39,7 @@ def test_quote_universes_and_frozen_profiles_do_not_change_v6() -> None:
         assert V6_COIN_STRATEGY.parameters_for(old) == V7_USDC_STRATEGY.parameters_for(new)
         assert V6_COIN_STRATEGY.policy_for(old) == V7_USDC_STRATEGY.policy_for(new)
     with pytest.raises(ValueError):
-        V7_USDC_STRATEGY.parameters_for("BTCUSDT")
+        V7_USDC_STRATEGY.parameters_for("BTCUSDC")
 
 
 @pytest.mark.parametrize("symbols", [SYMBOLS[::-1], SYMBOLS[:-1],
@@ -75,7 +75,7 @@ def test_invalid_or_insufficient_data_cannot_be_approved(problem: str) -> None:
     elif problem == "duplicate":
         first.insert(100, first[100])
     elif problem == "wrong_symbol":
-        first[100] = replace(first[100], symbol="BTCUSDT")
+        first[100] = replace(first[100], symbol="BTCUSDC")
     elif problem == "ohlc":
         first[100] = replace(first[100], high=0)
     elif problem == "provisional":
@@ -146,7 +146,7 @@ def test_usdc_study_pipeline_isolated_from_runtime_account(
     calls: list[str] = []
     control_db = tmp_path / "data" / "control.sqlite3"
     with CandleStore(control_db) as store:
-        store.put_candles(replace(c, symbol=symbol.removesuffix("USDC") + "USDT")
+        store.put_candles(replace(c, symbol=symbol.removesuffix("USDC") + "USDC")
                           for symbol, rows in candles.items() for c in rows)
     control_before = control_db.read_bytes()
 
@@ -162,7 +162,7 @@ def test_usdc_study_pipeline_isolated_from_runtime_account(
     monkeypatch.setattr(BinancePublicClient, "symbol_rules", rules)
     monkeypatch.setattr(BinancePublicClient, "fetch_klines", fetch)
     output = run_usdc_review(tmp_path, end, code_commit="offline-fixture",
-                             usdt_control_database=control_db)
+                             usdc_control_database=control_db)
     assert calls == list(V7_USDC_STRATEGY.symbols)
     assert original.read_bytes() == before
     assert control_db.read_bytes() == control_before
@@ -176,10 +176,10 @@ def test_usdc_study_pipeline_isolated_from_runtime_account(
     assert set(window["per_coin"]) == {"baseline", "stress"}
     assert set(window["per_coin"]["baseline"]) == set(V7_USDC_STRATEGY.symbols)
     assert len(list(output.rglob("manifest.json"))) == 4
-    control = summary["usdt_same_window_control"]["available_common_history"]
+    control = summary["usdc_same_window_control"]["available_common_history"]
     assert control["start_utc"] == window["start_utc"]
     assert control["end_utc"] == window["end_utc"]
-    assert control["quote_asset"] == "USDT"
+    assert control["quote_asset"] == "USDC"
     # Numeric parity for identical synthetic prices is not a claim about real market parity.
     assert control["portfolio_3x80"]["baseline"]["metrics"] == (
         window["portfolio_3x80"]["baseline"]["metrics"]
@@ -192,7 +192,7 @@ def test_usdc_metadata_does_not_pass_legacy_or_wrong_market_checks() -> None:
                        Decimal("0.01"), Decimal("0.001"), Decimal("0.001"), Decimal("5"))
     assert rule.tradable_for_quote("USDC")
     assert not rule.tradable_for_v1
-    assert not replace(rule, quote_asset="USDT").tradable_for_quote("USDC")
+    assert not replace(rule, quote_asset="USDC").tradable_for_quote("USDC")
     assert not replace(rule, base_asset="BTC").tradable_for_quote("USDC")
     assert not replace(rule, status="BREAK").tradable_for_quote("USDC")
     assert not replace(rule, spot_allowed=False).tradable_for_quote("USDC")

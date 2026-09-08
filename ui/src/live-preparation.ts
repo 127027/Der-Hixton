@@ -171,7 +171,7 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
     requireAuth();
     const blocker = sharedSettingsBlocker(); if (blocker) throw new Error(blocker);
     if (!last?.credentials.configured) throw new Error("Zuerst API-Key und Secret speichern und Verbindung prüfen.");
-    await request("trial/start", {confirmation:"TEST 50 USDT", notional_usdt:"50.00"});
+    await request("trial/start", {confirmation:"TEST 50 USDC", notional_usdc:"50.00"});
   });
   window.addEventListener("pagehide", clearSecrets);
   void refresh();

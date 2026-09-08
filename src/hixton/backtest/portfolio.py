@@ -161,8 +161,8 @@ def run_shared_portfolio_backtest(
     blocked: list[str] = []
     max_concurrent = 0
     risk_state = PortfolioRiskState(
-        high_water_equity_usdt=starting_cash,
-        day_start_equity_usdt=starting_cash,
+        high_water_equity_usdc=starting_cash,
+        day_start_equity_usdc=starting_cash,
         day_start_date_utc=report_start_utc.date().isoformat(),
     )
     risk_halted_at: datetime | None = None
