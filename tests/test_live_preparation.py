@@ -141,6 +141,8 @@ def account_fixture():
         "symbols": [
             {
                 "symbol": symbol,
+                "baseAsset": symbol.removesuffix("USDT"),
+                "quoteAsset": "USDT",
                 "status": "TRADING",
                 "isSpotTradingAllowed": True,
                 "orderTypes": ["MARKET"],
@@ -164,7 +166,7 @@ def test_trial_endpoint_rejects_non_fifty_budget(tmp_path: Path, amount: str) ->
     response = client.post(
         "/api/live/trial/start",
         headers=HEADERS,
-        json={"confirmation": "TEST 50 USDT", "notional_usdt": amount},
+        json={"confirmation": "TEST 50 USDC", "quote_asset": "USDC", "notional_quote": amount},
     )
     assert response.status_code == 400
 
@@ -174,7 +176,7 @@ def test_trial_route_is_authenticated_and_fail_closed_without_runtime_adapter(
 ) -> None:
     client, config, service = client_for(tmp_path)
     before = client.get("/api/status").json()["paper"]
-    body = {"confirmation": "TEST 50 USDT", "notional_usdt": "50.00"}
+    body = {"confirmation": "TEST 50 USDC", "quote_asset": "USDC", "notional_quote": "50.00"}
     assert client.post("/api/live/trial/start", headers=HEADERS, json=body).status_code == 401
     unlock(client)
     save_key(client)
@@ -268,7 +270,9 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
     client, config, _ = client_for(tmp_path)
     before = client.get("/api/status").json()["paper"]
     payload = {
-        "slot_count": 1, "target_notional_usdt": "50.00", "emergency_stop": False,
+        "slot_count": 1,
+        "target_notional_usdt": "50.00",
+        "emergency_stop": False,
         "confirmation": "ANWENDEN",
     }
     assert client.post("/api/trading/settings", json=payload).status_code == 403
@@ -284,7 +288,8 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
         assert settings == {key: value for key, value in payload.items() if key != "confirmation"}
         live = active.get("/api/live/status").json()
         assert live["trading_settings"] == settings
-        assert live["first_live_trial"]["target_notional_usdt"] == "50.00"
+        assert live["first_live_trial"]["target_notional_quote"] == "50.00"
+        assert live["first_live_trial"]["quote_asset"] == "USDC"
         assert live["state"] == "LIVE_DISABLED"
         assert {key: value for key, value in after.items() if key != "settings"} == {
             key: value for key, value in before.items() if key != "settings"
@@ -296,12 +301,18 @@ def test_common_settings_are_immediately_the_live_source_and_survive_restart(
 
 @pytest.mark.parametrize("slots,amount", [(4, "45"), (5, "50"), (10, "100")])
 def test_expanded_slot_allocation_persists_without_inventing_cash(
-    tmp_path: Path, slots: int, amount: str,
+    tmp_path: Path,
+    slots: int,
+    amount: str,
 ) -> None:
     client, config, _ = client_for(tmp_path)
     before = client.get("/api/status").json()["paper"]
-    payload = {"slot_count": slots, "target_notional_usdt": amount,
-               "emergency_stop": False, "confirmation": "ANWENDEN"}
+    payload = {
+        "slot_count": slots,
+        "target_notional_usdt": amount,
+        "emergency_stop": False,
+        "confirmation": "ANWENDEN",
+    }
     assert client.post("/api/trading/settings", headers=HEADERS, json=payload).status_code == 200
     restarted = TestClient(
         create_app(config, RuntimeSupervisor(config), live_vault=MemoryVault()),
@@ -327,11 +338,15 @@ def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_f
     client = TestClient(app, base_url="http://127.0.0.1:8765")
     service = app.state.live_preparation
     assert client.get("/api/live/status").json()["password_configured"] is True
-    wrong = client.post("/api/live/unlock", headers=HEADERS,
-                        json={"password": "incorrect-password-123", "repeat": ""})
+    wrong = client.post(
+        "/api/live/unlock",
+        headers=HEADERS,
+        json={"password": "incorrect-password-123", "repeat": ""},
+    )
     assert wrong.status_code == 400
-    correct = client.post("/api/live/unlock", headers=HEADERS,
-                          json={"password": PASSWORD, "repeat": ""})
+    correct = client.post(
+        "/api/live/unlock", headers=HEADERS, json={"password": PASSWORD, "repeat": ""}
+    )
     assert correct.status_code == 200
     assert client.get("/api/live/status").json()["authenticated"] is True
     save_key(client)
@@ -342,8 +357,12 @@ def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_f
 
         def inspect(self, notional: Decimal) -> dict[str, object]:
             assert notional == Decimal("50")
-            return {"account_checks_passed": True, "blockers": [],
-                    "free_usdt": "250", "free_bnb": "0.01"}
+            return {
+                "account_checks_passed": True,
+                "blockers": [],
+                "free_usdt": "250",
+                "free_bnb": "0.01",
+            }
 
     service.client_factory = FakeReadOnlyClient
     check = client.post("/api/live/check", headers=HEADERS, json={})
@@ -357,14 +376,22 @@ def test_existing_password_unlock_to_key_and_account_check_is_a_complete_local_f
     "slot_count,amount", [(11, "80"), (0, "80"), (3, "NaN"), (3, "Infinity"), (3, "-50")]
 )
 def test_common_settings_reject_unapproved_limits_without_silent_fallback(
-    tmp_path: Path, slot_count: int, amount: str,
+    tmp_path: Path,
+    slot_count: int,
+    amount: str,
 ) -> None:
     client, _, _ = client_for(tmp_path)
     before = client.get("/api/live/status").json()["trading_settings"]
-    response = client.post("/api/trading/settings", headers=HEADERS, json={
-        "slot_count": slot_count, "target_notional_usdt": amount,
-        "emergency_stop": False, "confirmation": "ANWENDEN",
-    })
+    response = client.post(
+        "/api/trading/settings",
+        headers=HEADERS,
+        json={
+            "slot_count": slot_count,
+            "target_notional_usdt": amount,
+            "emergency_stop": False,
+            "confirmation": "ANWENDEN",
+        },
+    )
     assert response.status_code == 400
     assert "Ungültige Handelseinstellungen" in response.json()["detail"]
     assert client.get("/api/live/status").json()["trading_settings"] == before
@@ -372,7 +399,8 @@ def test_common_settings_reject_unapproved_limits_without_silent_fallback(
 
 @pytest.mark.parametrize("already_open", [False, True])
 def test_shared_entry_pause_stops_only_entries_and_never_rearms_or_sells(
-    tmp_path: Path, already_open: bool,
+    tmp_path: Path,
+    already_open: bool,
 ) -> None:
     from tests.test_live_trial import arm, open_position, trial
 
@@ -384,10 +412,16 @@ def test_shared_entry_pause_stops_only_entries_and_never_rearms_or_sells(
         open_position(controller)
     previous_submits = len(exchange.submits)
     for pause in (True, False):
-        response = client.post("/api/trading/settings", headers=HEADERS, json={
-            "slot_count": 3, "target_notional_usdt": "80.00",
-            "emergency_stop": pause, "confirmation": "ANWENDEN",
-        })
+        response = client.post(
+            "/api/trading/settings",
+            headers=HEADERS,
+            json={
+                "slot_count": 3,
+                "target_notional_usdt": "80.00",
+                "emergency_stop": pause,
+                "confirmation": "ANWENDEN",
+            },
+        )
         assert response.status_code == 200
         live = client.get("/api/live/status").json()
         assert live["trading_settings"]["emergency_stop"] is pause
@@ -559,6 +593,35 @@ def test_missing_permissions_foreign_inventory_and_insufficient_usdt_fail_closed
     assert result["free_usdt"] == "0"
 
 
+def test_usdc_preflight_checks_actual_quote_not_usdt_and_never_changes_paper(tmp_path):
+    permissions, account, orders, markets = account_fixture()
+    account["balances"][0].update(asset="USDC", free="1200")
+    for item in markets["symbols"]:
+        item["symbol"] = item["baseAsset"] + "USDC"
+        item["quoteAsset"] = "USDC"
+    result = assess_account(
+        permissions, account, orders, markets, Decimal("50"), quote_asset="USDC"
+    )
+    assert result["account_checks_passed"] is True
+    assert result["free_quote"] == "1200" and result["free_usdt"] is None
+    assert result["quote_asset"] == "USDC"
+    assert all(symbol.endswith("USDC") for symbol in result["checked_symbols"])
+    client, _, service = client_for(tmp_path)
+    before = client.get("/api/status").json()["paper"]
+    # Default production read-only factory is now explicitly USDC; no network here.
+    assert service.client_factory(BinanceCredentials(KEY, SECRET)).quote_asset == "USDC"
+    unlock(client)
+    old_request = {"confirmation": "TEST 50 USDT", "notional_usdt": "50.00"}
+    assert (
+        client.post("/api/live/trial/start", headers=HEADERS, json=old_request).status_code == 400
+    )
+    assert client.get("/api/status").json()["paper"] == before
+    markets["symbols"][0]["quoteAsset"] = "USDT"
+    assert not assess_account(
+        permissions, account, orders, markets, Decimal("50"), quote_asset="USDC"
+    )["account_checks_passed"]
+
+
 def test_malformed_or_nan_balances_fail_closed() -> None:
     permissions, account, orders, markets = account_fixture()
     account["balances"][0]["free"] = "NaN"
@@ -628,8 +691,13 @@ def test_http_error_identifies_phase_and_code_without_leaking_payload(code: int,
 
     class Opener:
         def open(self, request, timeout):
-            raise HTTPError(request.full_url, 400, SECRET, {},
-                            io.BytesIO(json.dumps({"code": code, "msg": KEY}).encode()))
+            raise HTTPError(
+                request.full_url,
+                400,
+                SECRET,
+                {},
+                io.BytesIO(json.dumps({"code": code, "msg": KEY}).encode()),
+            )
 
     client._opener = Opener()
     with pytest.raises(BinanceCheckError) as error:

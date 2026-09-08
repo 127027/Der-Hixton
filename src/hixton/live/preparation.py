@@ -8,6 +8,7 @@ import time
 from collections.abc import Callable
 from datetime import UTC, datetime
 from decimal import Decimal
+from functools import partial
 from pathlib import Path
 from threading import RLock
 
@@ -16,11 +17,15 @@ from hixton.live.credentials import CredentialService, LocalAccess, Vault
 from hixton.live.trial import SignalTrial
 
 RELEASE_BLOCKERS = (
-    "Echte Orderausführung, Fill-Ledger und Wiederanlauf-Reconciliation "
-    "noch nicht implementiert/abgenommen.",
+    "USDC-Signal-/Paper-Runtime noch nicht migriert; "
+    "USDT-Signale werden nicht als USDC ausgeführt.",
+    "Orderadapter und Fill-Ledger sind offline getestet, "
+    "aber noch nicht an die Runtime angebunden. "
+    "Kontobestandsabgleich, Restmengenbehandlung und Exit-Wiederanlauf sind noch nicht abgenommen.",
     "Keine Livefreigabe für die aktive Strategie; Paper-Freigabe ist keine Echtgeldfreigabe.",
     "Paper-/Live-Ausführungsabgleich, Störfalltests und Binance-Testnet-Nachweis fehlen.",
 )
+_USDC_CLIENT = partial(BinanceReadOnlyClient, quote_asset="USDC")
 
 
 class LivePreparation:
@@ -28,7 +33,7 @@ class LivePreparation:
         self,
         database: Path,
         vault: Vault,
-        client_factory: Callable[..., BinanceReadOnlyClient] = BinanceReadOnlyClient,
+        client_factory: Callable[..., BinanceReadOnlyClient] = _USDC_CLIENT,
     ) -> None:
         self.database = database
         self.credentials = CredentialService(vault)
@@ -152,12 +157,20 @@ class LivePreparation:
                 "blockers": blockers,
                 "account_check": fresh_check if authenticated else None,
                 "trial_dispatch_available": False,
+                "trial_quote_asset": "USDC",
+                "trial_readiness": {
+                    "quote_aware_order_adapter_offline_tested": True,
+                    "runtime_connected": False,
+                    "account_reconciliation_accepted": False,
+                    "binance_testnet_accepted": False,
+                },
                 "trial": self.trial.report()
                 if authenticated and self.trial is not None
                 else {"state": "NOT_STARTED" if self.trial is None else "LOCKED"},
                 "first_live_trial": {
                     "slot_count": 1,
-                    "target_notional_usdt": "50.00",
-                    "minimum_free_usdt": "60.00",
+                    "quote_asset": "USDC",
+                    "target_notional_quote": "50.00",
+                    "minimum_free_quote": "60.00",
                 },
             }

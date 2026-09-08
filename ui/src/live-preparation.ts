@@ -95,7 +95,7 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
     const result = await response.json() as Record<string, unknown>;
     if (response.status === 409 && (path === "enable" || path === "trial/start")) {
       render(result as unknown as LiveStatus);
-      throw new Error("Noch nicht startbereit: Binance-Orderausführung und Kontoabgleich fehlen. Kein Echtgeldauftrag gesendet. Details unter „Technische Freigabe prüfen“.");
+      throw new Error("Noch nicht startbereit: USDC-Runtime, Kontoabgleich und Ausführungsabnahme fehlen. Kein Echtgeldauftrag gesendet. Details unter „Technische Freigabe prüfen“.");
     }
     if (!response.ok) throw new Error(typeof result.detail === "string" ? result.detail : `Aktion fehlgeschlagen (${response.status}).`);
     return result;
@@ -171,7 +171,7 @@ export function initializeLivePreparation(sharedSettingsBlocker: () => string | 
     requireAuth();
     const blocker = sharedSettingsBlocker(); if (blocker) throw new Error(blocker);
     if (!last?.credentials.configured) throw new Error("Zuerst API-Key und Secret speichern und Verbindung prüfen.");
-    await request("trial/start", {confirmation:"TEST 50 USDT", notional_usdt:"50.00"});
+    await request("trial/start", {confirmation:"TEST 50 USDC", quote_asset:"USDC", notional_quote:"50.00"});
   });
   window.addEventListener("pagehide", clearSecrets);
   void refresh();

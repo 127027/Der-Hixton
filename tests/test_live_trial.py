@@ -317,3 +317,74 @@ def test_unfilled_expired_reservation_is_not_replaced(tmp_path):
         == "FAILED"
     )
     assert not exchange.submits
+
+
+def test_entry_release_expiry_does_not_block_an_owned_exit(tmp_path):
+    controller, exchange = trial(tmp_path)
+    arm(controller)
+    open_position(controller)
+    controller.release_check = lambda: False
+    at = NOW + timedelta(hours=1)
+    points = universe(at, buy_symbol=None, sell_symbol="SOLUSDT")
+    controller.advance(points, now=at, healthy=True)
+    assert controller.advance(points, now=at, healthy=True)["state"] == "AWAITING_RECONCILIATION"
+    assert [order.side for order in exchange.submits] == ["BUY", "SELL"]
+
+
+@pytest.mark.parametrize(
+    "base", ["BTC", "ETH", "BNB", "SOL", "XRP", "ADA", "LINK", "AVAX", "DOT", "DOGE"]
+)
+def test_each_usdc_coin_uses_own_profile_once_without_relabeling_usdt(tmp_path, base):
+    from hixton.domain.versions import V7_USDC_STRATEGY as V7
+
+    journal = OrderJournal(tmp_path / "usdc-test-only.sqlite3")
+    fake = Exchange()
+    controller = SignalTrial(
+        journal, TrialOrderExecutor(journal, fake, lambda _: True), V7, lambda: True
+    )
+    arm(controller)
+
+    def points(at, enter):
+        # ETH's slope filter needs its real 24-bar history; all ten profiles
+        # remain unchanged. This is a synthetic controller test, not approval.
+        result = {}
+        for symbol in V7.symbols:
+            history = []
+            for offset in range(25):
+                point = _point(
+                    symbol,
+                    at - timedelta(hours=24 - offset),
+                    flip_up=enter and offset == 24 and symbol == base + "USDC",
+                    flip_down=not enter and offset == 24 and symbol == base + "USDC",
+                    strength=1.0,
+                )
+                history.append(
+                    replace(
+                        point, strategy_version=V7.version, vidya=float(70 + offset), abs_cmo=0.9
+                    )
+                )
+            result[symbol] = tuple(history)
+        return result
+
+    entry_points = points(NOW, True)
+    # A USDT universe must not be implicitly accepted by this USDC controller.
+    assert controller.advance(universe(), now=NOW, healthy=True)["state"] == "WAITING_SIGNAL"
+    assert controller.advance(entry_points, now=NOW, healthy=True)["state"] == "ENTRY_PENDING"
+    assert controller.advance(entry_points, now=NOW, healthy=True)["state"] == "OPEN"
+    at = NOW + timedelta(hours=1)
+    exit_points = points(at, False)
+    controller.advance(exit_points, now=at, healthy=True)
+    controller.advance(exit_points, now=at, healthy=True)
+    controller.confirm_reconciled(
+        no_open_orders=True, owned_remaining=D(0), account_matches=True, now=at
+    )
+    report = controller.report()
+    assert report["state"] == "COMPLETED"
+    assert report["quote_asset"] == "USDC"
+    assert report["quote_budget_usdt"] is None
+    assert report["net_pnl_usdt"] is None
+    assert report["net_pnl_quote"] == "2.5"
+    assert fake.submits[0].symbol == base + "USDC"
+    assert fake.submits[0].quote_budget == D("50")
+    assert [order.side for order in fake.submits] == ["BUY", "SELL"]
+    assert not V7.paper_approved

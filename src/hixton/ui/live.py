@@ -201,19 +201,20 @@ def install_live_routes(
         require_session(request)
         data = await payload(request)
         if (
-            set(data) != {"confirmation", "notional_usdt"}
-            or data.get("confirmation") != "TEST 50 USDT"
-            or not isinstance(data.get("notional_usdt"), str)
+            set(data) != {"confirmation", "notional_quote", "quote_asset"}
+            or data.get("confirmation") != "TEST 50 USDC"
+            or data.get("quote_asset") != "USDC"
+            or not isinstance(data.get("notional_quote"), str)
         ):
-            raise HTTPException(400, "Genau einen 50-USDT-Test ausdrücklich bestätigen.")
+            raise HTTPException(400, "Genau einen 50-USDC-Test ausdrücklich bestätigen.")
         try:
-            amount = Decimal(data["notional_usdt"])
+            amount = Decimal(data["notional_quote"])
             if not amount.is_finite() or amount != Decimal("50"):
                 raise ValueError
         except (InvalidOperation, ValueError):
-            raise HTTPException(400, "Einmaltest: ausschließlich 50 USDT Kaufbudget.") from None
+            raise HTTPException(400, "Einmaltest: ausschließlich 50 USDC Kaufbudget.") from None
         # No URL parameter, key presence or green preflight bypasses incomplete implementation.
-        # SignalTrial is offline-tested; production adapter/account reconciliation remain open.
+        # Quote-aware adapter is offline-tested, not runtime/account-reconciler release.
         result = await run_in_threadpool(get_status, True)
         await run_in_threadpool(service.audit, "TRIAL_REQUEST_BLOCKED")
         return JSONResponse(result, status_code=409)

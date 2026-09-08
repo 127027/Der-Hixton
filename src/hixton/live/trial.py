@@ -15,7 +15,7 @@ from threading import RLock
 from typing import Any
 from uuid import UUID
 
-from hixton.constants import SYMBOLS
+from hixton.domain.markets import split_market
 from hixton.domain.models import IndicatorPoint, SignalAction
 from hixton.domain.trade_policy import TradePolicyGate
 from hixton.domain.versions import StrategyDefinition
@@ -215,7 +215,7 @@ class SignalTrial:
             if entry and (not row["entries_enabled"] or not 0 <= age <= 90):
                 self._set(state="FAILED", reason="ENTRY_EXPIRED_OR_DISABLED", entries_enabled=0)
                 return
-            if not self.release_check():
+            if entry and not self.release_check():
                 self._set(reason="RELEASE_REQUIRED")
                 return
         state = self.executor.execute(intent.intent_id)
@@ -229,7 +229,7 @@ class SignalTrial:
                 self._set(state="FAILED", reason="NO_NET_ENTRY_FILL", entries_enabled=0)
                 return
             gross = Decimal(str(summary["gross_quantity"]))
-            price = Decimal(str(summary["gross_quote_usdt"])) / gross
+            price = Decimal(str(summary["gross_quote"])) / gross
             self._set(
                 from_state="ENTRY_PENDING",
                 state="OPEN",
@@ -246,7 +246,7 @@ class SignalTrial:
             owned = Decimal(row["owned_quantity"])
             fees = summary["fees_by_asset"]
             assert isinstance(fees, dict)
-            consumed = sold + Decimal(str(fees.get(row["symbol"].removesuffix("USDT"), "0")))
+            consumed = sold + Decimal(str(fees.get(split_market(row["symbol"])[0], "0")))
             if consumed != owned:
                 self._set(
                     from_state="EXIT_PENDING",
@@ -326,7 +326,7 @@ class SignalTrial:
     ) -> None:
         candidates: list[IndicatorPoint] = []
         boundaries = set()
-        for symbol in SYMBOLS:
+        for symbol in self.strategy.symbols:
             series = points.get(symbol, ())
             if not series:
                 return  # Incomplete universe cannot win merely by arriving earlier.
@@ -356,7 +356,10 @@ class SignalTrial:
         if len(boundaries) != 1 or not candidates:
             return
         candidates.sort(
-            key=lambda point: (-(point.rank_strength or 0), SYMBOLS.index(point.symbol))
+            key=lambda point: (
+                -(point.rank_strength or 0),
+                self.strategy.symbols.index(point.symbol),
+            )
         )
         winner = candidates[0]
         self._reserve(
@@ -417,7 +420,13 @@ class SignalTrial:
             "mode": "ONE_SHOT_50",
             "state": row["state"],
             "symbol": row["symbol"],
-            "quote_budget_usdt": "50.00",
+            "quote_asset": json.loads(row["strategy_json"]).get("quote_asset", "USDT"),
+            "quote_budget": "50.00",
+            "quote_budget_usdt": (
+                "50.00"
+                if json.loads(row["strategy_json"]).get("quote_asset", "USDT") == "USDT"
+                else None
+            ),
             "entries_enabled": bool(row["entries_enabled"]),
             "reason": row["reason"],
             "armed_at_utc": row["armed_at"],
@@ -443,22 +452,27 @@ class SignalTrial:
             }
         # Fees in BNB/other assets must not be labelled USDT or silently valued at zero.
         result["net_pnl_usdt"] = None
+        result["net_pnl_quote"] = None
         entry, exit_order = result["buy"], result["sell"]
         if isinstance(entry, dict) and isinstance(exit_order, dict):
             fees: dict[str, Decimal] = {}
             for order in (entry, exit_order):
                 for asset, amount in order["fees_by_asset"].items():
                     fees[asset] = fees.get(asset, Decimal(0)) + Decimal(amount)
-            base = row["symbol"].removesuffix("USDT")
+            base, quote_asset = split_market(row["symbol"])
             unvalued = [
-                asset for asset, amount in fees.items() if amount and asset not in {base, "USDT"}
+                asset
+                for asset, amount in fees.items()
+                if amount and asset not in {base, quote_asset}
             ]
             result["unvalued_fee_assets"] = unvalued
             result["fees_by_asset"] = {asset: str(amount) for asset, amount in fees.items()}
             if row["state"] == "COMPLETED" and not unvalued:
-                result["net_pnl_usdt"] = str(
-                    Decimal(exit_order["gross_quote_usdt"])
-                    - Decimal(entry["gross_quote_usdt"])
-                    - fees.get("USDT", Decimal(0))
+                result["net_pnl_quote"] = str(
+                    Decimal(exit_order["gross_quote"])
+                    - Decimal(entry["gross_quote"])
+                    - fees.get(quote_asset, Decimal(0))
                 )
+                if quote_asset == "USDT":
+                    result["net_pnl_usdt"] = result["net_pnl_quote"]
         return result

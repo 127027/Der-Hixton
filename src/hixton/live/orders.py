@@ -17,7 +17,7 @@ from decimal import Decimal
 from pathlib import Path
 from typing import Protocol
 
-from hixton.constants import SYMBOLS
+from hixton.domain.markets import split_market
 
 _ZERO = Decimal("0")
 _TERMINAL = {"FILLED", "CANCELED", "REJECTED", "EXPIRED", "EXPIRED_IN_MATCH"}
@@ -43,11 +43,11 @@ class TrialIntent:
     base_quantity: Decimal = _ZERO
 
     def __post_init__(self) -> None:
+        split_market(self.symbol)
         if (
             not self.intent_id
             or len(self.intent_id) > 128
             or not self.account_fingerprint
-            or self.symbol not in SYMBOLS
             or self.side not in {"BUY", "SELL"}
             or not self.strategy_version
         ):
@@ -56,7 +56,7 @@ class TrialIntent:
         _amount(self.quote_budget)
         _amount(self.base_quantity)
         if self.side == "BUY" and (self.quote_budget != Decimal("50") or self.base_quantity != 0):
-            raise ValueError("First trial BUY must use exactly 50 USDT, no base quantity")
+            raise ValueError("First trial BUY must use exactly 50 quote units, no base quantity")
         if self.side == "SELL" and (self.quote_budget != 0 or self.base_quantity <= 0):
             raise ValueError("Trial SELL requires an explicit owned base quantity")
 
@@ -75,13 +75,22 @@ class ExchangeFill:
     price: Decimal
     commission: Decimal
     commission_asset: str
+    quote_quantity: Decimal | None = None
 
     def __post_init__(self) -> None:
         _amount(self.quantity, positive=True)
         _amount(self.price, positive=True)
         _amount(self.commission)
+        if self.quote_quantity is not None:
+            _amount(self.quote_quantity, positive=True)
         if not self.trade_id or not self.commission_asset:
             raise ValueError("Fill identity and fee asset are required")
+
+    @property
+    def quote(self) -> Decimal:
+        # Binance myTrades.quoteQty may be rounded to quote precision. Never
+        # invent a different cash movement by multiplying the display price.
+        return self.quantity * self.price if self.quote_quantity is None else self.quote_quantity
 
 
 @dataclass(frozen=True, slots=True)
@@ -96,9 +105,9 @@ class ExchangeOrder:
     fills: tuple[ExchangeFill, ...] = ()
 
     def __post_init__(self) -> None:
+        split_market(self.symbol)
         if (
             self.state not in _EXCHANGE_STATES
-            or self.symbol not in SYMBOLS
             or self.side not in {"BUY", "SELL"}
             or not self.order_id
         ):
@@ -142,6 +151,9 @@ class OrderJournal:
                     action TEXT NOT NULL, at_utc TEXT NOT NULL
                 );
             """)
+            columns = {row["name"] for row in connection.execute("PRAGMA table_info(trial_fills)")}
+            if "quote_quantity" not in columns:
+                connection.execute("ALTER TABLE trial_fills ADD COLUMN quote_quantity TEXT")
 
     @contextmanager
     def _connect(self) -> Iterator[sqlite3.Connection]:
@@ -229,7 +241,8 @@ class OrderJournal:
         with self._connect() as connection:
             connection.execute(
                 "UPDATE trial_intents SET state='UNKNOWN',updated_at=? WHERE intent_id=? "
-                "AND state != 'CREATED'",
+                "AND state NOT IN ('CREATED','FILLED','CANCELED','REJECTED','EXPIRED',"
+                "'EXPIRED_IN_MATCH')",
                 (datetime.now(UTC).isoformat(), intent_id),
             )
             self._audit(connection, intent_id, "RECONCILIATION_REQUIRED")
@@ -285,6 +298,7 @@ class OrderJournal:
                     str(fill.price),
                     str(fill.commission),
                     fill.commission_asset,
+                    str(fill.quote),
                 )
                 existing = connection.execute(
                     "SELECT * FROM trial_fills WHERE account=? AND symbol=? AND trade_id=?",
@@ -296,16 +310,22 @@ class OrderJournal:
                     or Decimal(existing["quantity"]) != fill.quantity
                     or Decimal(existing["price"]) != fill.price
                     or Decimal(existing["commission"]) != fill.commission
+                    or (
+                        Decimal(existing["quote_quantity"])
+                        if existing["quote_quantity"] is not None
+                        else Decimal(existing["quantity"]) * Decimal(existing["price"])
+                    ) != fill.quote
                 ):
                     raise RuntimeError("Conflicting duplicate fill; manual reconciliation required")
                 connection.execute(
-                    "INSERT OR IGNORE INTO trial_fills VALUES(?,?,?,?,?,?,?,?)", values
+                    "INSERT OR IGNORE INTO trial_fills VALUES(?,?,?,?,?,?,?,?,?)", values
                 )
             fills = connection.execute(
-                "SELECT quantity,price FROM trial_fills WHERE intent_id=?", (intent.intent_id,)
+                "SELECT quantity,price,quote_quantity FROM trial_fills WHERE intent_id=?",
+                (intent.intent_id,),
             ).fetchall()
             booked_quantity = sum((Decimal(f["quantity"]) for f in fills), _ZERO)
-            booked_quote = sum((Decimal(f["quantity"]) * Decimal(f["price"]) for f in fills), _ZERO)
+            booked_quote = sum((self._fill_quote(f) for f in fills), _ZERO)
             if booked_quantity > order.executed_quantity or booked_quote > order.cumulative_quote:
                 raise RuntimeError("Fill amounts exceed exchange order totals")
             complete = (
@@ -328,6 +348,14 @@ class OrderJournal:
             )
             self._audit(connection, intent.intent_id, state)
 
+    @staticmethod
+    def _fill_quote(row: sqlite3.Row) -> Decimal:
+        return (
+            Decimal(row["quote_quantity"])
+            if row["quote_quantity"] is not None
+            else Decimal(row["quantity"]) * Decimal(row["price"])
+        )
+
     def fill_summary(self, intent_id: str) -> dict[str, object]:
         intent, state = self.load(intent_id)
         with self._connect() as connection:
@@ -340,13 +368,13 @@ class OrderJournal:
                 "SELECT * FROM trial_fills WHERE intent_id=?", (intent_id,)
             ).fetchall()
         quantity = sum((Decimal(row["quantity"]) for row in rows), _ZERO)
-        quote = sum((Decimal(row["quantity"]) * Decimal(row["price"]) for row in rows), _ZERO)
+        quote = sum((self._fill_quote(row) for row in rows), _ZERO)
         fees: dict[str, Decimal] = {}
         for row in rows:
             fees[row["commission_asset"]] = fees.get(row["commission_asset"], _ZERO) + Decimal(
                 row["commission"]
             )
-        base = intent.symbol.removesuffix("USDT")
+        base, quote_asset = split_market(intent.symbol)
         net_received = quantity - fees.get(base, _ZERO) if intent.side == "BUY" else _ZERO
         return {
             "intent_id": intent_id,
@@ -357,10 +385,15 @@ class OrderJournal:
             "state": state,
             "fill_count": len(rows),
             "gross_quantity": str(quantity),
-            "gross_quote_usdt": str(quote),
+            "base_asset": base,
+            "quote_asset": quote_asset,
+            "gross_quote": str(quote),
+            # Compatibility only for genuinely USDT records, never relabel USDC.
+            "gross_quote_usdt": str(quote) if quote_asset == "USDT" else None,
             "net_received_base": str(net_received),
             "fees_by_asset": {asset: str(value) for asset, value in fees.items()},
-            "fees_fully_valued_in_usdt": set(fees) <= {"USDT"},
+            "fees_fully_valued_in_quote": set(fees) <= {quote_asset},
+            "fees_fully_valued_in_usdt": quote_asset == "USDT" and set(fees) <= {"USDT"},
             "fills": [
                 {
                     key: row[key]

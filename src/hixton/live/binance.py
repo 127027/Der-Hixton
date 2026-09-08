@@ -13,7 +13,7 @@ from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
 from urllib.request import HTTPRedirectHandler, ProxyHandler, Request, build_opener
 
-from hixton.constants import SYMBOLS
+from hixton.domain.markets import symbols_for_quote
 from hixton.live.credentials import BinanceCredentials
 
 _BASE = "https://api.binance.com"
@@ -52,8 +52,10 @@ class _NoRedirect(HTTPRedirectHandler):
 
 
 class BinanceReadOnlyClient:
-    def __init__(self, credentials: BinanceCredentials) -> None:
+    def __init__(self, credentials: BinanceCredentials, *, quote_asset: str = "USDT") -> None:
         self._credentials = credentials
+        self.quote_asset = quote_asset
+        self.symbols = symbols_for_quote(quote_asset)
         self._offset_ms = 0
         # Ignore environment proxy overrides; TLS certificate verification stays enabled.
         self._opener = build_opener(ProxyHandler({}), _NoRedirect())
@@ -117,9 +119,11 @@ class BinanceReadOnlyClient:
         orders = self._read("/api/v3/openOrders")
         # Binance rejects spaces in this JSON-array parameter with -1100.
         markets = self._read(
-            "/api/v3/exchangeInfo", {"symbols": json.dumps(SYMBOLS, separators=(",", ":"))}
+            "/api/v3/exchangeInfo", {"symbols": json.dumps(self.symbols, separators=(",", ":"))}
         )
-        return assess_account(permissions, account, orders, markets, notional)
+        return assess_account(
+            permissions, account, orders, markets, notional, quote_asset=self.quote_asset
+        )
 
 
 def _amount(value: object) -> Decimal:
@@ -133,9 +137,18 @@ def _amount(value: object) -> Decimal:
 
 
 def assess_account(
-    permissions: Any, account: Any, orders: Any, markets: Any, notional: Decimal
+    permissions: Any,
+    account: Any,
+    orders: Any,
+    markets: Any,
+    notional: Decimal,
+    *,
+    quote_asset: str = "USDT",
 ) -> dict[str, object]:
     """Strict data assessment; metadata only, never import account holdings into paper."""
+    symbols = symbols_for_quote(quote_asset)
+    if not notional.is_finite() or notional != Decimal("50"):
+        raise BinanceCheckError("Einmaltest-Vorprüfung benötigt genau 50 Quote-Einheiten.")
     if not all(isinstance(value, dict) for value in (permissions, account, markets)):
         raise BinanceCheckError("Unvollständige Binance-Kontoantwort.")
     if not isinstance(orders, list) or not isinstance(account.get("balances"), list):
@@ -176,23 +189,29 @@ def assess_account(
     foreign = [
         asset
         for asset, (free, locked) in balances.items()
-        if asset not in {"USDT", "BNB"} and free + locked > 0
+        if asset not in {quote_asset, "BNB"} and free + locked > 0
     ]
     if foreign:
         blockers.append("Fremdbestände vorhanden; separaten Bot-Account verwenden/Bestände klären.")
-    free_usdt = balances.get("USDT", (Decimal(0), Decimal(0)))[0]
-    if free_usdt < notional + Decimal("10"):
-        blockers.append("Für den ersten 1x50-Test werden mindestens 60 freie USDT benötigt.")
+    free_quote = balances.get(quote_asset, (Decimal(0), Decimal(0)))[0]
+    if free_quote < notional + Decimal("10"):
+        blockers.append(
+            f"Für den ersten 1x50-Test werden mindestens 60 freie {quote_asset} benötigt."
+        )
     raw_symbols = markets.get("symbols")
     if not isinstance(raw_symbols, list):
         raise BinanceCheckError("Binance-Symbolfilter fehlen.")
     symbol_map = {item.get("symbol"): item for item in raw_symbols if isinstance(item, dict)}
-    for symbol in SYMBOLS:
+    if len(symbol_map) != len(raw_symbols):
+        raise BinanceCheckError("Doppelte oder ungültige Binance-Symbolfilter.")
+    for symbol in symbols:
         item = symbol_map.get(symbol)
         if (
             not item
             or item.get("status") != "TRADING"
             or item.get("isSpotTradingAllowed") is not True
+            or item.get("baseAsset") != symbol.removesuffix(quote_asset)
+            or item.get("quoteAsset") != quote_asset
         ):
             blockers.append(f"{symbol}: Spot-Handel nicht bestätigt.")
             continue
@@ -210,14 +229,16 @@ def assess_account(
             blockers.append(f"{symbol}: Mengenfilter unvollständig.")
         notionals = [by_kind[k] for k in ("MIN_NOTIONAL", "NOTIONAL") if k in by_kind]
         if not notionals or any(_amount(f.get("minNotional")) > notional for f in notionals):
-            blockers.append(f"{symbol}: Mindestnotional fehlt oder liegt über 50 USDT.")
+            blockers.append(f"{symbol}: Mindestnotional fehlt oder liegt über 50 {quote_asset}.")
     return {
         "account_checks_passed": not blockers,
         "blockers": blockers,
-        "free_usdt": str(free_usdt),
+        "quote_asset": quote_asset,
+        "free_quote": str(free_quote),
+        "free_usdt": str(free_quote) if quote_asset == "USDT" else None,
         "free_bnb": str(balances.get("BNB", (Decimal(0), Decimal(0)))[0]),
         "open_order_count": len(orders),
-        "checked_symbols": list(SYMBOLS),
+        "checked_symbols": list(symbols),
         "fee_discount_verified": False,
         "note": "Read-only Vorprüfung, kein Order-/Fill-/Reconciliation-Nachweis.",
     }

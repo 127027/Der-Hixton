@@ -309,3 +309,54 @@ def test_offline_buy_sell_cycle_only_sells_received_base(tmp_path: Path) -> None
     assert closer.execute(exit_intent.intent_id) == "FILLED"
     assert exit_exchange.submits == 1
     assert D(str(journal.fill_summary(exit_intent.intent_id)["gross_quote_usdt"])) == quote
+
+
+def test_quote_precision_uses_binance_cash_amount_and_rejects_changed_fill(tmp_path):
+    journal = OrderJournal(tmp_path / "orders.sqlite3")
+    entry = replace(buy(), symbol="ETHUSDC")
+    journal.create(entry)
+    journal.claim_submit(entry.intent_id)
+    fill = ExchangeFill("1", D("0.3"), D("3.33333333"), D("0"), "USDC", D("1.00000000"))
+    response = ExchangeOrder(
+        entry.client_order_id,
+        "1",
+        entry.symbol,
+        "BUY",
+        "FILLED",
+        D("0.3"),
+        D("1.00000000"),
+        (fill,),
+    )
+    journal.record(entry, response)
+    assert journal.load(entry.intent_id)[1] == "FILLED"
+    assert journal.fill_summary(entry.intent_id)["gross_quote"] == "1.00000000"
+    with pytest.raises(RuntimeError, match="Conflicting duplicate"):
+        journal.record(entry, replace(response, fills=(replace(fill, quote_quantity=D("0.999")),)))
+
+
+def test_late_failed_concurrent_lookup_cannot_erase_terminal_success(tmp_path):
+    journal = OrderJournal(tmp_path / "orders.sqlite3")
+    entry = buy()
+    journal.create(entry)
+    journal.claim_submit(entry.intent_id)
+    journal.record(entry, filled(entry))
+    journal.unknown(entry.intent_id)
+    assert journal.load(entry.intent_id)[1] == "FILLED"
+
+
+def test_existing_ledger_migration_preserves_legacy_fills(tmp_path):
+    import sqlite3
+
+    path = tmp_path / "legacy.sqlite3"
+    journal = OrderJournal(path)
+    entry = buy()
+    journal.create(entry)
+    journal.claim_submit(entry.intent_id)
+    journal.record(entry, filled(entry))
+    before = journal.fill_summary(entry.intent_id)
+    with sqlite3.connect(path) as connection:
+        connection.execute("ALTER TABLE trial_fills DROP COLUMN quote_quantity")
+    migrated = OrderJournal(path)
+    assert migrated.fill_summary(entry.intent_id) == before
+    migrated.record(entry, filled(entry))
+    assert migrated.fill_summary(entry.intent_id)["fill_count"] == 1

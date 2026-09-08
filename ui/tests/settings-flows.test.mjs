@@ -89,7 +89,7 @@ test("one explicit click requests exactly one fifty-USDT test, never continuous 
     await ui.node("live-trial-start").fire("click");
     assert.equal(mock.calls.filter(c=>c.url.endsWith("/trial/start")).length,1);
     assert.equal(mock.calls.filter(c=>c.url.endsWith("/enable")).length,0);
-    assert.deepEqual(mock.calls.find(c=>c.url.endsWith("/trial/start")).body,{confirmation:"TEST 50 USDT",notional_usdt:"50.00"});
+    assert.deepEqual(mock.calls.find(c=>c.url.endsWith("/trial/start")).body,{confirmation:"TEST 50 USDC",quote_asset:"USDC",notional_quote:"50.00"});
     assert.match(ui.node("live-trial-result").textContent,/Noch nicht startbereit/);
   } finally {live.dispose();ui.restore();}
 });
