@@ -1,16 +1,16 @@
-name: Codex Supervisor
+name: Hixton Engineering Agent
 
 on:
   workflow_dispatch:
     inputs:
       round:
-        description: Current autonomous repair round
+        description: Current autonomous learning round
         required: false
         default: '1'
       max_rounds:
-        description: Maximum repair rounds before BLOCKED
+        description: Maximum autonomous bootstrap rounds
         required: false
-        default: '6'
+        default: '12'
   push:
     branches:
       - agent/codex-supervisor-v1
@@ -20,17 +20,17 @@ permissions:
   actions: write
 
 concurrency:
-  group: codex-supervisor-${{ github.ref }}
+  group: hixton-engineering-agent-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
-  qa-and-repair:
+  bootstrap-or-maintain-memory:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
       BRANCH_NAME: agent/codex-supervisor-v1
       CURRENT_ROUND: ${{ github.event.inputs.round || '1' }}
-      MAX_ROUNDS: ${{ github.event.inputs.max_rounds || '6' }}
+      MAX_ROUNDS: ${{ github.event.inputs.max_rounds || '12' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -39,51 +39,18 @@ jobs:
           fetch-depth: 0
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-          cache: pip
-
-      - name: Set up Node
-        uses: actions/setup-node@v4
-        with:
-          node-version: '22'
-          cache: npm
-          cache-dependency-path: ui/package-lock.json
-
-      - name: Install Python dependencies
-        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
-
-      - name: Install UI dependencies
-        run: npm --prefix ui ci
-
-      - name: Run deterministic quality gate
-        id: initial_qa
-        continue-on-error: true
-        run: bash scripts/qa_gate.sh
-
-      - name: Show failing QA evidence
-        if: steps.initial_qa.outcome == 'failure'
+      - name: Detect agent mode
+        id: mode
         shell: bash
         run: |
-          echo '===== QA SUMMARY ====='
-          cat .agent/qa-summary.txt || true
-          echo '===== QA LOG TAILS ====='
-          for log in .agent/qa-logs/*.log; do
-            [[ -f "$log" ]] || continue
-            echo "----- $log -----"
-            tail -n 250 "$log" || true
-          done
-
-      - name: Stop at cost guard
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) > fromJSON(env.MAX_ROUNDS)
-        run: |
-          echo "BLOCKED: quality gates still fail after $MAX_ROUNDS autonomous repair rounds."
-          exit 1
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          state = json.loads(Path('agent_memory/state.json').read_text())
+          print('bootstrap_complete=' + ('true' if state.get('bootstrap_complete') else 'false'))
+          PY
 
       - name: Ensure Codex API key is configured
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
@@ -92,94 +59,83 @@ jobs:
             exit 1
           fi
 
-      - name: Snapshot protected QA files
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
+      - name: Snapshot protected application tree during bootstrap
+        if: steps.mode.outputs.bootstrap_complete != 'true'
+        shell: bash
         run: |
-          mkdir -p /tmp/hixton-guard
-          cp AGENTS.md /tmp/hixton-guard/AGENTS.md
-          cp scripts/qa_gate.sh /tmp/hixton-guard/qa_gate.sh
-          cp .github/workflows/codex-supervisor.yml /tmp/hixton-guard/codex-supervisor.yml
+          git ls-files | grep -v '^agent_memory/' > /tmp/protected-files.txt
+          git status --porcelain
 
-      - name: Let Codex repair only after a real failure
+      - name: Learn and maintain repository knowledge
         id: codex
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
           permission-profile: ':workspace'
           allow-bots: true
-          effort: medium
+          effort: high
           prompt: |
-            You are the Hixton Codex Supervisor repair worker.
-            Read AGENTS.md first and obey it strictly.
+            Read AGENTS.md and follow it exactly.
+            Do not rely on an external explanation of this repository.
+            Learn the repository from its own source, tests, UI, configuration, workflows and documentation.
+            Read agent_memory/state.json first and continue from the persistent knowledge already stored there.
+            If bootstrap is incomplete, this run is LEARNING ONLY: inspect, trace, cross-check and update files exclusively under agent_memory/. Do not modify application code, UI, tests, workflows, settings or behavior.
+            Be thorough rather than superficial. Follow connections end-to-end, especially UI -> API -> service -> runtime/domain/storage/exchange -> response -> UI. Use git ls-files as the completeness baseline. Continue filling gaps and unknowns instead of declaring completion early.
+            If bootstrap is already complete, only refresh the knowledge base for repository changes since last_indexed_commit; do not perform an engineering task unless a separate future mission explicitly requests one.
 
-            Primary release target: READY_FOR_50_USDC_TEST.
-            The controlled acceptance mode is exactly one real Binance Spot entry using 50 USDC on the next genuine strategy signal, while the other two slots remain 80 USDC Paper. After that one real position completes and reconciles, no further real entry is permitted and the bot returns to three 80 USDC Paper slots.
-            Never create an artificial signal and never bypass strategy filters to make the acceptance test happen.
-            Backtest must represent the CURRENT Paper configuration applied historically over the configured three-year window, using the same strategy decision logic rather than a separate strategy.
-
-            The deterministic quality gate has failed. Start with `.agent/qa-summary.txt` and only the corresponding failing files in `.agent/qa-logs/`.
-            Work in a tight loop: reproduce -> inspect minimal context -> smallest correct fix -> narrow test -> repeat.
-            Continue within this run while actionable failures remain. Do not merely analyze or stop after one fix.
-
-            Critical invariants:
-            - never weaken or delete tests to get green;
-            - never weaken DMS safety requirements;
-            - never modify AGENTS.md, scripts/qa_gate.sh, or this workflow;
-            - never use Binance live credentials in CI;
-            - never submit a real Binance order from CI;
-            - never enable unrestricted Live trading;
-            - preserve the hard 50 USDC one-shot limit and restart/idempotency protections.
-
-            Before finishing, run `bash scripts/qa_gate.sh`. If it is still red, continue fixing while the failure is actionable. If genuinely blocked, leave the repository safe and report the exact blocker.
-
-      - name: Restore protected QA files
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS) && always()
-        run: |
-          cp /tmp/hixton-guard/AGENTS.md AGENTS.md
-          cp /tmp/hixton-guard/qa_gate.sh scripts/qa_gate.sh
-          cp /tmp/hixton-guard/codex-supervisor.yml .github/workflows/codex-supervisor.yml
-
-      - name: Verify after Codex
-        id: final_qa
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
-        continue-on-error: true
-        run: bash scripts/qa_gate.sh
-
-      - name: Show remaining QA evidence
-        if: steps.final_qa.outcome == 'failure'
+      - name: Enforce bootstrap write boundary
+        if: steps.mode.outputs.bootstrap_complete != 'true'
         shell: bash
         run: |
-          cat .agent/qa-summary.txt || true
-          for log in .agent/qa-logs/*.log; do
-            [[ -f "$log" ]] || continue
-            echo "----- $log -----"
-            tail -n 250 "$log" || true
-          done
+          bad="$(git diff --name-only -- . ':(exclude)agent_memory/**' ':(exclude).agent/**')"
+          if [[ -n "$bad" ]]; then
+            echo 'ERROR: bootstrap attempted to modify files outside agent_memory/:'
+            echo "$bad"
+            git checkout -- $(cat /tmp/protected-files.txt)
+            exit 1
+          fi
 
-      - name: Commit autonomous repair round
-        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
+      - name: Validate memory state
+        id: state
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_OUTPUT"
+          import json
+          from pathlib import Path
+          path = Path('agent_memory/state.json')
+          state = json.loads(path.read_text())
+          complete = bool(state.get('bootstrap_complete'))
+          print('bootstrap_complete=' + ('true' if complete else 'false'))
+          print('mode=' + str(state.get('mode', 'UNKNOWN')))
+          if complete:
+              required = ['inventory_complete','architecture_complete','dataflows_complete','ui_map_complete','storage_complete','tests_complete','security_complete','cross_check_complete']
+              missing = [key for key in required if not state.get(key)]
+              unresolved = state.get('unresolved_repository_questions') or []
+              if missing or unresolved:
+                  raise SystemExit(f'Invalid bootstrap completion: missing={missing}, unresolved={unresolved}')
+          PY
+
+      - name: Commit persistent knowledge
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add -A
-          git reset -- .agent || true
+          git add agent_memory/
           if git diff --cached --quiet; then
-            echo 'Codex made no repository changes.'
+            echo 'No persistent knowledge changes this round.'
           else
-            git commit -m "fix(agent): autonomous repair round $CURRENT_ROUND"
+            git commit -m "docs(agent): repository learning round $CURRENT_ROUND"
             git push origin HEAD:"$BRANCH_NAME"
           fi
 
-      - name: Continue autonomous loop
-        if: steps.initial_qa.outcome == 'failure' && steps.final_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) < fromJSON(env.MAX_ROUNDS)
+      - name: Continue learning automatically
+        if: steps.state.outputs.bootstrap_complete != 'true' && fromJSON(env.CURRENT_ROUND) < fromJSON(env.MAX_ROUNDS)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
         run: |
           next=$((CURRENT_ROUND + 1))
-          echo "Dispatching repair round $next / $MAX_ROUNDS"
+          echo "Dispatching learning round $next / $MAX_ROUNDS"
           gh api --method POST \
             -H 'Accept: application/vnd.github+json' \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows/codex-supervisor.yml/dispatches" \
@@ -187,20 +143,16 @@ jobs:
             -f "inputs[round]=$next" \
             -f "inputs[max_rounds]=$MAX_ROUNDS"
 
-      - name: Final status
+      - name: Bootstrap status
         shell: bash
         run: |
-          if [[ "${{ steps.initial_qa.outcome }}" == "success" ]]; then
-            echo 'READY_FOR_NEXT_GATE: deterministic repository checks are green.'
-            exit 0
-          fi
-          if [[ "${{ steps.final_qa.outcome }}" == "success" ]]; then
-            echo 'READY_FOR_NEXT_GATE: autonomous repair succeeded and deterministic checks are green.'
+          if [[ "${{ steps.state.outputs.bootstrap_complete }}" == "true" ]]; then
+            echo 'BOOTSTRAP_COMPLETE: repository knowledge base is ready. No engineering task has been executed.'
             exit 0
           fi
           if (( CURRENT_ROUND < MAX_ROUNDS )); then
-            echo "NOT_READY: round $CURRENT_ROUND failed; next round dispatched."
+            echo "LEARNING_CONTINUES: round $CURRENT_ROUND completed and the next round was dispatched."
             exit 0
           fi
-          echo "BLOCKED: maximum repair budget $MAX_ROUNDS reached."
+          echo "BOOTSTRAP_INCOMPLETE: automatic learning budget $MAX_ROUNDS reached; inspect agent_memory/state.json before assigning engineering tasks."
           exit 1
