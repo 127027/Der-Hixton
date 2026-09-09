@@ -2,7 +2,6 @@ $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Branch = 'agent/codex-supervisor-v1'
 $AgentRoot = Join-Path $env:LOCALAPPDATA 'HixtonAgent'
-. (Join-Path $PSScriptRoot 'codex_api.ps1')
 
 function Require-Success([string]$What) {
     if ($LASTEXITCODE -ne 0) { throw "$What failed with exit code $LASTEXITCODE" }
@@ -12,6 +11,17 @@ function Read-State {
     $path = Join-Path $Repo 'agent_memory\state.json'
     if (-not (Test-Path $path)) { throw "Missing $path" }
     return Get-Content $path -Raw -Encoding UTF8 | ConvertFrom-Json
+}
+
+function Get-NpmCodex {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) { throw 'npm was not found.' }
+    $prefix = (& npm config get prefix).Trim()
+    Require-Success 'npm config get prefix'
+    $candidate = Join-Path $prefix 'codex.cmd'
+    if (-not (Test-Path $candidate)) {
+        throw "Current npm Codex launcher not found at $candidate. Run: npm install -g @openai/codex@latest"
+    }
+    return $candidate
 }
 
 Set-Location $Repo
@@ -31,21 +41,23 @@ Write-Host 'Updating local agent branch...'
 & git pull --ff-only origin $Branch
 Require-Success 'git pull'
 
-New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
-$apiCodex = Initialize-HixtonApiCodex -AgentRoot $AgentRoot
-$CodexPath = $apiCodex.CodexPath
-$env:CODEX_HOME = $apiCodex.CodexHome
+$CodexPath = Get-NpmCodex
+$version = (& $CodexPath --version 2>&1) -join ' '
+Require-Success 'codex --version'
+Write-Host "Hixton Codex CLI: $version"
+Write-Host 'Authentication: normal ChatGPT/Codex login (no API key).'
 
 $state = Read-State
 Write-Host ('Agent learning progress: {0}%' -f $state.progress_percent)
 Write-Host ('Bootstrap complete: {0}' -f $state.bootstrap_complete)
 Write-Host ''
 Write-Host 'You are entering an interactive chat with the persistent Hixton agent.'
-Write-Host 'This chat uses the isolated LOCAL API Codex profile, not your ChatGPT/Codex plan quota.'
+Write-Host 'This chat uses your normal ChatGPT/Codex login and therefore the same Codex usage limit.'
 Write-Host 'During bootstrap, AGENTS.md forbids production-code changes. The chat runs in a disposable worktree.'
 Write-Host 'Only agent_memory changes can be copied back into the real repository when the chat ends.'
 Write-Host ''
 
+New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
 $work = Join-Path $AgentRoot ('chat-' + [guid]::NewGuid().ToString('N'))
 
 try {
@@ -65,7 +77,7 @@ When useful, tell the user what you learned and what remains unresolved.
     & $CodexPath --sandbox workspace-write --ask-for-approval on-request --cd $work $initialPrompt
     $chatExit = $LASTEXITCODE
     if ($chatExit -ne 0) {
-        throw "Codex interactive chat exited with code $chatExit."
+        throw "Codex interactive chat exited with code $chatExit. If your Codex usage limit is reached, use ChatGPT/GitHub until it resets."
     }
 
     $tempMemory = Join-Path $work 'agent_memory'
@@ -103,7 +115,7 @@ if ($staged.Trim()) {
     Require-Success 'git commit'
     & git push origin "HEAD:$Branch"
     Require-Success 'git push'
-    Write-Host 'Updated agent memory was committed and pushed. No secret was uploaded.'
+    Write-Host 'Updated agent memory was committed and pushed.'
 }
 else {
     Write-Host 'No agent-memory changes to persist.'
