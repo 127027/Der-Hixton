@@ -1,0 +1,18 @@
+{
+  "mode": "BOOTSTRAP_LEARN_ONLY",
+  "bootstrap_complete": false,
+  "last_indexed_commit": null,
+  "inventory_complete": false,
+  "architecture_complete": false,
+  "dataflows_complete": false,
+  "ui_map_complete": false,
+  "storage_complete": false,
+  "tests_complete": false,
+  "security_complete": false,
+  "cross_check_complete": false,
+  "unresolved_repository_questions": [
+    "Full repository learning pass not yet executed."
+  ],
+  "external_runtime_unknowns": [],
+  "notes": "During bootstrap the agent may modify only agent_memory/."
+}
