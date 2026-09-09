@@ -79,7 +79,7 @@ Update the required agent_memory documents and state.json with evidence-based pe
 Work thoroughly for this round and make meaningful progress before stopping.
 "@
 
-        & codex exec --ephemeral --sandbox workspace-write --ask-for-approval never -c 'features.plugins=false' --cd $work $prompt
+        & codex -c 'features.plugins=false' --ask-for-approval never --sandbox workspace-write --cd $work exec --ephemeral $prompt
         $codexExit = $LASTEXITCODE
         if ($codexExit -ne 0) {
             throw "Codex exited with code $codexExit. On some native Windows Codex versions non-interactive workspace-write has known sandbox issues; update Codex or use AgentChat.bat for an interactive learning session."
