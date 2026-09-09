@@ -3,6 +3,10 @@ name: Codex Supervisor
 on:
   workflow_dispatch:
     inputs:
+      round:
+        description: Current autonomous repair round
+        required: false
+        default: '1'
       max_rounds:
         description: Maximum repair rounds before BLOCKED
         required: false
@@ -13,7 +17,7 @@ on:
 
 permissions:
   contents: write
-  actions: read
+  actions: write
 
 concurrency:
   group: codex-supervisor-${{ github.ref }}
@@ -21,11 +25,11 @@ concurrency:
 
 jobs:
   qa-and-repair:
-    if: github.actor != 'github-actions[bot]' || github.event_name == 'workflow_dispatch'
     runs-on: ubuntu-latest
     timeout-minutes: 90
     env:
       BRANCH_NAME: agent/codex-supervisor-v1
+      CURRENT_ROUND: ${{ github.event.inputs.round || '1' }}
       MAX_ROUNDS: ${{ github.event.inputs.max_rounds || '6' }}
     steps:
       - name: Checkout
@@ -59,32 +63,37 @@ jobs:
         continue-on-error: true
         run: bash scripts/qa_gate.sh
 
-      - name: Count repair round
-        id: round
+      - name: Show failing QA evidence
         if: steps.initial_qa.outcome == 'failure'
         shell: bash
         run: |
-          mkdir -p .agent
-          git fetch origin "$BRANCH_NAME"
-          count="$(git log "origin/$BRANCH_NAME" --grep='^fix(agent): autonomous repair round' --format='%H' | wc -l | tr -d ' ')"
-          next=$((count + 1))
-          echo "round=$next" >> "$GITHUB_OUTPUT"
-          echo "Repair round: $next / $MAX_ROUNDS"
-          if (( next > MAX_ROUNDS )); then
-            echo "blocked=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "blocked=false" >> "$GITHUB_OUTPUT"
-          fi
+          echo '===== QA SUMMARY ====='
+          cat .agent/qa-summary.txt || true
+          echo '===== QA LOG TAILS ====='
+          for log in .agent/qa-logs/*.log; do
+            [[ -f "$log" ]] || continue
+            echo "----- $log -----"
+            tail -n 250 "$log" || true
+          done
 
       - name: Stop at cost guard
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked == 'true'
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) > fromJSON(env.MAX_ROUNDS)
         run: |
-          echo 'BLOCKED: deterministic gates still fail after the configured automatic repair budget.'
-          cat .agent/qa-summary.txt || true
+          echo "BLOCKED: quality gates still fail after $MAX_ROUNDS autonomous repair rounds."
           exit 1
 
+      - name: Ensure Codex API key is configured
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          if [[ -z "$OPENAI_API_KEY" ]]; then
+            echo 'BLOCKED: repository secret OPENAI_API_KEY is missing.'
+            exit 1
+          fi
+
       - name: Snapshot protected QA files
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         run: |
           mkdir -p /tmp/hixton-guard
           cp AGENTS.md /tmp/hixton-guard/AGENTS.md
@@ -92,22 +101,40 @@ jobs:
           cp .github/workflows/codex-supervisor.yml /tmp/hixton-guard/codex-supervisor.yml
 
       - name: Let Codex repair only after a real failure
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        id: codex
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
         with:
           openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          permission-profile: ':workspace'
+          allow-bots: true
+          effort: medium
           prompt: |
             You are the Hixton Codex Supervisor repair worker.
             Read AGENTS.md first and obey it strictly.
+
+            Primary release target: READY_FOR_50_USDC_TEST.
+            The controlled acceptance mode is exactly one real Binance Spot entry using 50 USDC on the next genuine strategy signal, while the other two slots remain 80 USDC Paper. After that one real position completes and reconciles, no further real entry is permitted and the bot returns to three 80 USDC Paper slots.
+            Never create an artificial signal and never bypass strategy filters to make the acceptance test happen.
+            Backtest must represent the CURRENT Paper configuration applied historically over the configured three-year window, using the same strategy decision logic rather than a separate strategy.
+
             The deterministic quality gate has failed. Start with `.agent/qa-summary.txt` and only the corresponding failing files in `.agent/qa-logs/`.
             Work in a tight loop: reproduce -> inspect minimal context -> smallest correct fix -> narrow test -> repeat.
             Continue within this run while actionable failures remain. Do not merely analyze or stop after one fix.
-            Do not weaken tests, DMS safety requirements, the supervisor workflow, AGENTS.md, or scripts/qa_gate.sh.
-            Never use Binance live credentials, never send an Echtgeld order, and never enable live trading.
-            Before finishing, run `bash scripts/qa_gate.sh` and report the remaining blockers if it is still red.
+
+            Critical invariants:
+            - never weaken or delete tests to get green;
+            - never weaken DMS safety requirements;
+            - never modify AGENTS.md, scripts/qa_gate.sh, or this workflow;
+            - never use Binance live credentials in CI;
+            - never submit a real Binance order from CI;
+            - never enable unrestricted Live trading;
+            - preserve the hard 50 USDC one-shot limit and restart/idempotency protections.
+
+            Before finishing, run `bash scripts/qa_gate.sh`. If it is still red, continue fixing while the failure is actionable. If genuinely blocked, leave the repository safe and report the exact blocker.
 
       - name: Restore protected QA files
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true' && always()
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS) && always()
         run: |
           cp /tmp/hixton-guard/AGENTS.md AGENTS.md
           cp /tmp/hixton-guard/qa_gate.sh scripts/qa_gate.sh
@@ -115,12 +142,23 @@ jobs:
 
       - name: Verify after Codex
         id: final_qa
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         continue-on-error: true
         run: bash scripts/qa_gate.sh
 
-      - name: Commit an autonomous repair round
-        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+      - name: Show remaining QA evidence
+        if: steps.final_qa.outcome == 'failure'
+        shell: bash
+        run: |
+          cat .agent/qa-summary.txt || true
+          for log in .agent/qa-logs/*.log; do
+            [[ -f "$log" ]] || continue
+            echo "----- $log -----"
+            tail -n 250 "$log" || true
+          done
+
+      - name: Commit autonomous repair round
+        if: steps.initial_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) <= fromJSON(env.MAX_ROUNDS)
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
@@ -130,9 +168,24 @@ jobs:
           if git diff --cached --quiet; then
             echo 'Codex made no repository changes.'
           else
-            git commit -m "fix(agent): autonomous repair round ${{ steps.round.outputs.round }}"
+            git commit -m "fix(agent): autonomous repair round $CURRENT_ROUND"
             git push origin HEAD:"$BRANCH_NAME"
           fi
+
+      - name: Continue autonomous loop
+        if: steps.initial_qa.outcome == 'failure' && steps.final_qa.outcome == 'failure' && fromJSON(env.CURRENT_ROUND) < fromJSON(env.MAX_ROUNDS)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          next=$((CURRENT_ROUND + 1))
+          echo "Dispatching repair round $next / $MAX_ROUNDS"
+          gh api --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/codex-supervisor.yml/dispatches" \
+            -f ref="$BRANCH_NAME" \
+            -f "inputs[round]=$next" \
+            -f "inputs[max_rounds]=$MAX_ROUNDS"
 
       - name: Final status
         shell: bash
@@ -142,9 +195,12 @@ jobs:
             exit 0
           fi
           if [[ "${{ steps.final_qa.outcome }}" == "success" ]]; then
-            echo 'READY_FOR_NEXT_GATE: repair succeeded and deterministic checks are green.'
+            echo 'READY_FOR_NEXT_GATE: autonomous repair succeeded and deterministic checks are green.'
             exit 0
           fi
-          echo 'NOT_READY: another repair round is required.'
-          cat .agent/qa-summary.txt || true
+          if (( CURRENT_ROUND < MAX_ROUNDS )); then
+            echo "NOT_READY: round $CURRENT_ROUND failed; next round dispatched."
+            exit 0
+          fi
+          echo "BLOCKED: maximum repair budget $MAX_ROUNDS reached."
           exit 1
