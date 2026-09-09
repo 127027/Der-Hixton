@@ -1,0 +1,150 @@
+name: Codex Supervisor
+
+on:
+  workflow_dispatch:
+    inputs:
+      max_rounds:
+        description: Maximum repair rounds before BLOCKED
+        required: false
+        default: '6'
+  push:
+    branches:
+      - agent/codex-supervisor-v1
+
+permissions:
+  contents: write
+  actions: read
+
+concurrency:
+  group: codex-supervisor-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  qa-and-repair:
+    if: github.actor != 'github-actions[bot]' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      BRANCH_NAME: agent/codex-supervisor-v1
+      MAX_ROUNDS: ${{ github.event.inputs.max_rounds || '6' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.BRANCH_NAME }}
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: pip
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: ui/package-lock.json
+
+      - name: Install Python dependencies
+        run: python -m pip install --upgrade pip && python -m pip install -e '.[dev]'
+
+      - name: Install UI dependencies
+        run: npm --prefix ui ci
+
+      - name: Run deterministic quality gate
+        id: initial_qa
+        continue-on-error: true
+        run: bash scripts/qa_gate.sh
+
+      - name: Count repair round
+        id: round
+        if: steps.initial_qa.outcome == 'failure'
+        shell: bash
+        run: |
+          mkdir -p .agent
+          git fetch origin "$BRANCH_NAME"
+          count="$(git log "origin/$BRANCH_NAME" --grep='^fix(agent): autonomous repair round' --format='%H' | wc -l | tr -d ' ')"
+          next=$((count + 1))
+          echo "round=$next" >> "$GITHUB_OUTPUT"
+          echo "Repair round: $next / $MAX_ROUNDS"
+          if (( next > MAX_ROUNDS )); then
+            echo "blocked=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "blocked=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stop at cost guard
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked == 'true'
+        run: |
+          echo 'BLOCKED: deterministic gates still fail after the configured automatic repair budget.'
+          cat .agent/qa-summary.txt || true
+          exit 1
+
+      - name: Snapshot protected QA files
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        run: |
+          mkdir -p /tmp/hixton-guard
+          cp AGENTS.md /tmp/hixton-guard/AGENTS.md
+          cp scripts/qa_gate.sh /tmp/hixton-guard/qa_gate.sh
+          cp .github/workflows/codex-supervisor.yml /tmp/hixton-guard/codex-supervisor.yml
+
+      - name: Let Codex repair only after a real failure
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
+        with:
+          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
+          prompt: |
+            You are the Hixton Codex Supervisor repair worker.
+            Read AGENTS.md first and obey it strictly.
+            The deterministic quality gate has failed. Start with `.agent/qa-summary.txt` and only the corresponding failing files in `.agent/qa-logs/`.
+            Work in a tight loop: reproduce -> inspect minimal context -> smallest correct fix -> narrow test -> repeat.
+            Continue within this run while actionable failures remain. Do not merely analyze or stop after one fix.
+            Do not weaken tests, DMS safety requirements, the supervisor workflow, AGENTS.md, or scripts/qa_gate.sh.
+            Never use Binance live credentials, never send an Echtgeld order, and never enable live trading.
+            Before finishing, run `bash scripts/qa_gate.sh` and report the remaining blockers if it is still red.
+
+      - name: Restore protected QA files
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true' && always()
+        run: |
+          cp /tmp/hixton-guard/AGENTS.md AGENTS.md
+          cp /tmp/hixton-guard/qa_gate.sh scripts/qa_gate.sh
+          cp /tmp/hixton-guard/codex-supervisor.yml .github/workflows/codex-supervisor.yml
+
+      - name: Verify after Codex
+        id: final_qa
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        continue-on-error: true
+        run: bash scripts/qa_gate.sh
+
+      - name: Commit an autonomous repair round
+        if: steps.initial_qa.outcome == 'failure' && steps.round.outputs.blocked != 'true'
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git reset -- .agent || true
+          if git diff --cached --quiet; then
+            echo 'Codex made no repository changes.'
+          else
+            git commit -m "fix(agent): autonomous repair round ${{ steps.round.outputs.round }}"
+            git push origin HEAD:"$BRANCH_NAME"
+          fi
+
+      - name: Final status
+        shell: bash
+        run: |
+          if [[ "${{ steps.initial_qa.outcome }}" == "success" ]]; then
+            echo 'READY_FOR_NEXT_GATE: deterministic repository checks are green.'
+            exit 0
+          fi
+          if [[ "${{ steps.final_qa.outcome }}" == "success" ]]; then
+            echo 'READY_FOR_NEXT_GATE: repair succeeded and deterministic checks are green.'
+            exit 0
+          fi
+          echo 'NOT_READY: another repair round is required.'
+          cat .agent/qa-summary.txt || true
+          exit 1
