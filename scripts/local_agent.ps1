@@ -6,7 +6,6 @@ $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Branch = 'agent/codex-supervisor-v1'
 $AgentRoot = Join-Path $env:LOCALAPPDATA 'HixtonAgent'
-. (Join-Path $PSScriptRoot 'codex_api.ps1')
 
 function Require-Success([string]$What) {
     if ($LASTEXITCODE -ne 0) {
@@ -31,6 +30,19 @@ function Show-Progress($State) {
     Write-Host ''
 }
 
+function Get-NpmCodex {
+    if (-not (Get-Command npm -ErrorAction SilentlyContinue)) {
+        throw 'npm was not found.'
+    }
+    $prefix = (& npm config get prefix).Trim()
+    Require-Success 'npm config get prefix'
+    $candidate = Join-Path $prefix 'codex.cmd'
+    if (-not (Test-Path $candidate)) {
+        throw "Current npm Codex launcher not found at $candidate. Run: npm install -g @openai/codex@latest"
+    }
+    return $candidate
+}
+
 Set-Location $Repo
 
 $branchNow = (& git branch --show-current).Trim()
@@ -49,10 +61,13 @@ Write-Host 'Updating local agent branch...'
 & git pull --ff-only origin $Branch
 Require-Success 'git pull'
 
+$CodexPath = Get-NpmCodex
+$version = (& $CodexPath --version 2>&1) -join ' '
+Require-Success 'codex --version'
+Write-Host "Hixton Codex CLI: $version"
+Write-Host 'Authentication: normal ChatGPT/Codex login (no API key).'
+
 New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
-$apiCodex = Initialize-HixtonApiCodex -AgentRoot $AgentRoot
-$CodexPath = $apiCodex.CodexPath
-$env:CODEX_HOME = $apiCodex.CodexHome
 
 for ($round = 1; $round -le $MaxRounds; $round++) {
     $state = Read-State
@@ -82,17 +97,13 @@ Work thoroughly for this round and make meaningful progress before stopping.
         & $CodexPath -c 'features.plugins=false' --ask-for-approval never --sandbox workspace-write --cd $work exec --ephemeral $prompt
         $codexExit = $LASTEXITCODE
         if ($codexExit -ne 0) {
-            throw "Codex exited with code $codexExit."
+            throw "Codex exited with code $codexExit. If your ChatGPT/Codex usage limit is reached, continue the repository work in ChatGPT/GitHub until the limit resets."
         }
 
         $tempMemory = Join-Path $work 'agent_memory'
         if (-not (Test-Path $tempMemory)) {
             throw 'Codex finished without an agent_memory directory.'
         }
-
-        $changed = (& git -C $work status --porcelain) -join "`n"
-        Write-Host 'Disposable-worktree changes:'
-        if ($changed.Trim()) { Write-Host $changed } else { Write-Host '  none' }
 
         $realMemory = Join-Path $Repo 'agent_memory'
         New-Item -ItemType Directory -Force -Path $realMemory | Out-Null
@@ -128,7 +139,7 @@ Work thoroughly for this round and make meaningful progress before stopping.
         Require-Success 'git commit'
         & git push origin "HEAD:$Branch"
         Require-Success 'git push'
-        Write-Host 'Persistent agent knowledge committed and pushed. No secret was uploaded.'
+        Write-Host 'Persistent agent knowledge committed and pushed.'
     }
     else {
         Write-Host 'No persistent knowledge change was produced in this round.'
