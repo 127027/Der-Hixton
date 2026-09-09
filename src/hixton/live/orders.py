@@ -1,4 +1,4 @@
-"""Offline-tested order safety core. Not connected to Binance or a UI submit route.
+"""Offline-tested order safety core; no released UI submit route.
 
 Persist SUBMITTING before calling an injected exchange. Ambiguous outcomes are
 only queried, NEVER submitted a second time, including across process restarts.
@@ -119,7 +119,7 @@ class ExchangeOrder:
 
 
 class OrderExchange(Protocol):
-    """A production implementation is deliberately not provided/released here."""
+    """Transport contract; its existence does not grant production release."""
 
     def submit(self, intent: TrialIntent) -> ExchangeOrder: ...
     def query(self, intent: TrialIntent) -> ExchangeOrder | None: ...
@@ -314,7 +314,8 @@ class OrderJournal:
                         Decimal(existing["quote_quantity"])
                         if existing["quote_quantity"] is not None
                         else Decimal(existing["quantity"]) * Decimal(existing["price"])
-                    ) != fill.quote
+                    )
+                    != fill.quote
                 ):
                     raise RuntimeError("Conflicting duplicate fill; manual reconciliation required")
                 connection.execute(

@@ -34,6 +34,7 @@ def install_live_routes(
         vault if vault is not None else WindowsVault(config.database_path),
     )
     app.state.live_preparation = service
+    supervisor.trial_runtime = service.connect_runtime(supervisor.strategy)
 
     def require_local(request: Request) -> None:
         # Unlike legacy read/Paper endpoints, private actions require an exact origin.
@@ -214,7 +215,7 @@ def install_live_routes(
         except (InvalidOperation, ValueError):
             raise HTTPException(400, "Einmaltest: ausschließlich 50 USDC Kaufbudget.") from None
         # No URL parameter, key presence or green preflight bypasses incomplete implementation.
-        # Quote-aware adapter is offline-tested, not runtime/account-reconciler release.
+        # Runtime wiring and balance checks do not release the pre-submit gates.
         result = await run_in_threadpool(get_status, True)
         await run_in_threadpool(service.audit, "TRIAL_REQUEST_BLOCKED")
         return JSONResponse(result, status_code=409)

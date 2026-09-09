@@ -1,5 +1,20 @@
 # 20 – Betriebsrunbook
 
+## Arbeitsstand 0.4.9 / DEC-055 – Einmaltest angeschlossen, noch nicht freigegeben
+
+Neu fertig: Supervisor-Lifecycle alle zwei Sekunden, getrennt vom Stunden-Signal und unabhängig vom Paper-Ledger; dauerhaft geladener Einmaltest/Orderjournalzustand; keine Schlüssel-/Kontozugriffe bei nicht gestartetem Test. Der Service bindet den Binance-Adapter verzögert an den gespeicherten Schlüssel, doch **Arming und produktiver Submit sind weiterhin gesperrt**. Kein abgeschalteter Dauer-Live-Status wird als aktive Testausführung ausgegeben; Fehler erscheinen als TRIAL_NEEDS_REVIEW und werden redigiert protokolliert.
+
+Neu fertig: unveränderlicher Ausgangsbestand in `trial_account_baseline` innerhalb der bereits vorhandenen lokalen `live-preparation.sqlite3`; Erfassung nur vor Order-Intents und ohne offene Orders/gesperrte Guthaben. Doppelte Kontoabfrage um openOrders verwirft veränderliche Snapshots. Erwarteter Saldo = Ausgangsbestand + bestätigte eigene Fills − tatsächliche Gebühren je Asset. Kein Import von Altbeständen ins Paperkonto oder Verkauf als Bot-Eigentum. Der Abschluss ruft die interne Bestätigung erst bei stimmigen Salden, keinen offenen/unklaren Orders und exakt null eigener Restmenge auf; kein UI-Boolean als Ersatz. Für den inaktiven Betreiber-Test wurde noch keine Baseline erfasst.
+
+**Nächste Arbeit, bevor HTTP 409 aufgehoben werden darf:**
+
+1. Technische Entry-/Exit-Freigabe unmittelbar vor Versand anschließen: frische Binance-Filter (einschließlich MARKET_LOT_SIZE), Preis-/Spread-/Slippagegrenzen, tatsächlich verfügbarer eigener Bestand und freie Quote/Reserve. Die derzeitigen `False`-Freigaben niemals lediglich durch `True` oder einen UI-Schalter ersetzen.
+2. Restmengenmodell erweitern: derzeit führen nicht exakt vollständig verkaufte Mengen zu NEEDS_REVIEW. Handelbare Restmengen und nicht handelbarer Dust müssen vor automatischer Freigabe sauber quantisiert, getrennt gebucht und im Bericht ausgewiesen werden; keine stillschweigende Vollverkaufsbehauptung.
+3. Vollständige Fremdorder-/Kontohistorie bzw. abgenommene Kontoisolierung: Saldoerhaltung ist notwendig, erkennt aber keine zwischenzeitlichen gegenläufigen manuellen Trades. Aktuelle strenge Fremdbestandsblockade bleibt bestehen. Keine Benutzerbestände ohne Auftrag verkaufen.
+4. Externe Testnet-Ausführung und Störfälle abnehmen; API-Rechte/IP-Freigabe am Betreiberkonto müssen zusätzlich stimmen. Synthetische Antworten, ein öffentlicher Marktcheck oder ein profitabler Backtest ersetzen keinen solchen Nachweis. Danach Benutzerbutton einmalig scharfstellbar machen, Kauf/Exit/Fills/Restmenge in UI/Chart vollständig abnehmen; 3×80-Dauer-Live weiterhin nicht automatisch aktivieren.
+
+Nachgewiesen offline: alle zehn Coin-Policies treffen gleiche Paper-/Einmaltest-Entscheidungen an denselben synthetischen Punkten. Tatsächlicher Adapterparser verarbeitet je Test einen BUY(50.00) und SELL; Entry-aus nach BUY verhindert nicht SELL. Verlorene Antwort nach Kauf und Neustart erzeugen keinen zweiten BUY. Abweichende Konten/Salden, offene Orders, alte Snapshots, gebundene Mittel und BNB-Gebühren sind getestet. Dies ist kein Gewinnnachweis; die Beispielsummen sind künstliche Testwerte.
+
 ## Bedienung ab 0.4.8 / DEC-054 – kein versteckter Dauerbetrieb
 
 1. Einmal `Startbot.bat` öffnen. Konsole und Bot-Seite offen lassen. Die Konsole benennt die Stoppregel, die UI zeigt eine dauerhafte Verbindungs-/Abschaltzeile und „Bot beenden“.

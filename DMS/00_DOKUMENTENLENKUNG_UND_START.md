@@ -1,6 +1,10 @@
 # 00 – Dokumentenlenkung und Start
 
-## Aktuell: DMS 1.13.0 / Anwendung 0.4.8, DEC-054
+## Aktuell: DMS 1.14.0 / Anwendung 0.4.9, DEC-055
+
+Ein gemeinsamer Entscheidungsweg für Backtest/Paper/Live, unterschiedliche Daten- und Ausführungsschnittstellen. Zentrale Signalpriorität ergänzt die bereits gemeinsame Coin-Policy. Einmaltest-Laufzeit ist jetzt angeschlossen, Ausgangsbestand-/Fill-Saldovergleich implementiert; Produktion weiterhin direkt vor Orderversand gesperrt. Konkrete Abgrenzung: 292 Python-Tests/19 UI-Tests, zehn Offline-Durchläufe mit echtem Adapterparser und abgeglichenen Paperentscheidungen sind keine externe Binance-Abnahme. Markt-/Preis-/Mengenfreigaben, handelbare Restmengen, vollständige Fremdorderprüfung und Testnet/Betriebsnachweis bleiben offen. Neue Backtest-Manifeste protokollieren Python-Quelltext-Hash und Prüfbereich. DMS 20 enthält den aktuellen Arbeitsstand; ältere Aussagen „kein Runtime-Anschluss“ sind dadurch teilweise überholt, nicht die Echtgeldsperre.
+
+## Historie: DMS 1.13.0 / Anwendung 0.4.8, DEC-054
 
 Sichtbarer Betrieb ist Eigentümervorgabe: keine versteckte Dauerinstanz; neuer Start löst ausschließlich die authentifizierte alte Instanz derselben Installation ab und wartet auf deren Prozessende. Letzter Bot-Tab zu oder Terminal weg beendet den Bot. Kein Handel vor erster UI-Verbindung; Reload-Schonfrist 5 Sekunden, anschließend geordneter Stopp mit maximal 15 Sekunden Selbstbeendigungsfrist. Netzwerkabbrüche benötigen zusätzlich Erkennung durch WebSocket-Ping. Minimieren/Tabwechsel sind kein Schließen. Keine automatische Liquidation, offene Echtgeldpositionen wären nach Prozessende unbetreut. Historische 24/7-Aussagen gelten nur mit geöffneter Konsole/Oberfläche. Echtgeld bleibt technisch gesperrt; die Kontoprüfung erklärt konkrete Rechte und Fremdbestände, hebt aber keine Schutzregel auf. DMS 20 enthält Bedienung/Restarbeit, DMS 18 den tatsächlichen Laptopstand.
 

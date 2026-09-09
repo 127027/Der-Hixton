@@ -1,7 +1,7 @@
-"""Persistent signal-driven one-shot controller, tested with injected exchanges only.
+"""Persistent signal-driven one-shot controller with release-gated runtime wiring.
 
-No production exchange adapter or HTTP release is provided by this module. It
-reuses the canonical Hixton policy, never imports Paper holdings or Paper fills.
+No HTTP release is provided by this module. It reuses the canonical Hixton policy,
+never imports Paper holdings or Paper fills. Operational acceptance remains open.
 """
 
 from __future__ import annotations
@@ -17,6 +17,7 @@ from uuid import UUID
 
 from hixton.domain.markets import split_market
 from hixton.domain.models import IndicatorPoint, SignalAction
+from hixton.domain.strategy import entry_priority
 from hixton.domain.trade_policy import TradePolicyGate
 from hixton.domain.versions import StrategyDefinition
 from hixton.live.orders import OrderJournal, TrialIntent, TrialOrderExecutor
@@ -356,9 +357,8 @@ class SignalTrial:
         if len(boundaries) != 1 or not candidates:
             return
         candidates.sort(
-            key=lambda point: (
-                -(point.rank_strength or 0),
-                self.strategy.symbols.index(point.symbol),
+            key=lambda point: entry_priority(
+                point.rank_strength, point.symbol, self.strategy.symbols
             )
         )
         winner = candidates[0]

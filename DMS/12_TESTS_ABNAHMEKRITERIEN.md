@@ -1,5 +1,13 @@
 # 12 – Tests und Abnahmekriterien
 
+## Prüfstand 0.4.9 / DEC-055
+
+292 Python-Tests bestanden, ein opt-in Windows-Vault-Test übersprungen; 19 UI-Tests, Ruff, mypy (52 Quelldateien), TypeScript und Produktionsbuild bestanden. Zusätzliche 21 Tests: zehn Coin-Durchläufe vergleichen Paperentscheidungen mit Einmaltest und realem Adapterparser auf synthetischen Antworten; genau ein 50-USDC-Kauf und zugehöriger Verkauf trotz Entry-aus. Timeout-/Restart-Abgleich ohne zweiten Kauf; unveränderliche Baseline; kein Netzwerkzugriff beim inaktiven/gestoppten Lifecycle; Konto-/Saldo-/OpenOrder-/Stale-/Locked-Fehler; BNB-Gebühren ohne erfundenen Netto-PnL; veränderliche Kontosnapshots; Quelltext-Hash reagiert auf uncommittete Pythonänderungen. Die bestehende historische Portfolio-/Paper-Paritätsregression besteht weiterhin.
+
+Die Start-API muss weiterhin HTTP 409 liefern, obwohl `runtime_connected=true` ist: Verbindung ist nicht Produktionsfreigabe. Keine echten oder Testnet-Orders in dieser Suite. Nur nachgewiesene Teile als bestanden markieren; tatsächlicher Vorversand-Guard, Restmengen/Fremdorderhistorie und externe Betriebsabnahme bleiben offen gemäß DMS 20. Alte Berichte bleiben unverändert; neue Manifeste und HTML-/UI-Hinweise trennen historische Berechnung ausdrücklich von Ausführungsabnahme und Zukunftsertrag.
+
+Schnittstellenreferenz für lesenden Konto-/Orderabgleich: [Binance Account API](https://developers.binance.com/en/docs/catalog/core-trading-spot-trading/api/rest-api/account), geprüft am 09.09.2026. Dokumentation ist kein Konto- oder Ausführungsnachweis.
+
 ## Prüfstand 0.4.8 / DEC-054
 
 271 Python-Tests bestanden, ein optionaler Windows-Vault-Test übersprungen; 19 UI-Tests, Ruff, mypy (50 Quelldateien), TypeScript und Produktionsbuild bestanden. Neue Tests: kein Handel vor UI, abgewiesener Fremd-Origin/fehlendes oder veraltetes Shutdown-Token, Mehrtab-/Reload-Schonfrist, Terminalverlust und Fehler der Terminalüberwachung, expliziter Stop, Schutz fremder Portbenutzer und Metadaten einer Nachfolgeinstanz. UI prüft pagehide/BFCache, Stop ohne Auto-Reconnect, Reload bei Prozesswechsel und sichtbaren Verbindungsverlust. Kontovorprüfung unterscheidet false/unbekannt und benennt Fremdbestände, ohne Gates zu lockern. Realer Laptop-Start-/Stopp-Nachweis wird getrennt in DMS 18 geführt; kein Echtgeldauftrag gehört zu diesen Tests.

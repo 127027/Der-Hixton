@@ -1,6 +1,14 @@
 # Der Hixton Trading Bot
 
-## Aktuell: Anwendung 0.4.8 / DMS 1.13.0
+## Aktuell: Anwendung 0.4.9 / DMS 1.14.0
+
+DEC-055: Eine gemeinsame Handelslogik bleibt das Ziel für Historie, Paper und echte Ausführung. Coin-Profile und `TradePolicyGate` sind gemeinsam; die Prioritätsfunktion ist jetzt ebenfalls zentral statt dreifach formuliert. Die getrennten Simulations-/Ausführungsabläufe sind noch keine vollständig einheitliche Engine. Kein Coin-Tuning, kein Kontoreset. Neue Berichte halten zusätzlich Python-Quelltext-Hash (auch für uncommittete Änderungen) und die Grenze „historische Simulation, keine Binance-Ausführungsabnahme“ fest. Ein Patch erfordert neue Tests; alte Gewinne werden weder überschrieben noch zu einer Zukunftsprognose.
+
+Einmaltest-Laufzeit nun an den Supervisor angeschlossen (alle zwei Sekunden dieselben analysierten Punkte), ohne automatische Scharfschaltung. Ein eigener dauerhafter Ausgangsbestand und tatsächliche Fills ermöglichen einen exakten Saldovergleich einschließlich BNB-Gebühren und unveränderter Altbestände. Das ist **noch keine vollständige Fremdorder-/Restmengen-/Produktivabnahme**. Der 50-USDC-Endpunkt bleibt HTTP 409; der reale Versand ist zusätzlich direkt vor Submit gesperrt. Kein gestarteter Test, keine Livefreigabe. Die konkrete Restarbeit steht oben in [DMS 20](DMS/20_BETRIEBSRUNBOOK.md).
+
+Prüfstand: 292 Python-Tests bestanden, ein optionaler Vault-Test übersprungen; 19 UI-Tests, Ruff, mypy (52 Quelldateien), TypeScript und Produktionsbuild bestanden. Zehn Coin-Durchläufe vergleichen Paper-Entscheidungen mit dem echten Adaptercode an **synthetischen Binance-Antworten**: genau ein 50-USDC-BUY, danach SELL trotz Entry-aus, Abschluss erst nach exaktem Kontovergleich. Kein externer Binance-/Testnet-Auftrag ist damit behauptet.
+
+### Weiter gültig: sichtbarer Betrieb seit 0.4.8 / DMS 1.13.0
 
 **Sichtbarer Betrieb (DEC-054):** `Startbot.bat` startet den lokal installierten Stand in einer sichtbaren Konsole und öffnet die Oberfläche. Eine identifizierte frühere Instanz derselben Installation wird geordnet beendet; erst nach ihrem tatsächlichen Prozessende startet die neue. Kein automatischer GitHub-Download beim Start, kein Abschießen fremder Portbenutzer. **Terminal schließen oder letzten Bot-Tab schließen = Bot aus.** Ein Tab-Neuladen hat 5 Sekunden Schonfrist; bei Verbindungsabbrüchen kommt die WebSocket-Erkennungszeit hinzu. Nach erkannter Stoppanforderung endet der Prozess spätestens nach 15 Sekunden, nötigenfalls durch Selbstbeendigung. Vor der ersten UI-Verbindung startet kein Paper-Handel; ohne Oberfläche beendet sich der Starter nach 60 Sekunden. Minimieren/Tabwechsel allein stoppen nicht. `--no-browser` unterdrückt nur das automatische Öffnen, erlaubt keinen unsichtbaren Dauerbetrieb.
 
@@ -22,7 +30,7 @@ Binance-Fehler `-1100` der Marktfilterabfrage korrigiert: Die Zehn-Coin-Liste wi
 
 Unter „Binance verbinden“ zuerst das bereits eingerichtete lokale Hixton-Passwort verwenden bzw. beim ersten Mal eines festlegen. Rückmeldung steht direkt am Passwortfeld. Erst nach bestätigter Sitzung werden API-Key/Secret freigegeben; speichern und Verbindung prüfen. Vorhandene Passwörter werden nicht zurückgesetzt. Details: [Betriebsrunbook](DMS/20_BETRIEBSRUNBOOK.md).
 
-**Echtgeld noch nicht ausführbar:** Live-Steuerung und die Vorbereitung des einmaligen 50-USDC-Tests sind sichtbar. Der offline geprüfte Orderadapter ist noch nicht an Runtime und vollständigen Kontoabgleich angeschlossen. Sie werden nicht durch UI-Vereinfachung freigegeben. Paper nutzt echte Marktzeit und simuliertes Geld; gemeinsame Handelsparameter, getrennte Konten/Fills.
+**Echtgeld noch nicht ausführbar:** Live-Steuerung und die Vorbereitung des einmaligen 50-USDC-Tests sind sichtbar. Der Orderadapter ist ab 0.4.9 an die gesperrte Laufzeit angebunden; vollständiger produktiver Vorversand-/Restmengen-/Kontoabgleich und externe Abnahme fehlen weiterhin. Sie werden nicht durch UI-Vereinfachung freigegeben. Paper nutzt echte Marktzeit und simuliertes Geld; gemeinsame Handelsparameter, getrennte Konten/Fills.
 
 Ein normaler Doppelklick auf `Startbot.bat` setzt **nichts** zurück. Der nur ausdrücklich beauftragte Offline-Neuanfang ist unter [DMS 20](DMS/20_BETRIEBSRUNBOOK.md) dokumentiert. Nach einem frischen Start sind zunächst drei Slots frei: Es wird auf neue qualifizierte Signale gewartet, nicht in alte grüne Trends hineingekauft.
 

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import hashlib
 from collections import deque
-from collections.abc import Iterable
+from collections.abc import Iterable, Sequence
 from datetime import timedelta
 from decimal import ROUND_HALF_EVEN, Decimal
 
@@ -34,6 +34,13 @@ def rank_strength(value: float) -> float:
     """Round breakout strength to 12 decimals using round-half-even."""
 
     return float(Decimal(str(value)).quantize(_RANK_QUANTUM, rounding=ROUND_HALF_EVEN))
+
+
+def entry_priority(
+    strength: float | None, symbol: str, symbols: Sequence[str]
+) -> tuple[float, int]:
+    """One deterministic priority rule for historical, Paper and real-order candidates."""
+    return -rank_strength(strength or 0.0), symbols.index(symbol)
 
 
 def _signal_id(point: IndicatorPoint, action: SignalAction) -> str:

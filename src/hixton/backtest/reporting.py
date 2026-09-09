@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import csv
 import dataclasses
+import hashlib
 import html
 import json
 from collections import Counter
@@ -14,11 +15,24 @@ from pathlib import Path
 from typing import TypeAlias
 from uuid import uuid4
 
+from hixton import __version__
 from hixton.backtest.models import BacktestResult, BatchResult, PortfolioBacktestResult
 from hixton.constants import TIMEFRAME
 from hixton.domain.versions import V1_STRATEGY, StrategyDefinition
 
 RunResult: TypeAlias = BacktestResult | BatchResult | PortfolioBacktestResult
+
+
+def source_fingerprint(root: Path | None = None) -> str:
+    """Include uncommitted Python patches; a Git HEAD alone cannot identify them."""
+    root = root or Path(__file__).resolve().parents[1]
+    digest = hashlib.sha256()
+    for source in sorted(root.rglob("*.py")):
+        digest.update(source.relative_to(root).as_posix().encode())
+        digest.update(b"\0")
+        digest.update(source.read_text(encoding="utf-8").encode())
+        digest.update(b"\0")
+    return digest.hexdigest()
 
 
 def _primitive(value: object) -> object:
@@ -138,6 +152,14 @@ def write_report_bundle(
         "run_id": run_id,
         "created_at_utc": created_at.isoformat(),
         "status": "VALID",
+        "validation_scope": {
+            "kind": "HISTORICAL_SIMULATION",
+            "application_version": __version__,
+            "python_source_sha256": source_fingerprint(),
+            "binance_order_execution": "NOT_TESTED_BY_BACKTEST",
+            "live_release_granted": False,
+            "future_performance_guaranteed": False,
+        },
         "run_mode": run_mode,
         "strategy": {
             "version": strategy.version,
@@ -268,7 +290,9 @@ def _write_html(
   <h1>Hixton Backtest {html.escape(strategy.backtest_version.upper())}</h1>
   <p>Strategie: <code>{html.escape(strategy.version)}</code></p>
   <p>Run-ID: <code>{html.escape(run_id)}</code></p>
-  <p class="warning">Historische Ergebnisse sind keine Gewinngarantie.</p>
+  <p class="warning">Historische Simulation der angegebenen Regeln und Einstellungen.
+  VALID bedeutet ein gültiges Rechenergebnis, keine Binance-Ausführungsabnahme oder Livefreigabe.
+  Historische Ergebnisse sind keine Gewinngarantie.</p>
   <h2>Kennzahlen</h2>
   <pre>{payload}</pre>
 </body>

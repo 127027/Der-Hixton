@@ -25,7 +25,7 @@ from hixton.domain.allocation import ONE_PER_SYMBOL, allocate_entry_slots
 from hixton.domain.markets import validate_market_symbols
 from hixton.domain.models import Candle, Signal, SignalAction, StrategyParameters, StrategySemantics
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
-from hixton.domain.strategy import HixtonStrategy, rank_strength
+from hixton.domain.strategy import HixtonStrategy, entry_priority
 from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 
 _HUNDRED = Decimal("100")
@@ -167,7 +167,6 @@ def run_shared_portfolio_backtest(
     )
     risk_halted_at: datetime | None = None
     daily_paused_bars = 0
-    order = {symbol: index for index, symbol in enumerate(symbols)}
 
     for row in rows:
         open_time = row[0].open_time_utc
@@ -238,10 +237,7 @@ def run_shared_portfolio_backtest(
                 del positions[signal.symbol]
 
             entries.sort(
-                key=lambda signal: (
-                    -rank_strength(signal.breakout_strength or 0.0),
-                    order[signal.symbol],
-                )
+                key=lambda signal: entry_priority(signal.breakout_strength, signal.symbol, symbols)
             )
             used_slots = sum(position.slots for position in positions.values())
             allocations = allocate_entry_slots(

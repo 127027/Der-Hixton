@@ -1,4 +1,4 @@
-"""Binance Spot one-shot transport and fill lookup; NOT wired to runtime/UI.
+"""Binance Spot one-shot transport, runtime-bound but production release-gated.
 
 Only the journal executor may dispatch, after its mandatory safety gate. This
 adapter does not establish consent, balance ownership, filter/price readiness or
@@ -28,6 +28,8 @@ _ALLOWLIST = {
     ("GET", "/api/v3/time"),
     ("GET", "/api/v3/order"),
     ("GET", "/api/v3/myTrades"),
+    ("GET", "/api/v3/account"),
+    ("GET", "/api/v3/openOrders"),
     ("POST", "/api/v3/order"),
 }
 

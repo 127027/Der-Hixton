@@ -1,5 +1,15 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-055 – Ein Handelsregelwerk, getrennte Ausführungsnachweise, 09.09.2026
+
+Eigentümer bestätigt: Historie simuliert die gewählten heutigen Regeln rückwirkend; Paper simuliert deren jetzige Ausführung; Live sendet echte Orders. Keine unabhängig erfundenen Coin-Regeln je Betriebsart. Ein Patch muss durch Strategie-/Policy-/Portfolio-/Ausführungstests geprüft werden. Ein historisches Ergebnis ist keine Vorhersage und kein Beweis funktionierender Binance-Rechte oder tatsächlicher Orderausführung. `VALID` bezeichnet ein valides Simulationsergebnis, nicht Produktfreigabe. Gewählte historische Versionen bleiben ausdrücklich historische Referenzen; aktuelle Coin-Parameter wurden in 0.4.9 nicht optimiert.
+
+Einmaltest: nach manueller Benutzerfreigabe genau ein frisches qualifiziertes Signal aus zehn Coins, genau 50 USDC Kaufbudget, keine zweite Einstiegsberechtigung. Nach dem Kauf neue Einstiege aus; die eigene Position bleibt bis zum regulären Coin-Ausgang betreut. „Live aus“ meint Entry-aus, nicht Bot-Prozess aus. Die strengere Prozessabschaltung aus DEC-054 bleibt bestehen und wird nicht für heimliche Exit-Betreuung umgangen.
+
+0.4.9 verbindet den dauerhaften Controller mit dem Supervisor, übernimmt dieselben analysierten Daten und zentralisiert die Rangfolge. Einmaliger Ausgangsbestand vor dem ersten Intent; Binance-Fills verändern nur die zugehörigen Mengen, Quote und Gebührenassets. Ein unveränderter Altbestand ist kein Bot-Eigentum. Fehlende Baseline, unklare Orders, offene Orders, eingefrorene Mengen, falsches Konto oder Saldoabweichung verhindern einen behaupteten Abschluss. Ein stabiler Saldovergleich allein beweist keine vollständige Historie zwischen zwei Abfragen: gegenläufige manuelle Trades sind damit nicht ausgeschlossen. Diese Grenze bleibt Teil der offenen produktiven Abnahme.
+
+Produktiver Submit bleibt fail-closed gesperrt, ebenso Benutzerstart HTTP 409. Vor Freigabe: Live-Markt-/Preis-/Mengenprüfung, nicht handelbare vs. handelbare Reste, Fremdorderhistorie, externe Testnet-/Störfallabnahme und klare UI-Abnahmekette. Keine echte Order durch den Entwicklungsagenten. Nur ein späterer Benutzerklick darf die Einmalberechtigung erzeugen; Dauer-Live bleibt außerhalb dieser Freigabe.
+
 ## DEC-054 – Kein unsichtbarer Bot und kontrollierte Instanzablösung, 09.09.2026
 
 VERBINDLICH auf Eigentümerauftrag: `Startbot.bat` bleibt der einzige Starter. Er führt den aktuell lokal installierten Code aus. Ein erneuter Start darf nicht eine zusätzliche Handelsinstanz erzeugen: bestehende Instanz anhand Installation, Instanz-ID und zufälligem lokalem Kontrolltoken identifizieren, Shutdown anfordern und tatsächliches Prozessende abwarten. Fremde/alte nicht authentifizierbare Server auf dem Port bleiben unangetastet und erzeugen eine verständliche Meldung. Einmaliges Deployment von 0.4.7 erfordert gezieltes Beenden der identifizierten alten Instanz, da diese das neue Protokoll noch nicht kennt.

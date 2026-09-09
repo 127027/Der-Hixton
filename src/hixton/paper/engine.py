@@ -12,6 +12,7 @@ from hixton.backtest.models import BASELINE_COSTS, ONE, ZERO, ExecutionRules
 from hixton.constants import HIXTON_SPEC_VERSION, SYMBOLS
 from hixton.domain.models import Candle, IndicatorPoint, Signal, SignalAction
 from hixton.domain.risk import PortfolioRiskState, evaluate_portfolio_risk
+from hixton.domain.strategy import entry_priority
 from hixton.domain.trade_policy import TradePolicy, TradePolicyGate
 from hixton.domain.versions import StrategyDefinition
 from hixton.paper.models import (
@@ -313,12 +314,8 @@ def process_new_closed_points(
                         emitted.append(_blocked_event(signal, decision.block_reason))
                         continue
                     candidates.append((signal, point))
-            order = {symbol: index for index, symbol in enumerate(SYMBOLS)}
             candidates.sort(
-                key=lambda item: (
-                    -(item[1].rank_strength or 0.0),
-                    order[item[0].symbol],
-                )
+                key=lambda item: entry_priority(item[1].rank_strength, item[0].symbol, SYMBOLS)
             )
 
             for signal, point in candidates:

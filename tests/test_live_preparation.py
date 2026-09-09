@@ -188,7 +188,9 @@ def test_trial_route_is_authenticated_and_fail_closed_without_runtime_adapter(
         "target_notional_usdc": "80.00",
     }
     assert response.json()["trial"]["state"] == "NOT_STARTED"
-    assert service.trial is None
+    assert service.trial is not None and service.runtime is not None
+    assert response.json()["trial_readiness"]["runtime_connected"] is True
+    assert response.json()["trial_readiness"]["production_submission_accepted"] is False
     assert (
         client.post(
             "/api/live/trial/start", headers=HEADERS, json={**body, "force_live": True}
