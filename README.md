@@ -1,6 +1,12 @@
 # Der Hixton Trading Bot
 
-## Aktuell: Anwendung 0.4.7 / DMS 1.12.1
+## Aktuell: Anwendung 0.4.8 / DMS 1.13.0
+
+**Sichtbarer Betrieb (DEC-054):** `Startbot.bat` startet den lokal installierten Stand in einer sichtbaren Konsole und öffnet die Oberfläche. Eine identifizierte frühere Instanz derselben Installation wird geordnet beendet; erst nach ihrem tatsächlichen Prozessende startet die neue. Kein automatischer GitHub-Download beim Start, kein Abschießen fremder Portbenutzer. **Terminal schließen oder letzten Bot-Tab schließen = Bot aus.** Ein Tab-Neuladen hat 5 Sekunden Schonfrist; bei Verbindungsabbrüchen kommt die WebSocket-Erkennungszeit hinzu. Nach erkannter Stoppanforderung endet der Prozess spätestens nach 15 Sekunden, nötigenfalls durch Selbstbeendigung. Vor der ersten UI-Verbindung startet kein Paper-Handel; ohne Oberfläche beendet sich der Starter nach 60 Sekunden. Minimieren/Tabwechsel allein stoppen nicht. `--no-browser` unterdrückt nur das automatische Öffnen, erlaubt keinen unsichtbaren Dauerbetrieb.
+
+**Offene Binance-Positionen werden beim Beenden nicht verkauft und danach nicht mehr überwacht.** Ein späteres Livekonto benötigt deshalb weiterhin vollständige Neustart-/Order-Reconciliation. Diese Änderung gibt keinen Echtgeldtest frei. Die Kontovorprüfung zeigt jetzt deaktivierte/ungeklärte Rechte getrennt und nennt blockierende Altbestände; keine Bestände allein wegen einer Fehlermeldung verkaufen. Code-Abnahme 0.4.8: 271 Python-Tests, ein optionaler Vault-Test übersprungen; 19 UI-Tests, Ruff, mypy, TypeScript und Bundle-Build bestanden. Tatsächlicher Laptop-Prüfstand wird in DMS 18 separat festgehalten.
+
+### Vorherige Laptop-Auslieferung 0.4.7
 
 Am 09.09.2026 um 08:19 Europe/Berlin wurde **die tatsächliche Laptop-Installation** in `C:\Users\andre\OneDrive\Desktop\Der Hixton Indikator traiding BOT` auf Code `bc0b121` aktualisiert und über ihre vorhandene `Startbot.bat` neu gestartet. Geprüft: Anwendung 0.4.7, V6-USDC `d57f88ec2e5f`, HEALTHY, zehn USDC-Märkte, Binance-Stream verbunden, getrenntes Paperkonto mit 250 USDC und 3×80. Alle 50 Chartkombinationen liefern Daten. Historische USDT-Berichte und das vollständige alte Konto bleiben unverändert erhalten; sie sind keine USDC-Ergebnisse. Deployment-/Sicherungsnachweis: [DMS 18](DMS/18_BACKTEST_STATUS_UND_ERGEBNISFORMAT.md). Ergebnisse und Grenzen: [USDC-Prüfstand V7](backtests/v7/README.md).
 

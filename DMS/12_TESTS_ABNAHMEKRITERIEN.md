@@ -1,5 +1,9 @@
 # 12 – Tests und Abnahmekriterien
 
+## Prüfstand 0.4.8 / DEC-054
+
+271 Python-Tests bestanden, ein optionaler Windows-Vault-Test übersprungen; 19 UI-Tests, Ruff, mypy (50 Quelldateien), TypeScript und Produktionsbuild bestanden. Neue Tests: kein Handel vor UI, abgewiesener Fremd-Origin/fehlendes oder veraltetes Shutdown-Token, Mehrtab-/Reload-Schonfrist, Terminalverlust und Fehler der Terminalüberwachung, expliziter Stop, Schutz fremder Portbenutzer und Metadaten einer Nachfolgeinstanz. UI prüft pagehide/BFCache, Stop ohne Auto-Reconnect, Reload bei Prozesswechsel und sichtbaren Verbindungsverlust. Kontovorprüfung unterscheidet false/unbekannt und benennt Fremdbestände, ohne Gates zu lockern. Realer Laptop-Start-/Stopp-Nachweis wird getrennt in DMS 18 geführt; kein Echtgeldauftrag gehört zu diesen Tests.
+
 ## Prüfstand 0.4.7 / DEC-053 – keine Echtgeld-Abnahme
 
 Deployment-Nachtrag 09.09.2026 / DMS 1.12.1: Python-Suite auch im tatsächlichen Laptop-Projekt erfolgreich wiederholt, 262 bestanden und ein opt-in Windows-Vault-Test übersprungen. Laufender 0.4.7-USDC-Bot HEALTHY, zehn Märkte, 50/50 Chartkombinationen; Browserübersicht/Einstellungen/Chart geprüft, keine erfassten JavaScript-Warnungen/-Fehler. Erhaltene alte Paperdaten und lokale Schlüssel-/Passwortkonfiguration siehe DMS 18. Das ersetzt weder Binance-Ordertests noch einen abgenommenen echten Kontoreconciler.

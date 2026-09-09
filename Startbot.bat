@@ -1,5 +1,6 @@
 @echo off
 setlocal
+title Der Hixton - Bot aktiv nur mit Konsole und Bot-Seite
 cd /d "%~dp0"
 
 set "HIXTON_PYTHON=%CD%\.venv\Scripts\python.exe"
@@ -22,8 +23,10 @@ if not exist "src\hixton\ui\static\index.html" (
   goto :error
 )
 
-echo [Hixton] Starte Paper-Bot und lokale UI auf http://127.0.0.1:8765/ ...
-"%HIXTON_PYTHON%" src\main.py start
+echo [Hixton] Starte aktuelle Instanz. Eine bisherige Hixton-Instanz wird geordnet abgeloest.
+echo [Hixton] Konsole ODER letzte Bot-Seite schliessen = Bot AUS. Kein Hintergrundbetrieb.
+echo [Hixton] Offene Binance-Positionen werden beim Beenden NICHT automatisch verkauft.
+"%HIXTON_PYTHON%" src\main.py start %*
 if errorlevel 1 goto :error
 exit /b 0
 

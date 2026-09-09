@@ -30,6 +30,7 @@ from hixton.paper.storage import PaperStore
 from hixton.runtime.state import RuntimeSnapshot
 from hixton.runtime.supervisor import RuntimeSupervisor
 from hixton.ui.chart import RANGE_LABELS, build_chart_payload
+from hixton.ui.lifecycle import VisibleSession
 from hixton.ui.live import install_live_routes
 
 STATIC_ROOT = Path(__file__).with_name("static")
@@ -301,13 +302,24 @@ def _origin_is_local(request: Request) -> bool:
 
 
 def create_app(
-    config: ProjectConfig, supervisor: RuntimeSupervisor, *, live_vault: Vault | None = None
+    config: ProjectConfig,
+    supervisor: RuntimeSupervisor,
+    *,
+    live_vault: Vault | None = None,
+    session: VisibleSession | None = None,
 ) -> FastAPI:
     @asynccontextmanager
     async def lifespan(_: FastAPI) -> AsyncIterator[None]:
-        supervisor.start()
-        yield
-        await supervisor.stop()
+        if session is None:
+            supervisor.start()
+        else:
+            session.start(supervisor)
+        try:
+            yield
+        finally:
+            if session is not None:
+                await session.close()
+            await supervisor.stop()
 
     app = FastAPI(
         title="Der Hixton",
@@ -333,6 +345,8 @@ def create_app(
         return response
 
     install_live_routes(app, config, supervisor, _origin_is_local, live_vault)
+    if session is not None:
+        session.install(app)
 
     app.mount("/assets", StaticFiles(directory=STATIC_ROOT / "assets"), name="assets")
 

@@ -1,5 +1,13 @@
 # 16 – Entscheidungslog und offene Punkte
 
+## DEC-054 – Kein unsichtbarer Bot und kontrollierte Instanzablösung, 09.09.2026
+
+VERBINDLICH auf Eigentümerauftrag: `Startbot.bat` bleibt der einzige Starter. Er führt den aktuell lokal installierten Code aus. Ein erneuter Start darf nicht eine zusätzliche Handelsinstanz erzeugen: bestehende Instanz anhand Installation, Instanz-ID und zufälligem lokalem Kontrolltoken identifizieren, Shutdown anfordern und tatsächliches Prozessende abwarten. Fremde/alte nicht authentifizierbare Server auf dem Port bleiben unangetastet und erzeugen eine verständliche Meldung. Einmaliges Deployment von 0.4.7 erfordert gezieltes Beenden der identifizierten alten Instanz, da diese das neue Protokoll noch nicht kennt.
+
+Terminal geschlossen **oder** letzte Bot-Oberfläche geschlossen: neue Verarbeitung stoppen, Prozess beenden. Mehrere Tabs sind zulässig; erst das letzte Schließen startet die 5-Sekunden-Reload-Schonfrist. Minimierte Fenster und inaktive Tabs bleiben geöffnet; kein Timer auf Sichtfokus. WebSocket-Ping 10 Sekunden/Timeout 5 Sekunden zur Erkennung abgerissener Verbindungen. Keine Oberfläche nach 60 Sekunden: kein Handel und automatischer Stopp. Nach erkanntem Stopp maximal 15 Sekunden zum Prozessende, auch bei hängendem Download-Thread. Eigene unfertige SQLite-Transaktionen werden gegebenenfalls zurückgerollt; fremde Prozesse werden nie zwangsbeendet. Fehler der Terminalüberwachung führen ebenfalls zum Stopp.
+
+Kein automatischer Verkauf bei Programmende. Bereits echte offene Positionen wären danach ohne Bot-Überwachung; das wird in Konsole und UI angezeigt. Ein späterer Live-Wiederanlauf muss reale Orders/Bestände abgleichen, darf keine neue Budgetfreigabe erfinden und bleibt bis zur getrennten Abnahme gesperrt. Diese Entscheidung ersetzt die Vorstellung eines unsichtbaren 24/7-Hintergrunddienstes, nicht die bisherigen Handels-/Kapitalregeln.
+
 ## DEC-053 – GitHub-USDC-Umbau übernehmen, Echtgeld-Einmaltest weiter vorbereiten, 09.09.2026
 
 Eigentümer verweist auf `codex/build-foundation-v1` (übernommen bis `ab4f83e`). Parameter/Policies werden nicht neu optimiert. Aktiver Code benutzt zehn USDC-Symbole, eine eigene `hixton-usdc.sqlite3` und eindeutige Quote im Strategie-Snapshot; alte USDT-Konten/Ergebnisse werden nicht umetikettiert. Die historische V6-USDT-ID `9734f240e873` unterscheidet sich von V6-USDC `d57f88ec2e5f`. Das ist keine neue Profitabilitätsfreigabe.

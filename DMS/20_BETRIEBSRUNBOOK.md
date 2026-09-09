@@ -1,5 +1,16 @@
 # 20 – Betriebsrunbook
 
+## Bedienung ab 0.4.8 / DEC-054 – kein versteckter Dauerbetrieb
+
+1. Einmal `Startbot.bat` öffnen. Konsole und Bot-Seite offen lassen. Die Konsole benennt die Stoppregel, die UI zeigt eine dauerhafte Verbindungs-/Abschaltzeile und „Bot beenden“.
+2. Erneuter Start ersetzt die identifizierte frühere Instanz **derselben Installation** geordnet. Der Starter wartet auf Prozessende, nicht nur auf einen kurzfristig freien Port. Unbekannter Portbenutzer: verständlicher Abbruch, kein pauschales `taskkill` und keine zweite Handelsinstanz. Der Starter lädt keinen ungeprüften GitHub-Code automatisch herunter.
+3. Terminal schließen, letzten Bot-Tab schließen oder „Bot beenden“: Bot stoppt. Reload innerhalb 5 Sekunden bleibt möglich; mehrere Tabs zählen getrennt. Browser-/Verbindungsabbruch kann zusätzlich die Ping-Erkennungszeit benötigen. Nach erkanntem Stopp endet der Prozess binnen 15 Sekunden; ein hängender eigener Download-Thread verhindert das nicht dauerhaft.
+4. Ohne erste Bot-Oberfläche startet der Handel nicht; der Starter beendet sich nach 60 Sekunden. `Startbot.bat --no-browser` ist nur für manuelles Öffnen/Testen, kein Headless-Modus. Minimieren/Tabwechsel stoppen den Bot nicht. Windows-Konsole/zugehörige Shell werden überwacht; ein Überwachungsfehler stoppt sicher.
+5. **Offene Positionen werden nicht zwangsverkauft.** Nach Botende werden echte Binance-Positionen nicht mehr vom Bot überwacht. Vor echtem Betrieb bleibt ein vollständig abgenommener Konto-/Order-/Restmengen-Wiederanlauf zwingend. Bisheriger Einmaltest weiterhin nicht produktiv angeschlossen.
+6. Bei Binance-Vorprüfung unterscheiden die Meldungen jetzt „deaktiviert“ und „nicht eindeutig gemeldet“. Blockierende Altbestände werden namentlich angezeigt, nicht pauschal als Staub ignoriert oder als Bot-Eigentum übernommen. Betreiber richtet vertrauenswürdige öffentliche Ausgangs-IP und Spot-Les-/Handelsrechte selbst ein und speichert bei Binance. Keine Auszahlungs-/Transfer-/Futuresrechte hinzufügen. Danach lokal entsperren und neu „Verbindung prüfen“. Ein grüner Kontocheck allein ist keine Testtrade-Freigabe.
+
+Lokal ignoriert: `data/runtime-session.json` enthält den zufälligen Instanz-Kontrolltoken, **keinen Binance-Schlüssel**; nicht veröffentlichen. Er wird bei regulärem Ende nur vom passenden Besitzer entfernt. Veraltete Metadaten nach Rechnerabsturz werden bei freiem Port sicher ersetzt; sie rechtfertigen niemals blindes Beenden einer PID. Schlüssel/Passwort und Paperkonto werden durch Start/Stopp nicht gelöscht oder zurückgesetzt.
+
 ## Übergabe 0.4.7 / DEC-053 – Laptop aktualisiert, Echtgeld noch gesperrt
 
 GitHub-Stand `ab4f83e` und lokaler Orderadapter wurden zusammengeführt. Der Laptop wurde am 09.09.2026 ausdrücklich aktualisiert: Fast-forward `f976d6f` → `bc0b121` im tatsächlichen Desktop-Projekt, vorhandene `Startbot.bat` um 08:19 Berlin gestartet. Seit 08:19:54 HEALTHY, V6-USDC, 250 USDC Modellkapital, drei 80-USDC-Slots, keine Position/abgeschlossenen Trades, LIVE_DISABLED, Test NOT_STARTED. Alle zehn USDC-Märkte und 50 Chartkombinationen geprüft. Altes USDT-Ledger bleibt unangetastet und zusätzlich gesichert; Passwort/Schlüssel weiterhin als eingerichtet erkannt. Vollständiger Nachweis in DMS 18.

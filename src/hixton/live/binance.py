@@ -167,7 +167,13 @@ def assess_account(
     }
     for name in sorted(allowed):
         if permissions.get(name) is not True:
-            blockers.append(f"API-Recht fehlt oder ungeprüft: {name}")
+            state = "deaktiviert" if permissions.get(name) is False else "nicht eindeutig gemeldet"
+            hint = {
+                "enableReading": "Leserecht für diesen gespeicherten Key prüfen.",
+                "enableSpotAndMarginTrading": "Spot-Handel bei Binance freigeben und speichern.",
+                "ipRestrict": "Vertrauenswürdige öffentliche Ausgangs-IP bei Binance hinterlegen.",
+            }[name]
+            blockers.append(f"API-Recht {state}: {name}. {hint}")
     for name in sorted(forbidden):
         if permissions.get(name) is not False:
             blockers.append(f"API-Recht muss ausdrücklich deaktiviert sein: {name}")
@@ -192,7 +198,12 @@ def assess_account(
         if asset not in {quote_asset, "BNB"} and free + locked > 0
     ]
     if foreign:
-        blockers.append("Fremdbestände vorhanden; separaten Bot-Account verwenden/Bestände klären.")
+        blockers.append(
+            "Fremdbestände vorhanden: "
+            + ", ".join(sorted(foreign))
+            + ". Vorhandene Bestände müssen vom Bot-Bestand getrennt werden; "
+            "nicht allein wegen dieser Meldung verkaufen."
+        )
     free_quote = balances.get(quote_asset, (Decimal(0), Decimal(0)))[0]
     if free_quote < notional + Decimal("10"):
         blockers.append(
@@ -232,6 +243,14 @@ def assess_account(
             blockers.append(f"{symbol}: Mindestnotional fehlt oder liegt über 50 {quote_asset}.")
     return {
         "account_checks_passed": not blockers,
+        "permission_states": {
+            name: permissions[name] if type(permissions.get(name)) is bool else None
+            for name in sorted(allowed | forbidden)
+        },
+        "foreign_balances": [
+            {"asset": asset, "free": str(balances[asset][0]), "locked": str(balances[asset][1])}
+            for asset in sorted(foreign)
+        ],
         "blockers": blockers,
         "quote_asset": quote_asset,
         "free_quote": str(free_quote),

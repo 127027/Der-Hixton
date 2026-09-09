@@ -18,6 +18,7 @@ import type { TradingSettings, TradingLimits } from "./settings-draft";
 import { initializeTradingSettings } from "./trading-settings";
 import { initializeLivePreparation } from "./live-preparation";
 import { marketSignalText } from "./market-signal";
+import { initializeSessionLifetime } from "./session-lifetime";
 
 const symbols = ["BTCUSDC", "ETHUSDC", "BNBUSDC", "SOLUSDC", "XRPUSDC", "ADAUSDC", "LINKUSDC", "AVAXUSDC", "DOTUSDC", "DOGEUSDC"] as const;
 type SymbolName = (typeof symbols)[number];
@@ -519,6 +520,7 @@ const tradingSettings = initializeTradingSettings(async (settings) => {
   void refreshCore();
 });
 initializeControls();
+initializeSessionLifetime();
 initializeLivePreparation(() => tradingSettings.liveBlocker());
 ensureChart();
 void Promise.all([refreshCore(), refreshEvents(), refreshBacktests(), refreshRuntimeLogs()]).then(() => loadChart());

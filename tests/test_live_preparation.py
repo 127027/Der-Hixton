@@ -593,6 +593,21 @@ def test_missing_permissions_foreign_inventory_and_insufficient_usdc_fail_closed
     assert result["free_usdc"] == "0"
 
 
+def test_preflight_explains_false_unknown_and_each_foreign_asset_without_relaxing_gate() -> None:
+    permissions, account, orders, markets = account_fixture()
+    permissions["enableSpotAndMarginTrading"] = False
+    del permissions["ipRestrict"]
+    account["balances"].append({"asset": "BTC", "free": "0.0001", "locked": "0"})
+    result = assess_account(permissions, account, orders, markets, Decimal("50"))
+    assert result["account_checks_passed"] is False
+    assert result["permission_states"]["enableSpotAndMarginTrading"] is False
+    assert result["permission_states"]["ipRestrict"] is None
+    assert result["foreign_balances"] == [{"asset": "BTC", "free": "0.0001", "locked": "0"}]
+    assert "deaktiviert" in str(result["blockers"])
+    assert "nicht eindeutig gemeldet" in str(result["blockers"])
+    assert "BTC" in str(result["blockers"])
+
+
 def test_usdc_preflight_checks_actual_quote_not_usdt_and_never_changes_paper(tmp_path):
     permissions, account, orders, markets = account_fixture()
     account["balances"][0].update(asset="USDC", free="1200")

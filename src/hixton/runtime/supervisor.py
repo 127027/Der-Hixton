@@ -67,6 +67,8 @@ class RuntimeSupervisor:
     def _process_paper(
         self, points: dict[str, tuple[IndicatorPoint, ...]], rules: dict[str, ExecutionRules]
     ) -> tuple[object, ...]:
+        if self._stop.is_set():
+            return ()
         # The current provisional candle supplies only its immutable OPEN for fills.
         # It never enters the indicator or the closed-bar quality audit.
         with CandleStore(self.config.database_path) as store:
@@ -193,6 +195,8 @@ class RuntimeSupervisor:
             )
             try:
                 points, quality, rules = await asyncio.to_thread(self._synchronous_sync)
+                if self._stop.is_set():
+                    return
                 self.state.replace_analysis(points, quality)
                 if initial:
                     first_start = await asyncio.to_thread(
