@@ -3,8 +3,13 @@ setlocal
 cd /d "%~dp0"
 
 echo ============================================================
-echo  Hixton Local Engineering Agent - Bootstrap / Learning
+echo  Hixton Local Engineering Agent - API Reserve
  echo ============================================================
+echo.
+echo Dieser Agent verwendet bewusst den LOKALEN OpenAI-API-Zugang.
+echo Er verbraucht NICHT dein ChatGPT/Codex-Kontingent.
+echo API-Nutzung wird separat nach OpenAI-API-Preisen abgerechnet.
+echo Der API-Key wird niemals nach GitHub hochgeladen.
 echo.
 
 where powershell.exe >nul 2>nul
