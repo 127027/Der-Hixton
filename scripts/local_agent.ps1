@@ -6,6 +6,7 @@ $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Branch = 'agent/codex-supervisor-v1'
 $AgentRoot = Join-Path $env:LOCALAPPDATA 'HixtonAgent'
+. (Join-Path $PSScriptRoot 'codex_api.ps1')
 
 function Require-Success([string]$What) {
     if ($LASTEXITCODE -ne 0) {
@@ -44,15 +45,14 @@ if ($status.Trim()) {
     throw "Working tree is not clean. Commit/stash local changes before starting the agent.`n$status"
 }
 
-if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
-    throw "Codex CLI was not found. Install/login to Codex locally first; no GitHub OPENAI_API_KEY is required."
-}
-
 Write-Host 'Updating local agent branch...'
 & git pull --ff-only origin $Branch
 Require-Success 'git pull'
 
 New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
+$apiCodex = Initialize-HixtonApiCodex -AgentRoot $AgentRoot
+$CodexPath = $apiCodex.CodexPath
+$env:CODEX_HOME = $apiCodex.CodexHome
 
 for ($round = 1; $round -le $MaxRounds; $round++) {
     $state = Read-State
@@ -79,10 +79,10 @@ Update the required agent_memory documents and state.json with evidence-based pe
 Work thoroughly for this round and make meaningful progress before stopping.
 "@
 
-        & codex -c 'features.plugins=false' --ask-for-approval never --sandbox workspace-write --cd $work exec --ephemeral $prompt
+        & $CodexPath -c 'features.plugins=false' --ask-for-approval never --sandbox workspace-write --cd $work exec --ephemeral $prompt
         $codexExit = $LASTEXITCODE
         if ($codexExit -ne 0) {
-            throw "Codex exited with code $codexExit. On some native Windows Codex versions non-interactive workspace-write has known sandbox issues; update Codex or use AgentChat.bat for an interactive learning session."
+            throw "Codex exited with code $codexExit."
         }
 
         $tempMemory = Join-Path $work 'agent_memory'
