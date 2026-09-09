@@ -58,6 +58,21 @@ Required files:
 
 You may add additional focused knowledge files when useful.
 
+## Progress reporting
+
+Maintain `state.json` after every learning round. It must contain:
+
+- `progress_percent` from 0 to 100;
+- `current_focus` describing what is currently being learned;
+- `last_learning_round`;
+- `areas.inventory`, `areas.architecture`, `areas.dataflows`, `areas.ui_map`, `areas.storage`, `areas.tests`, `areas.security`, and `areas.cross_check`, each from 0 to 100;
+- the matching `*_complete` booleans;
+- `unresolved_repository_questions` and `external_runtime_unknowns`.
+
+Percentages are evidence-based engineering coverage, not estimates of time spent. Do not increase them because a round is ending. A section may reach 100 only when its required knowledge has been verified and documented. `progress_percent` should reflect the overall coverage of the eight areas, normally their rounded arithmetic mean. If later evidence invalidates prior understanding, reduce the affected percentage and document why.
+
+Never set `bootstrap_complete=true` unless all eight area percentages are 100, all eight completion booleans are true, the final cross-check has been performed, and no repository-understanding question remains that further code inspection could answer.
+
 ## Evidence standard
 
 Record facts only after verifying them in code, tests or committed documentation. Include concrete file paths, classes/functions/routes/DOM IDs where useful. Mark inference separately from verified behavior.
