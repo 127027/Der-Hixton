@@ -2,6 +2,8 @@
 
 ## Prüfstand 0.4.7 / DEC-053 – keine Echtgeld-Abnahme
 
+Deployment-Nachtrag 09.09.2026 / DMS 1.12.1: Python-Suite auch im tatsächlichen Laptop-Projekt erfolgreich wiederholt, 262 bestanden und ein opt-in Windows-Vault-Test übersprungen. Laufender 0.4.7-USDC-Bot HEALTHY, zehn Märkte, 50/50 Chartkombinationen; Browserübersicht/Einstellungen/Chart geprüft, keine erfassten JavaScript-Warnungen/-Fehler. Erhaltene alte Paperdaten und lokale Schlüssel-/Passwortkonfiguration siehe DMS 18. Das ersetzt weder Binance-Ordertests noch einen abgenommenen echten Kontoreconciler.
+
 Abschlussprüfung: **262 Python-Tests bestanden, 1 opt-in Windows-Vault-Test übersprungen; 16 UI-Tests bestanden; Ruff, Mypy (48 Quelldateien), TypeScript und Vite-Build bestanden.** Ein erster parallel zum Bundle-Build laufender Test wurde durch dessen temporär entfernten Assets-Ordner gestört; der vollständige sequenzielle Wiederholungslauf bestand. Kein Fehler wurde durch Entfernen eines Sicherheitstests umgangen.
 
 Zusätzlich echte lokal gespeicherte USDC-Kerzen geprüft: gemeinsamer Warm-up-Start 07.03.2024 08:00 UTC, Ende 08.09.2026 06:00 UTC, je Markt 21.958 Bars; zehn von zehn Qualitätsprüfungen und letzte Indikatorberechnungen gültig. Der Handelsbericht beginnt erst nach 400 Warm-up-Bars, am 24.03.2024 00:00 UTC. Dies ist kein aktueller Kontocheck, kein Echtgeldlauf und kein neuer Profitabilitätsbeleg. Das alte USDT-Ledger wird beim versehentlichen Öffnen mit dem neuen PaperStore vor einer Schemaänderung abgewiesen.

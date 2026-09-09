@@ -1,20 +1,20 @@
 # Der Hixton Trading Bot
 
-## Aktuell: Anwendung 0.4.7 / DMS 1.12.0
+## Aktuell: Anwendung 0.4.7 / DMS 1.12.1
 
-Der GitHub-USDC-Umbau bis `ab4f83e` wurde mit dem neuen, offline getesteten Einmal-Orderadapter zusammengeführt. Der Code verwendet zehn USDC-Märkte und die getrennte `data/hixton-usdc.sqlite3`; ein GitHub-Update allein migriert keinen laufenden Laptopprozess. Beim letzten Laptopcheck am 09.09.2026 lief dort unverändert 0.4.6/V6-USDT. Historische USDT-Berichte und Konten bleiben erhalten. Ergebnisse und Grenzen: [USDC-Prüfstand V7](backtests/v7/README.md).
+Am 09.09.2026 um 08:19 Europe/Berlin wurde **die tatsächliche Laptop-Installation** in `C:\Users\andre\OneDrive\Desktop\Der Hixton Indikator traiding BOT` auf Code `bc0b121` aktualisiert und über ihre vorhandene `Startbot.bat` neu gestartet. Geprüft: Anwendung 0.4.7, V6-USDC `d57f88ec2e5f`, HEALTHY, zehn USDC-Märkte, Binance-Stream verbunden, getrenntes Paperkonto mit 250 USDC und 3×80. Alle 50 Chartkombinationen liefern Daten. Historische USDT-Berichte und das vollständige alte Konto bleiben unverändert erhalten; sie sind keine USDC-Ergebnisse. Deployment-/Sicherungsnachweis: [DMS 18](DMS/18_BACKTEST_STATUS_UND_ERGEBNISFORMAT.md). Ergebnisse und Grenzen: [USDC-Prüfstand V7](backtests/v7/README.md).
 
 Der geplante Einmaltest verwendet **50 USDC**, wartet nach dem Benutzerklick auf genau ein neues qualifiziertes Signal und soll dessen Coin-Regeln bis zum Ausstieg ausführen; Paper bleibt unabhängig aktiv. **Noch nicht startbereit:** Orderadapter/Controller sind offline geprüft, aber nicht mit einem produktiven Runtime-/Bestandsreconciler verbunden. Der Button prüft Voraussetzungen, HTTP 409 verhindert Echtgeld. Ein grüner Trend ist kein neuer Kaufauftrag. Kein echter Testtrade und keine 24/7-Livefreigabe. Verbindlicher Übergabe-/Restarbeitsstand: [Betriebsrunbook](DMS/20_BETRIEBSRUNBOOK.md).
 
 ## Weiterhin gültige Bedienung seit 0.4.5
 
-Aktuell: **Anwendung 0.4.5 / DMS 1.10.1**. Einstellungen: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDC je Trade in 1-USDC-Schritten; das gewählte Positionsbudget ist Slots × Betrag, ohne feste 240-USDC-Grenze. Ein Klick auf „Übernehmen“ speichert. Kein Kontoreset, Guthabenauffüllen oder automatischer Echtgeldstart; verfügbare Mittel und Risikogates bleiben maßgeblich. Bestehende Positionen werden bei Änderungen nicht umgebucht.
+Einstellungen: **Handel → Binance verbinden → Livehandel**. Slots von 1 bis 10 und USDC je Trade in 1-USDC-Schritten; das gewählte Positionsbudget ist Slots × Betrag, ohne feste 240-USDC-Grenze. Ein Klick auf „Übernehmen“ speichert. Kein Kontoreset, Guthabenauffüllen oder automatischer Echtgeldstart; verfügbare Mittel und Risikogates bleiben maßgeblich. Bestehende Positionen werden bei Änderungen nicht umgebucht.
 
 Binance-Fehler `-1100` der Marktfilterabfrage korrigiert: Die Zehn-Coin-Liste wird ohne JSON-Leerzeichen gesendet. Öffentlich ohne Schlüssel reproduziert: vorher HTTP 400/-1100, korrigiert HTTP 200 mit zehn Symbolen. Live-Schalter markieren den bestätigten Serverzustand; der ausdrücklich beschriftete 50-USDC-Einmaltest braucht kein zusätzliches Häkchen und aktiviert keinen Dauerbetrieb.
 
 Unter „Binance verbinden“ zuerst das bereits eingerichtete lokale Hixton-Passwort verwenden bzw. beim ersten Mal eines festlegen. Rückmeldung steht direkt am Passwortfeld. Erst nach bestätigter Sitzung werden API-Key/Secret freigegeben; speichern und Verbindung prüfen. Vorhandene Passwörter werden nicht zurückgesetzt. Details: [Betriebsrunbook](DMS/20_BETRIEBSRUNBOOK.md).
 
-**Echtgeld noch nicht ausführbar:** Live an/aus und der einmalige 50-USDT-Test sind sichtbar, produktiver Orderadapter und Kontoabgleich fehlen jedoch weiterhin. Sie werden nicht durch UI-Vereinfachung freigegeben. Paper nutzt echte Marktzeit und simuliertes Geld; gemeinsame Handelsparameter, getrennte Konten/Fills.
+**Echtgeld noch nicht ausführbar:** Live-Steuerung und die Vorbereitung des einmaligen 50-USDC-Tests sind sichtbar. Der offline geprüfte Orderadapter ist noch nicht an Runtime und vollständigen Kontoabgleich angeschlossen. Sie werden nicht durch UI-Vereinfachung freigegeben. Paper nutzt echte Marktzeit und simuliertes Geld; gemeinsame Handelsparameter, getrennte Konten/Fills.
 
 Ein normaler Doppelklick auf `Startbot.bat` setzt **nichts** zurück. Der nur ausdrücklich beauftragte Offline-Neuanfang ist unter [DMS 20](DMS/20_BETRIEBSRUNBOOK.md) dokumentiert. Nach einem frischen Start sind zunächst drei Slots frei: Es wird auf neue qualifizierte Signale gewartet, nicht in alte grüne Trends hineingekauft.
 

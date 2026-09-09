@@ -1,8 +1,10 @@
 # 20 – Betriebsrunbook
 
-## Übergabe 0.4.7 / DEC-053 – Code integriert, Echtgeld noch gesperrt
+## Übergabe 0.4.7 / DEC-053 – Laptop aktualisiert, Echtgeld noch gesperrt
 
-GitHub-Stand `ab4f83e` und lokaler Orderadapter wurden zusammengeführt. Der Laptop wurde dabei nicht automatisch aktualisiert: letzter Nur-Lesen-Check 09.09.2026, 00:27 Berlin: HEALTHY, V6-USDT, 250 USDT Modellkapital, keine Position, keine abgeschlossenen Trades, LIVE_DISABLED, Test NOT_STARTED. Nicht behaupten, dort laufe schon der GitHub-USDC-Code.
+GitHub-Stand `ab4f83e` und lokaler Orderadapter wurden zusammengeführt. Der Laptop wurde am 09.09.2026 ausdrücklich aktualisiert: Fast-forward `f976d6f` → `bc0b121` im tatsächlichen Desktop-Projekt, vorhandene `Startbot.bat` um 08:19 Berlin gestartet. Seit 08:19:54 HEALTHY, V6-USDC, 250 USDC Modellkapital, drei 80-USDC-Slots, keine Position/abgeschlossenen Trades, LIVE_DISABLED, Test NOT_STARTED. Alle zehn USDC-Märkte und 50 Chartkombinationen geprüft. Altes USDT-Ledger bleibt unangetastet und zusätzlich gesichert; Passwort/Schlüssel weiterhin als eingerichtet erkannt. Vollständiger Nachweis in DMS 18.
+
+**Start beim Betreiber:** Weiter ausschließlich dieselbe `Startbot.bat` im Desktop-Projekt verwenden. Die Oberfläche liegt auf `http://127.0.0.1:8765/`; zeigt eine bereits offene Browserseite noch USDT, einmal Strg+F5. Aktiver Header muss V6-ID `d57f88ec2e5f`, Marktkarte BTC/USDC und Kapital USDC zeigen. Ein Start bei bereits belegtem Port ersetzt keinen alten Prozess automatisch; bei künftigen Updates deshalb Installation **und tatsächlich laufende Version** prüfen, nicht nur GitHub. Keine zweite Startdatei/kein automatischer Kontoreset hinzugefügt.
 
 Neu implementiert: `live/exchange.py` mit explizitem Binance-/Spot-Testnet-Host, HTTPS ohne Redirect/Proxy/automatischen Retry, signiertem MARKET-Kauf mit `quoteOrderQty=50.00`, SELL mit ausdrücklich vorgegebener eigener Menge, stabiler Client-ID, ACK→Orderstatus→paginierten tatsächlichen Fills. Unklare Antworten bleiben UNKNOWN und werden nur abgefragt. Exakte Binance-Quote-Mengen/Gebührenwährungen werden gebucht; USDT/USDC sind getrennt. Späte Fehler überschreiben keinen terminalen Erfolg. Entry-Freigabeablauf verhindert keinen schon fälligen Exit; dessen eigene Sicherheitsprüfung bleibt zwingend. Alles bisher ausschließlich mit Fake-HTTP/Fake-Börse geprüft.
 

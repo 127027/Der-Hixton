@@ -1,8 +1,8 @@
 # 00 – Dokumentenlenkung und Start
 
-## Aktuell: DMS 1.12.0 / Anwendung 0.4.7, DEC-053
+## Aktuell: DMS 1.12.1 / Anwendung 0.4.7, DEC-053
 
-Der GitHub-USDC-Umbau wurde integriert und um Orderadapter-/Migrationsregressionen ergänzt. Codeziel: V6-USDC `d57f88ec2e5f`, getrennte Modell-Datenbank. Laptop-Deployment ist separat zu prüfen; zuletzt lief dort noch 0.4.6/V6-USDT. Genau ein späterer 50-USDC-Test ist beauftragt, aber noch nicht ausführbar: produktiver Controller-Anschluss, Kontoreconciler, Mengen-/Preisgates und Testnet-/Betriebsabnahme fehlen. Keine Freigabe durch grüne Unit-Tests. DMS 20 enthält die konkrete Übergabe. Alle nachfolgenden datierten Stände sind Historie, keine heutige Aktivierungsbehauptung.
+Der GitHub-USDC-Umbau wurde integriert und um Orderadapter-/Migrationsregressionen ergänzt. Am 09.09.2026 um 08:19 Berlin ist Code `bc0b121` tatsächlich im Laptop-Ordner installiert und dessen vorhandene `Startbot.bat` gestartet worden: HEALTHY, V6-USDC `d57f88ec2e5f`, zehn Märkte, 250-USDC-Modellkonto/3×80 in getrennter Datenbank. Altes USDT-Ledger und Zugangsdaten bleiben erhalten. Deploymentnachweis steht in DMS 18. Genau ein späterer 50-USDC-Test ist beauftragt, aber noch nicht ausführbar: produktiver Controller-Anschluss, Kontoreconciler, Mengen-/Preisgates und Testnet-/Betriebsabnahme fehlen. Keine Freigabe durch grüne Unit-Tests oder einen gesunden Paperbetrieb. DMS 20 enthält die konkrete Übergabe. Alle nachfolgenden datierten Stände sind Historie, keine heutige Aktivierungsbehauptung.
 
 ## Historie: DMS 1.11.0 / Anwendung 0.4.6, DEC-052
 
