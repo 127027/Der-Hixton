@@ -18,6 +18,14 @@ Dieses Dokument hält externe, veränderliche Tatsachen getrennt von dauerhaften
 
 Die Seite beschreibt Kauf-/Verkaufspfeile, Nutzung auf verschiedenen Märkten und Timeframes sowie den allgemeinen Risikohinweis, dass keine Gewinngarantie besteht. Sie stellt jedoch keine ausreichend vollständige technische Signalformel oder öffentlich prüfbaren Pine-Source bereit. Deshalb behauptet das Projekt keine Herstellerparität; seine eigenständige normative V1-Definition ist `HIXTON-SPEC-1.0` in Dokument 03.
 
+## Offizielle Pine-v6-Semantik
+
+- Pine Script v6 Referenz: `https://www.tradingview.com/pine-script-reference/v6/`
+- Variablen, `var` und Bar-Historie: `https://www.tradingview.com/pine-script-docs/faq/variables-and-operators/`
+- Migration und Bool-Historie in v6: `https://www.tradingview.com/pine-script-docs/migration-guides/to-pine-version-6/`
+
+Diese Primärquellen wurden für die Python-Abbildung der am 01.09.2026 vom Eigentümer gelieferten Pine-Datei verwendet. Die Datei selbst, ihr SHA-256 und die konkret getesteten Parameter bleiben die projektspezifische V2-Referenz.
+
 ## Prüfung des initialen Universums
 
 Prüfdatum: 31.08.2026. Methode:
@@ -59,4 +67,4 @@ Für den Bot gilt:
 
 Remote: `https://github.com/127027/Der-Hixton`
 
-Am 31.08.2026 wurde der Remote als öffentliches Repository mit aktivem Branch `main` geprüft. Die DMS-Struktur ist dort die zentrale Projektablage. Proprietärer/fremder Pine-Source bleibt gemäß DEC-031 ausgeschlossen; mangels bewusst gesetzter `LICENSE` wird keine Open-Source-Lizenz unterstellt.
+Am 31.08.2026 wurde der Remote als öffentliches Repository mit aktivem Branch `main` geprüft. Die DMS-Struktur ist dort die zentrale Projektablage. Seit 01.09.2026 darf die vom Eigentümer zur Projektverwendung bereitgestellte Pine-v6-Datei gemäß DEC-031/034 eingecheckt werden; andere fremde Quellen bleiben ausgeschlossen. Mangels bewusst gesetzter `LICENSE` wird keine Open-Source-Lizenz unterstellt.

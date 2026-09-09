@@ -1,5 +1,7 @@
 # 09 – Systemarchitektur und Datenmodell
 
+V6-Erweiterung ohne zweite Engine: `StrategyDefinition` hält eine vollständige unveränderliche Map aus zehn `CoinProfile`-Einträgen. Jeder enthält `StrategyParameters` und `TradePolicy`. Analyse, Paper, Einzel-/Batch-/Portfoliobacktest und Chart lesen diese Quelle. SQLite-Positionen erhalten `entry_atr_text` und `highest_close_text` mit Legacy-Default 0; alte Zeilen werden nicht gelöscht. V6-Positionen ohne persistierten Entry-ATR stoppen die Verarbeitung sicher. Strategie-ID enthält den Profilhash.
+
 ## Architekturprinzipien
 
 - Strategie-Domain bleibt unabhängig von Börse, UI und Speicher.
@@ -12,7 +14,7 @@
 ## Zwei Systeme, ein gemeinsamer Strategiekern
 
 1. **Backtest-Labor:** historische Replay-/Batchläufe, standardmäßig 10×250 USDT oder ein frei gewählter Einzeltest mit 250 USDT; niemals Börsenorders.
-2. **24/7 Paper-/Live-System:** laufende Binance-Daten, anfangs 240 USDT gemeinsamer Cashpool und drei Slots à 80 USDT; Paper ist Pflichtvorstufe für Live.
+2. **24/7 Paper-/Live-System:** laufende Binance-Daten, anfangs 250 USDT gemeinsamer Cashpool (10 USDT Startreserve) und drei Slots à 80 USDT; Paper ist Pflichtvorstufe für Live.
 
 Die Systeme sind getrennte Laufmodi und Ledgers, aber keine getrennten Kopien der Hixton-Formel. Beide verwenden dieselbe versionierte Indicator-/Strategy-Engine. Dadurch wird verhindert, dass der Backtest „richtig“ und Paper/Live anders reagiert.
 
@@ -34,7 +36,7 @@ Die Systeme sind getrennte Laufmodi und Ledgers, aber keine getrennten Kopien de
 | UI | Dashboard, Chart, Reports, Einstellungen |
 | Observability | Logs, Metriken, Health und Alerts |
 
-## Verbindlicher Referenzstack für V1
+## Verbindlicher Referenzstack
 
 - Python-3-Service für Domain, Backtest und Adapter;
 - lokale relationale Datenbank, initial SQLite im WAL-Modus; Migration auf PostgreSQL möglich;

@@ -1,5 +1,13 @@
 # 04 – Märkte, Kapital und Risiko
 
+Aktueller Vorrang: **DMS 1.12.0 / DEC-053 / Anwendung 0.4.7**. Der integrierte Code verwendet USDC (250 Modellstart, Standard 3×80; später genau ein 50-USDC-Test). Alte datierte USDT-Anforderungen/Ergebnisse sind Historie, keine umgerechneten USDC-Nachweise. Runtime- und Laptop-Deployment sind getrennt zu prüfen. Kein Echtgeldstart: technischer Restarbeitsplan in [DMS 20](20_BETRIEBSRUNBOOK.md), tatsächlicher Testnachweis in [DMS 12](12_TESTS_ABNAHMEKRITERIEN.md). Bestehende Live-Sicherheitsgates bleiben wirksam.
+
+DEC-052 / 0.4.6: Zielwährung des künftigen Betreiber-Spotbetriebs ist USDC, erster geplanter Echtgeldversuch genau einmal 50 USDC. Aktive V6-Modelldaten bleiben USDT; V7-USDC ist zunächst eine gesonderte, nicht freigegebene Prüfung. Kein tatsächlicher Umtausch, Einzahlen oder Import der ca. 1200 USDC. Historische 3×80-Prüfung startet mit 250 Einheiten der jeweiligen Quote (240 Positionsbudget plus 10 Anfangsreserve). Gemeinsame Zeitfenster und identische Risikogates sind beim Vergleich Pflicht. Ein 20-%-Drawdown-Halt blockiert neue Entries, liquidiert aber nicht; der tatsächliche Drawdown kann darüber liegen. Keine tägliche Profitgarantie, kein Hebelauftrag.
+
+Aktuell DEC-051 / 0.4.5: Baseline 3×80 bleibt unverändert, die UI erlaubt 1–10 Slots × gewähltes positives Zielnotional ohne feste 240-USDT-Grenze. 5×50 bzw. 10×100 sind speicherbar; kein zusätzlicher Cash und keine neue Profitbehauptung. Das Update verändert die gespeicherten Betreiberwerte nicht. Die folgenden 3×80-Angaben beschreiben die Baseline. Slotanzahl ist eine Obergrenze, kein Auftrag, ohne qualifiziertes Signal zu kaufen. Verfügbare Mittel und interne Risikogates bleiben maßgeblich. Änderungen gelten für neue Entries, nicht als Zwangsabbau vorhandener Positionen; Positionsbudget ist keine garantierte Verlustgrenze.
+
+DEC-045: Der ausdrücklich beauftragte neue V6-Paperaccount beginnt separat mit 250 USDT. Die alte 240-USDT-Kontohistorie bleibt archiviert, nicht umgebucht. 3×80, höchstens ein Slot je Coin, Baselinekosten sowie 5-%-Tagespause und 20-%-Drawdown-Halt bleiben unverändert. Die 10 USDT sind eine Anfangsreserve, kein dauerhaft garantierter Mindestbetrag.
+
 ## Initiales Marktuniversum
 
 Für DMS V1 festgelegte Binance-Spot-Paare:
@@ -23,7 +31,7 @@ Ein Paar darf nur aktiviert werden, wenn es beim jeweiligen Start weiterhin hand
 
 ### System 1 – Paper und später Live
 
-- Gesamtstartkapital: **240,00 USDT**.
+- Gesamtstartkapital: **250,00 USDT** für neue Konten (DEC-044). Davon höchstens 240 USDT in drei 80-USDT-Slots und 10 USDT anfängliche Cashreserve; Gewinne/Verluste verändern diesen Puffer. Bestehende Konten behalten ihren tatsächlichen Bestand und ursprünglichen Startwert.
 - Gemeinsamer Cashbestand für alle zehn beobachteten Paare.
 - Standard: **drei Positionsslots à 80,00 USDT Zielnotional**.
 - Höchstens drei gleichzeitig offene Long-Positionen.
@@ -40,8 +48,8 @@ Kapital, Slotanzahl und Zielnotional müssen wegen Gebühren und verfügbarem Ca
 - Ziel-Quote-Budget je Einstieg ist in diesen isolierten Läufen fest 250,00 USDT oder, nach Verlusten, der kleinere verfügbare Cashbetrag; Gewinne erhöhen die nächste Zielgröße nicht automatisch.
 - Jeder Test startet ohne Position und Altorder.
 - Einzeltests beeinflussen einander nicht; Ergebnisse werden je Coin und zusätzlich als Vergleichstabelle gezeigt.
-- Optionaler Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 240 USDT und 3×80 USDT nach.
-- Es gibt kein festes Ziel „250 oder 500 USDT“. Zuerst wird korrekte Indikatorreaktion bewiesen; Performance wird ohne Wunschwert berichtet.
+- Der verpflichtende Spiegeltest bildet zusätzlich das Paper-/Live-Modell mit 250 USDT und 3×80 USDT samt Risikogates nach.
+- 250→500 USDT je Coin in drei Jahren ist nur ein Beispiel für einen guten Test, keine verbindliche Quote oder Garantie. Zuerst wird korrekte Indikatorreaktion bewiesen; danach wird die vollständige Performance einschließlich Zielverfehlungen berichtet.
 
 ## Positionsgröße
 
@@ -58,21 +66,23 @@ Initiale Regel:
 - keine Kreditaufnahme, kein negativer Cash-Bestand;
 - eine UI-Änderung von Slotanzahl oder Positionsgröße wirkt nur auf neue Einstiege.
 
-Automatisches Compounding ist deaktiviert. Das Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten V1-Backtest 250 USDT, auch wenn Gewinne entstehen. Nach Verlusten wird höchstens der verfügbare Cashbetrag eingesetzt. Nur eine bewusst bestätigte und auditierte UI-Änderung verändert die Größe künftiger Paper-/Live-Einstiege; bestehende Positionen bleiben unberührt.
+Automatisches Compounding ist deaktiviert. Das Zielnotional bleibt im Paper-/Live-Modell 80 USDT und im isolierten Backtest 250 USDT, auch wenn Gewinne entstehen. Nach Verlusten wird höchstens der verfügbare Cashbetrag eingesetzt. Nur eine bewusst bestätigte und auditierte UI-Änderung verändert die Größe künftiger Paper-/Live-Einstiege; bestehende Positionen bleiben unberührt.
 
 ## Slotvergabe
 
-Freie Slots gehen verbindlich an den größten auf 12 Dezimalstellen mit Round-Half-Even gerundeten Wert `(close-upper)/ATR` der jeweiligen Flip-Up-Kerze. Gleichstand wird über diese feste Reihenfolge gebrochen: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. Die Regel verwendet ausschließlich V1-Indikatorwerte und wird im Backtest mit simultanen Signalen geprüft.
+Freie Slots gehen verbindlich an den größten auf 12 Dezimalstellen mit Round-Half-Even gerundeten Wert `(close-upper)/ATR` der jeweiligen Flip-Up-Kerze. Gleichstand wird über diese feste Reihenfolge gebrochen: BTC, ETH, BNB, SOL, XRP, ADA, LINK, AVAX, DOT, DOGE. Die Regel verwendet ausschließlich Werte der jeweils ausgewählten Strategieversion und wird im Backtest mit simultanen Signalen geprüft.
 
 Ein Kauf-Flip, der wegen voller Slots nicht ausgeführt wird, wird protokolliert. Er wird nicht später mitten im bestehenden Uptrend nachgeholt, außer die Strategie definiert ausdrücklich eine weiterhin gültige Entry-Bedingung.
+
+Aktive V2 belegt höchstens einen Slot je Coin. Mehrfachslots im selben Coin sind nicht grundsätzlich verboten, benötigen aber eine eigene Strategieversion und denselben vollständigen Vergleich. `HIXTON-V3-SLOT-CANDIDATE-1` testete bis zu drei Slots auf dem stärksten gleichzeitigen Signal und wurde wegen des frühen 20-%-Risikohalts verworfen. Drei Slots im selben Coin erzeugen nur dreifaches Notional auf demselben Signal, nicht drei unabhängige Trades.
 
 ## Optimierungsziel
 
 „So viele Trades wie möglich“ darf nicht zu sinnlosen Gebührenumsätzen führen. Rangfolge:
 
 1. korrekte Hixton-Signale und Risikoregeln;
-2. maximaler Nettogewinn nach Gebühren und Slippage;
-3. bei sonst vergleichbarer Nettoperformance höhere Tradezahl und Kapitalnutzung.
+2. robuste Nettowirkung nach Gebühren und Slippage in unterschiedlichen Marktphasen, mit ausgewiesenen Rückschritten;
+3. effiziente Slotnutzung durch gute Signale aller zehn Coins; Tradezahl allein ist kein Gütekriterium.
 
 Timeframe oder Parameter werden nicht allein verändert, um künstlich mehr Trades zu erzeugen. Varianten müssen out-of-sample und nach Kosten bewertet werden.
 

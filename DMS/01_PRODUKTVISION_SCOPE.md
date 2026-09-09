@@ -1,6 +1,8 @@
 # 01 – Produktvision und Scope
 
-Status: `VERBINDLICH` für DMS V1.
+Präzisierung 06.09.2026 (DEC-043/044): Ziel ist die effiziente Nutzung von höchstens drei 80-USDT-Slots mit guten Signalen aus zehn Coins, nicht maximale Tradezahl. Einzeltests à 250 USDT prüfen zunächst jede Signalquelle; erst der gemeinsame 3×80-Spiegel prüft ihre Konkurrenz und Kapitalwirkung. 50/150/300 Trades und 250→500 USDT sind Beispiele, keine Zielquoten. Jede Coin-Eignung bleibt nach Kosten und über unterschiedliche Marktphasen nachzuweisen; Überanpassung oder erzwungene Trades erfüllen das Ziel nicht.
+
+Status: `VERBINDLICH` für DMS V1.3.
 
 ## Produktziel
 
@@ -23,7 +25,7 @@ Ein fachkundiger Dritter kann anhand dieses DMS und der späteren Artefakte:
 ## Enthalten
 
 - zehn konfigurierte Binance-Spot-Paare mit USDT als Quote-Währung;
-- 24/7-Papersystem als Live-Vorbereitung mit gemeinsamem Modellkapital von 240 USDT und drei anfänglichen Positionsslots à 80 USDT;
+- 24/7-Papersystem als Live-Vorbereitung mit gemeinsamem Modellkapital von 250 USDT (240 USDT Slots plus 10 USDT anfängliche Reserve) und drei anfänglichen Positionsslots à 80 USDT;
 - getrenntes Backtestsystem mit zehn isolierten Tests à 250 USDT sowie frei wählbaren Einzeltests, zum Beispiel nur ETH/USDT;
 - Einzelberichte pro Paar und ein aggregierter Portfoliobericht;
 - Mindesttestfenster von drei vollständigen Jahren;
@@ -35,7 +37,7 @@ Ein fachkundiger Dritter kann anhand dieses DMS und der späteren Artefakte:
 
 ## Nicht enthalten
 
-- Entwicklung oder Änderung des Pine-Indikators innerhalb dieses Dokumentationsauftrags;
+- undokumentierte Änderung der vom Eigentümer gelieferten Pine-Formel oder der visuell eingefrorenen UI;
 - Ergebnis- oder Gewinnversprechen;
 - Futures, Margin, Leverage oder Short-Positionen ohne neue Freigabe;
 - Martingale, Grid oder DCA/Pyramiding;
