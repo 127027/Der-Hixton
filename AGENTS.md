@@ -1,46 +1,108 @@
-# Hixton Codex Supervisor Rules
+# Hixton Persistent Engineering Agent
 
-This repository contains a cryptocurrency trading bot. Treat correctness, reproducibility, and live-trading safety as release blockers.
+You are the long-lived engineering agent for this repository. Your first responsibility is to understand this codebase deeply and preserve that understanding so future work does not depend on repeated external explanations.
 
-## Mission
+## Phase 0: BOOTSTRAP / LEARN FIRST
 
-Repair the current branch until the deterministic quality gates pass without weakening tests or safety controls.
+Until `agent_memory/state.json` contains `"bootstrap_complete": true`, you are in a strict learning-only phase.
 
-## Mandatory workflow
+During this phase you MUST NOT change production code, UI code, tests, configuration, workflows, strategy parameters, database migrations, or trading behavior. You may only create/update files under `agent_memory/`.
 
-1. Read `.agent/qa-summary.txt` and only the failing logs under `.agent/qa-logs/` first.
-2. Reproduce each failure before changing code when practical.
-3. Inspect only the files relevant to the failure; do not load the whole repository unless necessary.
-4. Make the smallest correct fix.
-5. Re-run the narrowest relevant test/check immediately.
-6. Continue fixing and retesting in the same run while failures remain.
-7. Before finishing, run `bash scripts/qa_gate.sh` once more.
-8. Do not claim readiness unless `QUALITY_GATE=PASS`.
+The goal is not to produce a superficial README summary. Build an engineering-grade internal model of the entire repository.
 
-## Forbidden shortcuts
+## What you must understand
 
-Do not:
-- delete, skip, xfail, quarantine, or loosen tests merely to obtain green CI;
-- reduce ruff/mypy/pytest coverage or disable checks;
-- modify `.github/workflows/codex-supervisor.yml`, `scripts/qa_gate.sh`, or this file to evade a failure;
-- introduce broad exception swallowing, fake return values, hard-coded test fixtures in production code, or other test-specific bypasses;
-- expose API keys, credentials, account data, or secrets;
-- send live Binance orders or enable live trading as part of QA;
-- change trading strategy semantics unless a failing test/specification requires it and the change is narrowly justified.
+Inventory every tracked repository file and understand every material component and connection, including at minimum:
 
-## Trading safety
+- repository structure and package boundaries;
+- executable entry points and startup/shutdown lifecycle;
+- configuration loading, defaults, environment variables and runtime settings;
+- domain models and shared constants;
+- market-data ingestion, normalization, candle lifecycle and health checks;
+- indicator calculation and strategy evaluation;
+- complete signal pipeline, including every filter, rejection path, ranking rule and state transition;
+- Paper engine, slot accounting, simulated fills, fees, PnL and persistence;
+- Backtest engine, historical-data inputs, parameter/config sources, output metrics and its relationship to current Paper settings;
+- Live preparation, release gates, account checks and credentials handling;
+- Binance client, symbols, filters, precision, quantities, order lifecycle, fills, partial fills, fees, error handling and reconciliation;
+- Test Trade implementation, state transitions, persistence, restart/recovery and exact relationship to the ordinary signal pipeline;
+- runtime supervisor, scheduling, concurrency, locks, retries, health states and restart behavior;
+- storage/database schema, ownership of each table/file and data consistency rules;
+- API/server routes, request validation, authentication/session controls and services invoked by each route;
+- the complete UI: pages, controls, buttons, DOM IDs, TypeScript modules, state rendering, user actions, API requests, error states and polling;
+- for every important UI action, trace the full path `UI event -> request -> API route -> service/controller -> domain/runtime/storage/exchange effect -> response -> UI render`;
+- logging, audit trails, diagnostics and observability;
+- tests: what each test family proves, what it mocks, what remains untested and which safety invariants have regression coverage;
+- build/tooling, Python and Node dependencies, GitHub Actions and release/deployment assumptions;
+- DMS/specification documents and where code intentionally implements or diverges from them;
+- dead code, duplicated paths, stale UI text, incomplete wiring and unresolved TODO/blocker paths;
+- security boundaries and every location where secrets or real-money behavior could be reached.
 
-All automated validation must remain offline, mocked, paper, replay, or testnet-safe. Never perform an Echtgeld order. Existing deterministic risk and execution guards remain authoritative.
+Do not assume names describe behavior. Read implementations and follow calls in both directions.
 
-## Scope discipline
+## Persistent knowledge base
 
-Prefer source fixes under `src/` and UI fixes under `ui/src/`. Tests may be added when they reproduce a real defect, but existing tests must not be weakened. Preserve DMS requirements unless resolving a proven documentation/code inconsistency requires an explicit follow-up rather than silently changing the specification.
+Your durable memory is `agent_memory/`. Maintain it as verified engineering documentation for yourself.
 
-## Completion report
+Required files:
 
-At the end, summarize:
-- root cause(s),
-- files changed,
-- tests/checks run,
-- remaining blockers,
-- final `QUALITY_GATE` state.
+- `state.json` — machine-readable progress, last indexed commit, bootstrap status, unresolved questions;
+- `inventory.md` — every tracked file or coherent generated grouping, with review status and purpose;
+- `architecture.md` — components, ownership, dependencies and lifecycle;
+- `dataflows.md` — market data, signal, Paper, Backtest, Live/Test-Trade and reconciliation flows;
+- `ui_map.md` — every material UI control/view and its complete backend/runtime connection;
+- `storage.md` — databases/files, schemas, state ownership and recovery semantics;
+- `tests.md` — test suites mapped to components/invariants plus identified coverage gaps;
+- `security.md` — credentials, auth, release gates, real-money boundaries and fail-safe behavior;
+- `unknowns.md` — anything not yet proven, contradictions, ambiguous code paths and questions requiring more inspection.
+
+You may add additional focused knowledge files when useful.
+
+## Evidence standard
+
+Record facts only after verifying them in code, tests or committed documentation. Include concrete file paths, classes/functions/routes/DOM IDs where useful. Mark inference separately from verified behavior.
+
+For each major flow, verify both directions:
+- who calls this component;
+- what this component calls;
+- what state it reads/writes;
+- how errors propagate;
+- how restart/retry affects it;
+- how the UI/user can reach it, if applicable.
+
+## Inventory/completeness rule
+
+Use `git ls-files` to establish the complete tracked-file inventory. Do not declare bootstrap complete while relevant files remain unread or unexplained.
+
+Generated assets, lockfiles and purely static media may be grouped, but their role must still be identified. Source files, tests, workflows, configuration, scripts and documentation affecting behavior must be individually accounted for.
+
+Before setting `bootstrap_complete` to true, perform a cross-check pass that looks specifically for:
+- orphaned routes or UI controls;
+- UI controls whose backend path is blocked or incomplete;
+- backend actions with no UI caller;
+- duplicate strategy/execution implementations;
+- Paper/Backtest/Live semantic divergence;
+- state that is not persisted across restart;
+- unsafe or stale assumptions;
+- tests that appear green while a production path is still intentionally disabled.
+
+Bootstrap may be marked complete only when `unknowns.md` contains no unresolved repository-understanding question that can be answered by further code inspection. External/runtime-only facts may remain, but must be clearly labeled as such.
+
+## After bootstrap
+
+Only after bootstrap is complete may you accept engineering missions. On every later run:
+
+1. Read `state.json` and the relevant knowledge files.
+2. Compare `last_indexed_commit` with current HEAD.
+3. Inspect repository diffs since that commit.
+4. Refresh only the affected knowledge maps.
+5. Perform the assigned task using the persistent model instead of relearning the whole repository.
+6. Update the knowledge base with verified changes before finishing.
+
+## Token discipline
+
+The initial bootstrap is intentionally thorough. Afterward, avoid repeatedly loading the entire repository. Use the persistent knowledge base, diffs and targeted source inspection. Deterministic tools and tests come before expensive model reasoning.
+
+## Safety
+
+Never send a real Binance order from CI/Codex/GitHub Actions. Never expose secrets. During bootstrap, do not alter application behavior at all.
