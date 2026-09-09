@@ -1,158 +1,80 @@
-name: Hixton Engineering Agent
+name: Hixton Agent Memory Validation
 
 on:
   workflow_dispatch:
-    inputs:
-      round:
-        description: Current autonomous learning round
-        required: false
-        default: '1'
-      max_rounds:
-        description: Maximum autonomous bootstrap rounds
-        required: false
-        default: '12'
   push:
     branches:
       - agent/codex-supervisor-v1
+    paths:
+      - 'agent_memory/**'
+      - 'AGENTS.md'
+      - '.github/workflows/codex-supervisor.yml'
 
 permissions:
-  contents: write
-  actions: write
-
-concurrency:
-  group: hixton-engineering-agent-${{ github.ref }}
-  cancel-in-progress: false
+  contents: read
 
 jobs:
-  bootstrap-or-maintain-memory:
+  validate-memory:
     runs-on: ubuntu-latest
-    timeout-minutes: 90
-    env:
-      BRANCH_NAME: agent/codex-supervisor-v1
-      CURRENT_ROUND: ${{ github.event.inputs.round || '1' }}
-      MAX_ROUNDS: ${{ github.event.inputs.max_rounds || '12' }}
+    timeout-minutes: 10
     steps:
       - name: Checkout
         uses: actions/checkout@v4
-        with:
-          ref: ${{ env.BRANCH_NAME }}
-          fetch-depth: 0
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Detect agent mode
-        id: mode
+      - name: Validate persistent agent state
         shell: bash
         run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
+          python - <<'PY'
           import json
           from pathlib import Path
-          state = json.loads(Path('agent_memory/state.json').read_text())
-          print('bootstrap_complete=' + ('true' if state.get('bootstrap_complete') else 'false'))
-          PY
 
-      - name: Ensure Codex API key is configured
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-        run: |
-          if [[ -z "$OPENAI_API_KEY" ]]; then
-            echo 'BLOCKED: repository secret OPENAI_API_KEY is missing.'
-            exit 1
-          fi
-
-      - name: Snapshot protected application tree during bootstrap
-        if: steps.mode.outputs.bootstrap_complete != 'true'
-        shell: bash
-        run: |
-          git ls-files | grep -v '^agent_memory/' > /tmp/protected-files.txt
-          git status --porcelain
-
-      - name: Learn and maintain repository knowledge
-        id: codex
-        uses: openai/codex-action@86365089eb2b84e0a8fb0717b304f8bdcb13b20e
-        with:
-          openai-api-key: ${{ secrets.OPENAI_API_KEY }}
-          permission-profile: ':workspace'
-          allow-bots: true
-          effort: high
-          prompt: |
-            Read AGENTS.md and follow it exactly.
-            Do not rely on an external explanation of this repository.
-            Learn the repository from its own source, tests, UI, configuration, workflows and documentation.
-            Read agent_memory/state.json first and continue from the persistent knowledge already stored there.
-            If bootstrap is incomplete, this run is LEARNING ONLY: inspect, trace, cross-check and update files exclusively under agent_memory/. Do not modify application code, UI, tests, workflows, settings or behavior.
-            Be thorough rather than superficial. Follow connections end-to-end, especially UI -> API -> service -> runtime/domain/storage/exchange -> response -> UI. Use git ls-files as the completeness baseline. Continue filling gaps and unknowns instead of declaring completion early.
-            If bootstrap is already complete, only refresh the knowledge base for repository changes since last_indexed_commit; do not perform an engineering task unless a separate future mission explicitly requests one.
-
-      - name: Enforce bootstrap write boundary
-        if: steps.mode.outputs.bootstrap_complete != 'true'
-        shell: bash
-        run: |
-          bad="$(git diff --name-only -- . ':(exclude)agent_memory/**' ':(exclude).agent/**')"
-          if [[ -n "$bad" ]]; then
-            echo 'ERROR: bootstrap attempted to modify files outside agent_memory/:'
-            echo "$bad"
-            git checkout -- $(cat /tmp/protected-files.txt)
-            exit 1
-          fi
-
-      - name: Validate memory state
-        id: state
-        shell: bash
-        run: |
-          python - <<'PY' >> "$GITHUB_OUTPUT"
-          import json
-          from pathlib import Path
           path = Path('agent_memory/state.json')
-          state = json.loads(path.read_text())
-          complete = bool(state.get('bootstrap_complete'))
-          print('bootstrap_complete=' + ('true' if complete else 'false'))
-          print('mode=' + str(state.get('mode', 'UNKNOWN')))
-          if complete:
-              required = ['inventory_complete','architecture_complete','dataflows_complete','ui_map_complete','storage_complete','tests_complete','security_complete','cross_check_complete']
-              missing = [key for key in required if not state.get(key)]
+          if not path.exists():
+              raise SystemExit('agent_memory/state.json is missing')
+
+          state = json.loads(path.read_text(encoding='utf-8'))
+          required_areas = [
+              'inventory', 'architecture', 'dataflows', 'ui_map',
+              'storage', 'tests', 'security', 'cross_check'
+          ]
+          areas = state.get('areas') or {}
+          missing = [name for name in required_areas if name not in areas]
+          if missing:
+              raise SystemExit(f'Missing progress areas: {missing}')
+
+          for name in required_areas:
+              value = areas[name]
+              if not isinstance(value, int) or not 0 <= value <= 100:
+                  raise SystemExit(f'Invalid progress value {name}={value!r}')
+
+          progress = state.get('progress_percent')
+          if not isinstance(progress, int) or not 0 <= progress <= 100:
+              raise SystemExit(f'Invalid progress_percent={progress!r}')
+
+          expected = round(sum(areas[name] for name in required_areas) / len(required_areas))
+          if progress != expected:
+              raise SystemExit(f'progress_percent must equal rounded area mean: expected {expected}, got {progress}')
+
+          if state.get('bootstrap_complete'):
+              incomplete = [name for name in required_areas if areas[name] != 100]
+              flags = [
+                  'inventory_complete', 'architecture_complete', 'dataflows_complete',
+                  'ui_map_complete', 'storage_complete', 'tests_complete',
+                  'security_complete', 'cross_check_complete'
+              ]
+              false_flags = [name for name in flags if not state.get(name)]
               unresolved = state.get('unresolved_repository_questions') or []
-              if missing or unresolved:
-                  raise SystemExit(f'Invalid bootstrap completion: missing={missing}, unresolved={unresolved}')
+              if incomplete or false_flags or unresolved:
+                  raise SystemExit(
+                      'Invalid bootstrap completion: '
+                      f'incomplete={incomplete}, false_flags={false_flags}, unresolved={unresolved}'
+                  )
+
+          print(f"Agent mode: {state.get('mode', 'UNKNOWN')}")
+          print(f"Learning progress: {progress}%")
+          print(f"Current focus: {state.get('current_focus', 'UNKNOWN')}")
+          print(f"Bootstrap complete: {bool(state.get('bootstrap_complete'))}")
           PY
 
-      - name: Commit persistent knowledge
-        shell: bash
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add agent_memory/
-          if git diff --cached --quiet; then
-            echo 'No persistent knowledge changes this round.'
-          else
-            git commit -m "docs(agent): repository learning round $CURRENT_ROUND"
-            git push origin HEAD:"$BRANCH_NAME"
-          fi
-
-      - name: Continue learning automatically
-        if: steps.state.outputs.bootstrap_complete != 'true' && fromJSON(env.CURRENT_ROUND) < fromJSON(env.MAX_ROUNDS)
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        shell: bash
-        run: |
-          next=$((CURRENT_ROUND + 1))
-          echo "Dispatching learning round $next / $MAX_ROUNDS"
-          gh api --method POST \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/workflows/codex-supervisor.yml/dispatches" \
-            -f ref="$BRANCH_NAME" \
-            -f "inputs[round]=$next" \
-            -f "inputs[max_rounds]=$MAX_ROUNDS"
-
-      - name: Bootstrap status
-        shell: bash
-        run: |
-          if [[ "${{ steps.state.outputs.bootstrap_complete }}" == "true" ]]; then
-            echo 'BOOTSTRAP_COMPLETE: repository knowledge base is ready. No engineering task has been executed.'
-            exit 0
-          fi
-          if (( CURRENT_ROUND < MAX_ROUNDS )); then
-            echo "LEARNING_CONTINUES: round $CURRENT_ROUND completed and the next round was dispatched."
-            exit 0
-          fi
-          echo "BOOTSTRAP_INCOMPLETE: automatic learning budget $MAX_ROUNDS reached; inspect agent_memory/state.json before assigning engineering tasks."
-          exit 1
+      - name: Confirm no OpenAI secret is required
+        run: echo 'This workflow validates committed agent memory only. Codex runs locally and no OPENAI_API_KEY is stored or required on GitHub.'
