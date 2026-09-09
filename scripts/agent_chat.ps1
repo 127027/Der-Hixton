@@ -2,6 +2,7 @@ $ErrorActionPreference = 'Stop'
 $Repo = (Resolve-Path (Join-Path $PSScriptRoot '..')).Path
 $Branch = 'agent/codex-supervisor-v1'
 $AgentRoot = Join-Path $env:LOCALAPPDATA 'HixtonAgent'
+. (Join-Path $PSScriptRoot 'codex_api.ps1')
 
 function Require-Success([string]$What) {
     if ($LASTEXITCODE -ne 0) { throw "$What failed with exit code $LASTEXITCODE" }
@@ -26,24 +27,25 @@ if ($status.Trim()) {
     throw "Working tree is not clean. Commit/stash local changes before starting AgentChat.`n$status"
 }
 
-if (-not (Get-Command codex -ErrorAction SilentlyContinue)) {
-    throw 'Codex CLI was not found. Install/login to Codex locally first.'
-}
-
 Write-Host 'Updating local agent branch...'
 & git pull --ff-only origin $Branch
 Require-Success 'git pull'
+
+New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
+$apiCodex = Initialize-HixtonApiCodex -AgentRoot $AgentRoot
+$CodexPath = $apiCodex.CodexPath
+$env:CODEX_HOME = $apiCodex.CodexHome
 
 $state = Read-State
 Write-Host ('Agent learning progress: {0}%' -f $state.progress_percent)
 Write-Host ('Bootstrap complete: {0}' -f $state.bootstrap_complete)
 Write-Host ''
 Write-Host 'You are entering an interactive chat with the persistent Hixton agent.'
+Write-Host 'This chat uses the isolated LOCAL API Codex profile, not your ChatGPT/Codex plan quota.'
 Write-Host 'During bootstrap, AGENTS.md forbids production-code changes. The chat runs in a disposable worktree.'
 Write-Host 'Only agent_memory changes can be copied back into the real repository when the chat ends.'
 Write-Host ''
 
-New-Item -ItemType Directory -Force -Path $AgentRoot | Out-Null
 $work = Join-Path $AgentRoot ('chat-' + [guid]::NewGuid().ToString('N'))
 
 try {
@@ -60,7 +62,7 @@ When the user asks about the bot, answer from verified repository evidence. If y
 When useful, tell the user what you learned and what remains unresolved.
 "@
 
-    & codex --sandbox workspace-write --ask-for-approval on-request --cd $work $initialPrompt
+    & $CodexPath --sandbox workspace-write --ask-for-approval on-request --cd $work $initialPrompt
     $chatExit = $LASTEXITCODE
     if ($chatExit -ne 0) {
         throw "Codex interactive chat exited with code $chatExit."
