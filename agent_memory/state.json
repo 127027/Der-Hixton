@@ -1,7 +1,20 @@
 {
   "mode": "BOOTSTRAP_LEARN_ONLY",
   "bootstrap_complete": false,
+  "progress_percent": 0,
+  "current_focus": "Initial repository learning has not started yet.",
   "last_indexed_commit": null,
+  "last_learning_round": 0,
+  "areas": {
+    "inventory": 0,
+    "architecture": 0,
+    "dataflows": 0,
+    "ui_map": 0,
+    "storage": 0,
+    "tests": 0,
+    "security": 0,
+    "cross_check": 0
+  },
   "inventory_complete": false,
   "architecture_complete": false,
   "dataflows_complete": false,
@@ -14,5 +27,5 @@
     "Full repository learning pass not yet executed."
   ],
   "external_runtime_unknowns": [],
-  "notes": "During bootstrap the agent may modify only agent_memory/."
+  "notes": "During bootstrap the agent may modify only agent_memory/. Progress values must be evidence-based, monotonic unless later evidence invalidates prior understanding, and never inflated merely to finish bootstrap."
 }
