@@ -78,6 +78,30 @@ def test_valid_active_v2_config_resolves_runtime_paths(tmp_path: Path) -> None:
     assert config.paper_starting_cash_usdc == Decimal("240.00")
     assert config.paper_slot_count == 3
     assert config.paper_target_notional_usdc == Decimal("80.00")
+    assert config.trial_order_base_url == "https://api.binance.com"
+
+
+def test_explicit_spot_testnet_trial_environment_is_allowed(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    payload = _payload()
+    runtime = payload["runtime"]
+    assert isinstance(runtime, dict)
+    runtime["trial_order_base_url"] = "https://testnet.binance.vision"
+    _write(path, payload)
+    config = load_project_config(path, project_root=tmp_path)
+    assert config.binance_base_url == "https://api.binance.com"
+    assert config.trial_order_base_url == "https://testnet.binance.vision"
+
+
+def test_trial_order_environment_refuses_arbitrary_host(tmp_path: Path) -> None:
+    path = tmp_path / "config.json"
+    payload = _payload()
+    runtime = payload["runtime"]
+    assert isinstance(runtime, dict)
+    runtime["trial_order_base_url"] = "https://evil.invalid"
+    _write(path, payload)
+    with pytest.raises(ValueError, match="trial_order_base_url"):
+        load_project_config(path, project_root=tmp_path)
 
 
 def test_unknown_or_changed_paper_baseline_is_rejected(tmp_path: Path) -> None:
