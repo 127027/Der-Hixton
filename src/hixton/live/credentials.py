@@ -50,15 +50,13 @@ class WindowsVault:
     """Only exact app targets, never enumerate the user's stored credentials."""
 
     def __init__(self, installation: Path) -> None:
-        # The default quote migration must not move existing passwords/API keys
-        # to a new namespace. No secret read/copy/reset is needed for this alias.
         if installation.name == "hixton-usdc.sqlite3":
             installation = installation.with_name("hixton.sqlite3")
         digest = hashlib.sha256(str(installation.resolve()).casefold().encode()).hexdigest()[:24]
         self.prefix = f"DerHixton/{digest}/"
 
     def _target(self, name: str) -> str:
-        if name not in {"binance-hmac", "ui-password"}:
+        if name not in {"binance-hmac", "binance-hmac-testnet", "ui-password"}:
             raise VaultError("Unbekannter Hixton-Schlüsselspeicher.")
         return self.prefix + name
 
@@ -88,7 +86,7 @@ class WindowsVault:
         dll = self._library()
         pointer = ctypes.POINTER(_Credential)()
         if not dll.CredReadW(target, 1, 0, ctypes.byref(pointer)):
-            if ctypes.get_last_error() == 1168:  # ERROR_NOT_FOUND, not an empty/failed vault
+            if ctypes.get_last_error() == 1168:
                 return None
             raise VaultError("Windows-Anmeldedatenspeicher konnte nicht gelesen werden.")
         try:
@@ -113,12 +111,12 @@ class WindowsVault:
             raise VaultError("Schlüsseldatensatz hat eine ungültige Größe.")
         buffer = (ctypes.c_ubyte * len(encoded)).from_buffer_copy(encoded)
         record = _Credential()
-        record.Type = 1  # CRED_TYPE_GENERIC
+        record.Type = 1
         record.TargetName = target
         record.UserName = "Der Hixton local application"
         record.CredentialBlobSize = len(encoded)
         record.CredentialBlob = ctypes.cast(buffer, ctypes.POINTER(ctypes.c_ubyte))
-        record.Persist = 2  # Same Windows user and machine; no enterprise roaming.
+        record.Persist = 2
         try:
             if not self._library().CredWriteW(ctypes.byref(record), 0):
                 raise VaultError("Windows konnte den Schlüssel nicht sicher speichern.")
@@ -150,12 +148,15 @@ class BinanceCredentials:
 
 
 class CredentialService:
-    def __init__(self, vault: Vault) -> None:
+    def __init__(self, vault: Vault, *, record_name: str = "binance-hmac") -> None:
+        if record_name not in {"binance-hmac", "binance-hmac-testnet"}:
+            raise ValueError("Unsupported Binance credential namespace")
         self.vault = vault
+        self.record_name = record_name
         self.lock = RLock()
 
     def load(self) -> BinanceCredentials | None:
-        value = self.vault.read("binance-hmac")
+        value = self.vault.read(self.record_name)
         if value is None:
             return None
         try:
@@ -167,7 +168,7 @@ class CredentialService:
     def save(self, credentials: BinanceCredentials) -> None:
         with self.lock:
             self.vault.write(
-                "binance-hmac",
+                self.record_name,
                 json.dumps(
                     {
                         "api_key": credentials.api_key,
@@ -177,6 +178,10 @@ class CredentialService:
                 ),
             )
 
+    def delete(self) -> None:
+        with self.lock:
+            self.vault.delete(self.record_name)
+
     def status(self) -> dict[str, object]:
         credentials = self.load()
         return {
@@ -184,6 +189,7 @@ class CredentialService:
             "fingerprint": credentials.fingerprint if credentials else None,
             "saved_at_utc": credentials.saved_at_utc if credentials else None,
             "storage": "WINDOWS_CREDENTIAL_MANAGER_CURRENT_USER",
+            "namespace": self.record_name,
         }
 
 
@@ -217,19 +223,17 @@ class LocalAccess:
                 raise VaultError("Lokales Passwort muss 12-256 Zeichen lang sein.")
             saved = self.vault.read("ui-password")
             if saved is None:
-                if self.vault.read("binance-hmac") is not None:
+                if (
+                    self.vault.read("binance-hmac") is not None
+                    or self.vault.read("binance-hmac-testnet") is not None
+                ):
                     raise VaultError("Passwortdatensatz fehlt bei vorhandenem Key. Recovery nötig.")
                 if password != repeated:
                     raise VaultError("Passwort-Wiederholung stimmt nicht überein.")
                 salt = secrets.token_bytes(16)
                 self.vault.write(
                     "ui-password",
-                    json.dumps(
-                        {
-                            "salt": salt.hex(),
-                            "hash": self._derive(password, salt),
-                        }
-                    ),
+                    json.dumps({"salt": salt.hex(), "hash": self._derive(password, salt)}),
                 )
             else:
                 try:
@@ -241,7 +245,7 @@ class LocalAccess:
                 if not hmac.compare_digest(expected, actual):
                     raise VaultError("Lokales Passwort ist nicht korrekt.")
             self._failures.clear()
-            self._sessions.clear()  # One protected browser session per installation.
+            self._sessions.clear()
             token = secrets.token_urlsafe(32)
             self._sessions[hashlib.sha256(token.encode()).hexdigest()] = now + 900
             return token
@@ -250,9 +254,7 @@ class LocalAccess:
         if not token or len(token) > 128:
             return False
         with self.lock:
-            return (
-                self._sessions.get(hashlib.sha256(token.encode()).hexdigest(), 0) > time.monotonic()
-            )
+            return self._sessions.get(hashlib.sha256(token.encode()).hexdigest(), 0) > time.monotonic()
 
     def logout(self) -> None:
         with self.lock:
