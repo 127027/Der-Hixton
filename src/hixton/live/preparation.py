@@ -49,11 +49,12 @@ class LivePreparation:
         if order_base_url not in {_PRODUCTION, _TESTNET}:
             raise ValueError("Explicit Binance production or Spot-testnet trial host required")
         self.database = database
-        self.credentials = CredentialService(vault)
+        self.order_base_url = order_base_url
+        record_name = "binance-hmac-testnet" if order_base_url == _TESTNET else "binance-hmac"
+        self.credentials = CredentialService(vault, record_name=record_name)
         self.access = LocalAccess(vault)
         self.lock = RLock()
         self.client_factory = client_factory
-        self.order_base_url = order_base_url
         self._check: dict[str, object] | None = None
         self._check_time = 0.0
         self._check_fingerprint: str | None = None
@@ -163,12 +164,7 @@ class LivePreparation:
         )
 
     def execution_release_ready(self) -> bool:
-        """Keep an armed entitlement durable without trusting a stale UI preflight.
-
-        Before an entitlement exists this collapses to the fresh arm gate. Once armed,
-        the credential identity must stay identical; the separate pre-submit path then
-        obtains a new account snapshot and current market/filter/book evidence.
-        """
+        """Keep an armed entitlement durable without trusting a stale UI preflight."""
         if self.trial is None:
             return False
         row = self.trial._row()
