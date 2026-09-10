@@ -103,7 +103,13 @@ class TrialReconciler:
             )
             self.journal._audit(connection, "ACCOUNT", "BASELINE_CAPTURED")
 
-    def check(self, snapshot: AccountSnapshot, *, now: datetime) -> dict[str, object]:
+    def _proof(
+        self,
+        snapshot: AccountSnapshot,
+        *,
+        now: datetime,
+        ignore_unresolved_intent: str | None = None,
+    ) -> dict[str, object]:
         snapshot.validate(now)
         with self.journal._connect() as connection:
             baseline = connection.execute("SELECT * FROM trial_account_baseline").fetchone()
@@ -137,13 +143,13 @@ class TrialReconciler:
             for asset in expected.keys() | snapshot.balances.keys()
             if expected.get(asset, ZERO) != sum(snapshot.balances.get(asset, (ZERO, ZERO)))
         )
-        unresolved = [row["intent_id"] for row in intents if row["state"] not in FINAL]
+        unresolved = [
+            row["intent_id"]
+            for row in intents
+            if row["state"] not in FINAL and row["intent_id"] != ignore_unresolved_intent
+        ]
         locked = any(amount != 0 for _, amount in snapshot.balances.values())
         passed = not (mismatches or unresolved or locked or snapshot.open_orders)
-        with self.journal._connect() as connection:
-            self.journal._audit(
-                connection, "ACCOUNT", "BALANCES_MATCH" if passed else "BALANCES_UNRESOLVED"
-            )
         return {
             "balances_match": passed,
             "no_open_orders": not snapshot.open_orders,
@@ -152,6 +158,45 @@ class TrialReconciler:
             "movements": {asset: str(value) for asset, value in movements.items()},
             "observed_at_utc": snapshot.observed_at.isoformat(),
         }
+
+    def check(self, snapshot: AccountSnapshot, *, now: datetime) -> dict[str, object]:
+        proof = self._proof(snapshot, now=now)
+        with self.journal._connect() as connection:
+            self.journal._audit(
+                connection,
+                "ACCOUNT",
+                "BALANCES_MATCH" if proof["balances_match"] is True else "BALANCES_UNRESOLVED",
+            )
+        return proof
+
+    def pre_submit_matches(
+        self,
+        intent_id: str,
+        snapshot: AccountSnapshot,
+        *,
+        now: datetime,
+    ) -> bool:
+        """Require baseline + already confirmed own fills to match before this intent sends.
+
+        The supplied intent is allowed to be the sole unresolved CREATED record because
+        its order has not been sent yet. Any other unresolved order, balance movement,
+        lock or open Binance order fails closed.
+        """
+        with self.journal._connect() as connection:
+            current = connection.execute(
+                "SELECT state FROM trial_intents WHERE intent_id=?", (intent_id,)
+            ).fetchone()
+        if current is None or current["state"] != "CREATED":
+            return False
+        proof = self._proof(snapshot, now=now, ignore_unresolved_intent=intent_id)
+        passed = proof["balances_match"] is True
+        with self.journal._connect() as connection:
+            self.journal._audit(
+                connection,
+                intent_id,
+                "PRE_SUBMIT_ACCOUNT_MATCH" if passed else "PRE_SUBMIT_ACCOUNT_BLOCKED",
+            )
+        return passed
 
     def complete_if_proven(self, trial: Any, snapshot: AccountSnapshot, *, now: datetime) -> bool:
         with trial.lock:
