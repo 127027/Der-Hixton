@@ -88,9 +88,28 @@ class LivePreparation:
             def query(self, intent: TrialIntent) -> ExchangeOrder | None:
                 return bound_exchange().query(intent)
 
+        journal = OrderJournal(self.database)
+        self.reconciler = TrialReconciler(journal)
+
+        def snapshot() -> AccountSnapshot:
+            exchange = bound_exchange()
+            return read_account_snapshot(exchange.transport, account=exchange.account_fingerprint)
+
+        self.snapshot_reader = snapshot
+
         def pre_submit(intent: TrialIntent) -> bool:
+            allowed = False
             try:
                 exchange = bound_exchange()
+                if self.reconciler is None:
+                    raise RuntimeError("Reconciler missing")
+                current = read_account_snapshot(
+                    exchange.transport, account=exchange.account_fingerprint
+                )
+                if not self.reconciler.pre_submit_matches(
+                    intent.intent_id, current, now=datetime.now(UTC)
+                ):
+                    raise RuntimeError("Account changed since trial baseline")
                 guard = TrialPreSubmitGuard(
                     exchange.transport,
                     account_fingerprint=exchange.account_fingerprint,
@@ -110,19 +129,12 @@ class LivePreparation:
             )
             return allowed
 
-        def snapshot() -> AccountSnapshot:
-            exchange = bound_exchange()
-            return read_account_snapshot(exchange.transport, account=exchange.account_fingerprint)
-
-        journal = OrderJournal(self.database)
-        self.reconciler = TrialReconciler(journal)
-        self.snapshot_reader = snapshot
         self._pre_submit_connected = True
         self.trial = SignalTrial(
             journal,
             TrialOrderExecutor(journal, DeferredExchange(), pre_submit),
             strategy,
-            self.technical_release_ready,
+            self.execution_release_ready,
         )
         self.runtime = TrialRuntime(self.trial, self.reconciler, snapshot)
         return self.runtime
@@ -133,7 +145,7 @@ class LivePreparation:
         return self._check
 
     def technical_release_ready(self) -> bool:
-        """Technical entry gate only; public/manual consent remains a separate route gate."""
+        """Gate used only when creating a new manual entitlement."""
         try:
             credentials = self.credentials.load()
         except Exception:
@@ -150,8 +162,32 @@ class LivePreparation:
             and (self.runtime is None or self.runtime.last_error is None)
         )
 
+    def execution_release_ready(self) -> bool:
+        """Keep an armed entitlement durable without trusting a stale UI preflight.
+
+        Before an entitlement exists this collapses to the fresh arm gate. Once armed,
+        the credential identity must stay identical; the separate pre-submit path then
+        obtains a new account snapshot and current market/filter/book evidence.
+        """
+        if self.trial is None:
+            return False
+        row = self.trial._row()
+        if row is None:
+            return self.technical_release_ready()
+        try:
+            credentials = self.credentials.load()
+        except Exception:
+            return False
+        return bool(
+            credentials is not None
+            and credentials.fingerprint == row["account"]
+            and self._pre_submit_connected
+            and self.reconciler is not None
+            and self.snapshot_reader is not None
+            and (self.runtime is None or self.runtime.last_error is None)
+        )
+
     def _discard_unused_baseline(self) -> None:
-        """Rollback only a baseline that never became attached to a trial/intent."""
         if self.reconciler is None:
             return
         with self.reconciler.journal._connect() as connection:
@@ -159,14 +195,12 @@ class LivePreparation:
             has_intent = connection.execute("SELECT 1 FROM trial_intents LIMIT 1").fetchone()
             if not has_trial and not has_intent:
                 connection.execute("DELETE FROM trial_account_baseline")
-                self.reconciler.journal._audit(connection, "ACCOUNT", "UNUSED_BASELINE_ROLLED_BACK")
+                self.reconciler.journal._audit(
+                    connection, "ACCOUNT", "UNUSED_BASELINE_ROLLED_BACK"
+                )
 
     def arm_trial(self, *, notional: Decimal) -> dict[str, object]:
-        """Prepare exactly one durable entitlement after a fresh read-only account check.
-
-        This method itself never submits an order. The public production HTTP route
-        remains blocked until external Testnet/failure acceptance is recorded.
-        """
+        """Create one durable entitlement; no order is sent by this method."""
         with self.lock:
             if not notional.is_finite() or notional != Decimal("50"):
                 raise BinanceCheckError("Einmaltest benötigt genau 50 USDC.")
@@ -186,10 +220,7 @@ class LivePreparation:
             try:
                 self.reconciler.capture(snapshot, now=now)
                 self.trial.arm(
-                    str(uuid4()),
-                    credentials.fingerprint,
-                    now=now,
-                    notional=notional,
+                    str(uuid4()), credentials.fingerprint, now=now, notional=notional
                 )
             except Exception:
                 self._discard_unused_baseline()
@@ -259,7 +290,7 @@ class LivePreparation:
 
     @staticmethod
     def _testnet_permissions() -> dict[str, bool]:
-        values = {
+        return {
             "enableReading": True,
             "enableSpotAndMarginTrading": True,
             "ipRestrict": True,
@@ -272,7 +303,6 @@ class LivePreparation:
             "enablePortfolioMarginTrading": False,
             "enableFixApiTrade": False,
         }
-        return values
 
     def _inspect_testnet(self, credentials: BinanceCredentials) -> dict[str, object]:
         """Spot-testnet readiness without pretending production SAPI permission proof."""
