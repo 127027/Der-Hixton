@@ -11,6 +11,7 @@ from decimal import Decimal
 from functools import partial
 from pathlib import Path
 from threading import RLock
+from uuid import uuid4
 
 from hixton.domain.versions import StrategyDefinition
 from hixton.live.binance import BinanceCheckError, BinanceReadOnlyClient
@@ -25,10 +26,10 @@ from hixton.live.trial import SignalTrial
 RELEASE_BLOCKERS = (
     "USDC-Migration und Echtorder-Anschluss benötigen gemeinsame Betriebsabnahme; "
     "USDT-Signale werden nicht als USDC ausgeführt.",
-    "Einmaltest-Laufzeit und exakter Saldoabgleich sind angeschlossen und offline getestet; "
-    "produktive Orderfreigabe, Restmengen und vollständige Fremdorderprüfung sind noch nicht abgenommen.",
-    "Keine Livefreigabe für die aktive Strategie; Paper-Freigabe ist keine Echtgeldfreigabe.",
-    "Paper-/Live-Ausführungsabgleich, Störfalltests und Binance-Testnet-Nachweis fehlen.",
+    "Einmaltest-Laufzeit, Kontobaseline, 25-bp-Preischeck und frische Pre-Submit-Prüfung "
+    "sind technisch vorbereitet; Restmengen/Fremdorder und externe Abnahme bleiben offen.",
+    "Keine normale Livefreigabe für die aktive Strategie; Paper-Freigabe ist keine Echtgeldfreigabe.",
+    "Binance-Testnet-/Störfallabnahme des Release Candidates fehlt.",
 )
 _USDC_CLIENT = partial(BinanceReadOnlyClient, quote_asset="USDC")
 
@@ -47,6 +48,7 @@ class LivePreparation:
         self.client_factory = client_factory
         self._check: dict[str, object] | None = None
         self._check_time = 0.0
+        self._check_fingerprint: str | None = None
         self._next_check = 0.0
         self.trial: SignalTrial | None = None
         self.runtime: TrialRuntime | None = None
@@ -55,7 +57,7 @@ class LivePreparation:
         self._pre_submit_connected = False
 
     def connect_runtime(self, strategy: StrategyDefinition) -> TrialRuntime:
-        """Wire durable recovery without granting a BUY or loading keys at startup."""
+        """Wire durable recovery without granting a public BUY action at startup."""
         service = self
 
         def bound_exchange() -> BinanceSpotExchange:
@@ -75,8 +77,6 @@ class LivePreparation:
                 return bound_exchange().query(intent)
 
         def pre_submit(intent: TrialIntent) -> bool:
-            # This check is deliberately reconstructed from the currently stored
-            # credential for every new order. It never trusts an old UI badge.
             try:
                 exchange = bound_exchange()
                 guard = TrialPreSubmitGuard(
@@ -101,17 +101,89 @@ class LivePreparation:
         self.reconciler = TrialReconciler(journal)
         self.snapshot_reader = snapshot
         self._pre_submit_connected = True
-        # User arming / production release remains closed until the baseline and
-        # external acceptance path is wired. The executor itself now has a real,
-        # immediate market/price/balance safety guard instead of constant False.
         self.trial = SignalTrial(
             journal,
             TrialOrderExecutor(journal, DeferredExchange(), pre_submit),
             strategy,
-            lambda: False,
+            self.technical_release_ready,
         )
         self.runtime = TrialRuntime(self.trial, self.reconciler, snapshot)
         return self.runtime
+
+    def _fresh_check(self) -> dict[str, object] | None:
+        if time.monotonic() - self._check_time > 60:
+            return None
+        return self._check
+
+    def technical_release_ready(self) -> bool:
+        """Technical entry gate only; public/manual consent remains a separate route gate."""
+        try:
+            credentials = self.credentials.load()
+        except Exception:
+            return False
+        check = self._fresh_check()
+        return bool(
+            credentials is not None
+            and self._check_fingerprint == credentials.fingerprint
+            and check is not None
+            and check.get("account_checks_passed") is True
+            and self._pre_submit_connected
+            and self.reconciler is not None
+            and self.snapshot_reader is not None
+            and (self.runtime is None or self.runtime.last_error is None)
+        )
+
+    def _discard_unused_baseline(self) -> None:
+        """Rollback only a baseline that never became attached to a trial/intent."""
+        if self.reconciler is None:
+            return
+        with self.reconciler.journal._connect() as connection:
+            has_trial = connection.execute("SELECT 1 FROM signal_trial LIMIT 1").fetchone()
+            has_intent = connection.execute("SELECT 1 FROM trial_intents LIMIT 1").fetchone()
+            if not has_trial and not has_intent:
+                connection.execute("DELETE FROM trial_account_baseline")
+                self.reconciler.journal._audit(connection, "ACCOUNT", "UNUSED_BASELINE_ROLLED_BACK")
+
+    def arm_trial(self, *, notional: Decimal) -> dict[str, object]:
+        """Prepare exactly one durable entitlement after a fresh read-only account check.
+
+        This method itself never submits an order. The public HTTP route intentionally
+        remains blocked until external Testnet/failure acceptance is recorded.
+        """
+        with self.lock:
+            if not notional.is_finite() or notional != Decimal("50"):
+                raise BinanceCheckError("Einmaltest benötigt genau 50 USDC.")
+            if self.trial is None or self.reconciler is None or self.snapshot_reader is None:
+                raise BinanceCheckError("Einmaltest-Laufzeit ist nicht vollständig verbunden.")
+            if self.trial.report()["state"] != "NOT_STARTED":
+                raise BinanceCheckError("Einmaltest wurde bereits angelegt; zuerst Zustand klären.")
+            if not self.technical_release_ready():
+                raise BinanceCheckError(
+                    "Frische bestandene Binance-Kontoprüfung und technische Freigaben fehlen."
+                )
+            credentials = self.credentials.load()
+            if credentials is None:
+                raise BinanceCheckError("Binance-Schlüssel fehlt.")
+            now = datetime.now(UTC)
+            snapshot = self.snapshot_reader()
+            try:
+                self.reconciler.capture(snapshot, now=now)
+                self.trial.arm(
+                    str(uuid4()),
+                    credentials.fingerprint,
+                    now=now,
+                    notional=notional,
+                )
+            except Exception:
+                self._discard_unused_baseline()
+                self.audit("TRIAL_ARM_FAILED")
+                raise
+            report = self.trial.report()
+            self.audit(
+                "TRIAL_ARMED",
+                {"trial_id": report.get("trial_id"), "quote_asset": "USDC", "notional": "50"},
+            )
+            return report
 
     def require_settled_for_key_change(self) -> None:
         if self.trial is not None and self.trial.report()["has_unsettled"]:
@@ -161,9 +233,9 @@ class LivePreparation:
     def invalidate_check(self) -> None:
         self._check = None
         self._check_time = 0
+        self._check_fingerprint = None
 
     def check(self) -> dict[str, object]:
-        # Serialize save/delete/check to avoid checking a replaced credential.
         with self.lock:
             if time.monotonic() < self._next_check:
                 raise BinanceCheckError(
@@ -185,6 +257,7 @@ class LivePreparation:
                 raise
             self._check = {**result, "checked_at_utc": datetime.now(UTC).isoformat()}
             self._check_time = time.monotonic()
+            self._check_fingerprint = credentials.fingerprint
             self.audit(
                 "BINANCE_READ_ONLY_CHECK_COMPLETE",
                 {
@@ -210,7 +283,7 @@ class LivePreparation:
                 )
             if not healthy:
                 blockers.append("Marktdaten/Bot derzeit nicht vollständig gesund.")
-            fresh_check = self._check if time.monotonic() - self._check_time <= 60 else None
+            fresh_check = self._fresh_check()
             if fresh_check is None:
                 blockers.append("Keine frische Binance-Kontoprüfung (höchstens 60 Sekunden alt).")
             elif fresh_check.get("account_checks_passed") is not True:
@@ -233,6 +306,8 @@ class LivePreparation:
                     "runtime_connected": self.runtime is not None,
                     "balance_conservation_connected": self.runtime is not None,
                     "fresh_pre_submit_guard_connected": self._pre_submit_connected,
+                    "baseline_arm_path_connected": self.reconciler is not None,
+                    "technical_release_ready": self.technical_release_ready(),
                     "production_submission_accepted": False,
                     "account_reconciliation_accepted": False,
                     "binance_testnet_accepted": False,
