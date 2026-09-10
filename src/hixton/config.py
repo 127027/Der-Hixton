@@ -12,6 +12,8 @@ from typing import Any
 from hixton.constants import SYMBOLS
 from hixton.domain.versions import strategy_definition
 
+_TRIAL_ORDER_BASES = {"https://api.binance.com", "https://testnet.binance.vision"}
+
 
 @dataclass(frozen=True, slots=True)
 class ProjectConfig:
@@ -32,6 +34,7 @@ class ProjectConfig:
     ui_timezone: str
     ui_default_range: str
     sha256: str
+    trial_order_base_url: str = "https://api.binance.com"
 
 
 def _required_mapping(value: object, name: str) -> dict[str, Any]:
@@ -120,11 +123,18 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
         raise ValueError("UI baseline must use the documented localhost settings")
 
     runtime = _required_mapping(root.get("runtime"), "runtime")
-    _reject_unknown(runtime, {"database_path", "run_output_root", "binance_base_url"}, "runtime")
+    _reject_unknown(
+        runtime,
+        {"database_path", "run_output_root", "binance_base_url", "trial_order_base_url"},
+        "runtime",
+    )
     database_path = project_root / str(runtime.get("database_path", "data/hixton.sqlite3"))
     run_output_root = project_root / str(
         runtime.get("run_output_root", f"backtests/{definition.backtest_version}/runs")
     )
+    trial_order_base_url = str(runtime.get("trial_order_base_url", "https://api.binance.com"))
+    if trial_order_base_url not in _TRIAL_ORDER_BASES:
+        raise ValueError("trial_order_base_url must be Binance Spot production or Spot testnet")
     digest = hashlib.sha256(
         json.dumps(root, sort_keys=True, separators=(",", ":")).encode("utf-8")
     ).hexdigest()
@@ -146,4 +156,5 @@ def load_project_config(path: Path, *, project_root: Path) -> ProjectConfig:
         ui_timezone=str(ui["timezone"]),
         ui_default_range=str(ui["default_range"]),
         sha256=digest,
+        trial_order_base_url=trial_order_base_url,
     )
