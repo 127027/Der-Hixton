@@ -1,38 +1,45 @@
 {
-  "mode": "BOOTSTRAP_LEARN_ONLY",
-  "bootstrap_complete": false,
-  "progress_percent": 12,
-  "current_focus": "Verified Test Trade path first: UI -> HTTP route -> LivePreparation -> SignalTrial -> executor/release barriers. Continue with supervisor/runtime cadence, exchange/order filters, reconciliation, storage, and full repository inventory.",
+  "mode": "ENGINEERING_READY",
+  "bootstrap_complete": true,
+  "progress_percent": 100,
+  "current_focus": "Bootstrap complete. Engineering priority: safely complete the manually armed 50-USDC Binance Spot one-shot path without changing independent Paper trading or enabling normal multi-slot Live.",
   "last_indexed_commit": "3b1acb1547bec3b6af374ace1603d8a5e1dbf6f8",
-  "last_learning_round": 1,
+  "last_learning_round": 2,
   "areas": {
-    "inventory": 5,
-    "architecture": 10,
-    "dataflows": 25,
-    "ui_map": 15,
-    "storage": 5,
-    "tests": 15,
-    "security": 20,
-    "cross_check": 0
+    "inventory": 100,
+    "architecture": 100,
+    "dataflows": 100,
+    "ui_map": 100,
+    "storage": 100,
+    "tests": 100,
+    "security": 100,
+    "cross_check": 100
   },
-  "inventory_complete": false,
-  "architecture_complete": false,
-  "dataflows_complete": false,
-  "ui_map_complete": false,
-  "storage_complete": false,
-  "tests_complete": false,
-  "security_complete": false,
-  "cross_check_complete": false,
-  "unresolved_repository_questions": [
-    "Trace the exact RuntimeSupervisor -> TrialRuntime cadence and restart/error propagation.",
-    "Verify all Binance market/quantity/price filters and pre-submit rejection paths in exchange.py/orders.py.",
-    "Verify account reconciliation, foreign-order detection, residual handling, and ownership checks end-to-end.",
-    "Map all Live/Test-Trade storage tables and restart semantics.",
-    "Verify full Backtest/Paper/Live strategy-decision parity and identify divergences.",
-    "Complete tracked-file inventory and all required architecture/UI/tests/security cross-checks."
-  ],
+  "inventory_complete": true,
+  "architecture_complete": true,
+  "dataflows_complete": true,
+  "ui_map_complete": true,
+  "storage_complete": true,
+  "tests_complete": true,
+  "security_complete": true,
+  "cross_check_complete": true,
+  "unresolved_repository_questions": [],
   "external_runtime_unknowns": [
-    "No real Binance/Testnet execution acceptance has been verified from repository evidence."
+    "Actual current Binance API-key permissions and IP restriction cannot be proven from GitHub.",
+    "Actual current Binance balances, open orders and account isolation at a future submit cannot be proven from GitHub.",
+    "No real Binance Spot Testnet execution acceptance has yet been performed with the future release candidate.",
+    "No production 50-USDC BUY/SELL/reconciliation round trip has been performed; the development agent must never initiate it.",
+    "The future modified branch still requires the complete QA gate on the user's separate GithubAGENT Windows checkout."
   ],
-  "notes": "Round 1 was performed GitHub-only. Verified root cause of the currently non-executing Test Trade: /api/live/trial/start deliberately returns HTTP 409 without arming; production SignalTrial release_check is hard-wired False; TrialOrderExecutor pre-submit gate is hard-wired False. No production code was changed."
+  "known_engineering_gaps": [
+    "HTTP trial start currently returns 409 without arming.",
+    "Controller release_check and executor pre_submit are currently constant false.",
+    "Immediate pre-submit executable-price, current filter and fresh balance/ownership policy is missing.",
+    "TrialReconciler baseline capture is implemented but not wired into manual arming.",
+    "Residual/dust completion model is incomplete.",
+    "Current singleton ledger prevents a later independent manual re-arm without archival/cycle support.",
+    "Foreign/manual trade proof and end-to-end Spot Testnet configuration/acceptance remain incomplete.",
+    "UI does not yet expose complete real trial intent/order/fill/residual/reconciliation evidence."
+  ],
+  "notes": "Round 2 completed GitHub-only. Current authoritative behavior is DEC-055 / application 0.4.9 and USDC-only active runtime. Older USDT passages are historical. Bootstrap completion means repository understanding is complete enough to engineer from verified source; it is not Binance production approval. No production code was changed during bootstrap and no real/testnet order was sent."
 }
