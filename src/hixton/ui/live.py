@@ -32,12 +32,12 @@ def install_live_routes(
     service = LivePreparation(
         config.database_path.with_name("live-preparation.sqlite3"),
         vault if vault is not None else WindowsVault(config.database_path),
+        order_base_url=config.trial_order_base_url,
     )
     app.state.live_preparation = service
     supervisor.trial_runtime = service.connect_runtime(supervisor.strategy)
 
     def require_local(request: Request) -> None:
-        # Unlike legacy read/Paper endpoints, private actions require an exact origin.
         if not local_action(request) or request.headers.get("origin") != str(
             request.base_url
         ).rstrip("/"):
@@ -51,7 +51,6 @@ def install_live_routes(
             )
 
     async def payload(request: Request) -> dict[str, Any]:
-        # Manual parsing prevents framework validation responses from echoing secret inputs.
         raw = bytearray()
         async for chunk in request.stream():
             raw.extend(chunk)
@@ -88,7 +87,6 @@ def install_live_routes(
             healthy=supervisor.state.snapshot().health == "HEALTHY",
         )
         result["paper_settings_preview"] = preview
-        # One existing persistent record, not a second editable Live configuration.
         result["trading_settings"] = shared
         blockers = result["blockers"]
         assert isinstance(blockers, list)
@@ -124,7 +122,6 @@ def install_live_routes(
             raise
         await run_in_threadpool(service.audit, "LOCAL_UNLOCKED")
         response = JSONResponse({"authenticated": True, "expires_in_seconds": 900})
-        # Loopback HTTP only; remote/TLS access is NOT supported by this application.
         response.set_cookie(
             _COOKIE, token, max_age=900, httponly=True, samesite="strict", path="/api/live"
         )
@@ -153,10 +150,15 @@ def install_live_routes(
         def save() -> dict[str, object]:
             with service.lock:
                 service.require_settled_for_key_change()
-                service.audit("BINANCE_CREDENTIAL_SAVE_REQUESTED")
+                service.audit(
+                    "BINANCE_CREDENTIAL_SAVE_REQUESTED", {"environment": service.environment}
+                )
                 service.credentials.save(credentials)
                 service.invalidate_check()
-                service.audit("BINANCE_CREDENTIAL_SAVED", {"fingerprint": credentials.fingerprint})
+                service.audit(
+                    "BINANCE_CREDENTIAL_SAVED",
+                    {"fingerprint": credentials.fingerprint, "environment": service.environment},
+                )
                 return service.credentials.status()
 
         return await run_in_threadpool(save)
@@ -171,10 +173,12 @@ def install_live_routes(
         def delete() -> None:
             with service.lock:
                 service.require_settled_for_key_change()
-                service.audit("BINANCE_CREDENTIAL_DELETE_REQUESTED")
-                service.credentials.vault.delete("binance-hmac")
+                service.audit(
+                    "BINANCE_CREDENTIAL_DELETE_REQUESTED", {"environment": service.environment}
+                )
+                service.credentials.delete()
                 service.invalidate_check()
-                service.audit("BINANCE_CREDENTIAL_REMOVED")
+                service.audit("BINANCE_CREDENTIAL_REMOVED", {"environment": service.environment})
 
         await run_in_threadpool(delete)
         return {"removed": True, "revoked_at_binance": False}
@@ -187,7 +191,6 @@ def install_live_routes(
     @app.post("/api/live/enable")
     async def enable(request: Request) -> JSONResponse:
         require_session(request)
-        # This endpoint must NEVER toggle RuntimeState.mode merely for a green UI badge.
         result = await run_in_threadpool(get_status, True)
         await run_in_threadpool(service.audit, "LIVE_REQUEST_BLOCKED")
         return JSONResponse(result, status_code=409)
@@ -214,11 +217,18 @@ def install_live_routes(
                 raise ValueError
         except (InvalidOperation, ValueError):
             raise HTTPException(400, "Einmaltest: ausschließlich 50 USDC Kaufbudget.") from None
-        # No URL parameter, key presence or green preflight bypasses incomplete implementation.
-        # Runtime wiring and balance checks do not release the pre-submit gates.
-        result = await run_in_threadpool(get_status, True)
-        await run_in_threadpool(service.audit, "TRIAL_REQUEST_BLOCKED")
-        return JSONResponse(result, status_code=409)
+
+        # Development acceptance is allowed only against Binance Spot Testnet.
+        # Production remains fail-closed regardless of key, status badge or URL payload.
+        if service.environment != "TESTNET":
+            result = await run_in_threadpool(get_status, True)
+            await run_in_threadpool(
+                service.audit, "TRIAL_REQUEST_BLOCKED", {"environment": service.environment}
+            )
+            return JSONResponse(result, status_code=409)
+
+        await run_in_threadpool(service.arm_trial, notional=amount)
+        return JSONResponse(await run_in_threadpool(get_status, True))
 
     @app.post("/api/live/trial/stop")
     async def stop_trial(request: Request) -> dict[str, object]:
