@@ -1,4 +1,4 @@
-"""Audited preparation, not a simulated LIVE status or a production dispatcher."""
+"""Audited preparation and fail-closed one-shot runtime wiring."""
 
 from __future__ import annotations
 
@@ -19,14 +19,14 @@ from hixton.live.exchange import BinanceSpotExchange, BinanceSpotTransport
 from hixton.live.orders import ExchangeOrder, OrderJournal, TrialIntent, TrialOrderExecutor
 from hixton.live.reconciliation import AccountSnapshot, TrialReconciler, read_account_snapshot
 from hixton.live.runtime import TrialRuntime
+from hixton.live.safety import TrialPreSubmitGuard
 from hixton.live.trial import SignalTrial
 
 RELEASE_BLOCKERS = (
     "USDC-Migration und Echtorder-Anschluss benötigen gemeinsame Betriebsabnahme; "
     "USDT-Signale werden nicht als USDC ausgeführt.",
     "Einmaltest-Laufzeit und exakter Saldoabgleich sind angeschlossen und offline getestet; "
-    "produktive Orderfreigabe, Markt-/Preisfilter, Restmengen und vollständige Fremdorderprüfung "
-    "sind noch nicht abgenommen.",
+    "produktive Orderfreigabe, Restmengen und vollständige Fremdorderprüfung sind noch nicht abgenommen.",
     "Keine Livefreigabe für die aktive Strategie; Paper-Freigabe ist keine Echtgeldfreigabe.",
     "Paper-/Live-Ausführungsabgleich, Störfalltests und Binance-Testnet-Nachweis fehlen.",
 )
@@ -48,9 +48,11 @@ class LivePreparation:
         self._check: dict[str, object] | None = None
         self._check_time = 0.0
         self._next_check = 0.0
-        # Installed routes connect the runtime; this never grants production release.
         self.trial: SignalTrial | None = None
         self.runtime: TrialRuntime | None = None
+        self.reconciler: TrialReconciler | None = None
+        self.snapshot_reader: Callable[[], AccountSnapshot] | None = None
+        self._pre_submit_connected = False
 
     def connect_runtime(self, strategy: StrategyDefinition) -> TrialRuntime:
         """Wire durable recovery without granting a BUY or loading keys at startup."""
@@ -72,21 +74,43 @@ class LivePreparation:
             def query(self, intent: TrialIntent) -> ExchangeOrder | None:
                 return bound_exchange().query(intent)
 
+        def pre_submit(intent: TrialIntent) -> bool:
+            # This check is deliberately reconstructed from the currently stored
+            # credential for every new order. It never trusts an old UI badge.
+            try:
+                exchange = bound_exchange()
+                guard = TrialPreSubmitGuard(
+                    exchange.transport,
+                    account_fingerprint=exchange.account_fingerprint,
+                    quote_asset="USDC",
+                )
+                allowed = guard(intent)
+            except Exception:
+                allowed = False
+            service.audit(
+                "TRIAL_PRE_SUBMIT_ALLOWED" if allowed else "TRIAL_PRE_SUBMIT_BLOCKED",
+                {"intent_id": intent.intent_id, "symbol": intent.symbol, "side": intent.side},
+            )
+            return allowed
+
         def snapshot() -> AccountSnapshot:
             exchange = bound_exchange()
             return read_account_snapshot(exchange.transport, account=exchange.account_fingerprint)
 
         journal = OrderJournal(self.database)
-        # Deliberate build-release gate, NOT a permissive default or UI Boolean.
-        # Current public routes cannot arm. Market/price/ownership gates and external
-        # acceptance must be implemented before this can allow production dispatch.
+        self.reconciler = TrialReconciler(journal)
+        self.snapshot_reader = snapshot
+        self._pre_submit_connected = True
+        # User arming / production release remains closed until the baseline and
+        # external acceptance path is wired. The executor itself now has a real,
+        # immediate market/price/balance safety guard instead of constant False.
         self.trial = SignalTrial(
             journal,
-            TrialOrderExecutor(journal, DeferredExchange(), lambda _: False),
+            TrialOrderExecutor(journal, DeferredExchange(), pre_submit),
             strategy,
             lambda: False,
         )
-        self.runtime = TrialRuntime(self.trial, TrialReconciler(journal), snapshot)
+        self.runtime = TrialRuntime(self.trial, self.reconciler, snapshot)
         return self.runtime
 
     def require_settled_for_key_change(self) -> None:
@@ -161,7 +185,6 @@ class LivePreparation:
                 raise
             self._check = {**result, "checked_at_utc": datetime.now(UTC).isoformat()}
             self._check_time = time.monotonic()
-            # Do not persist complete Binance account balances or raw API responses.
             self.audit(
                 "BINANCE_READ_ONLY_CHECK_COMPLETE",
                 {
@@ -200,9 +223,7 @@ class LivePreparation:
                 "password_configured": self.access.configured(),
                 "credentials": credential_status
                 if authenticated
-                else {
-                    "configured": credential_status["configured"],
-                },
+                else {"configured": credential_status["configured"]},
                 "blockers": blockers,
                 "account_check": fresh_check if authenticated else None,
                 "trial_dispatch_available": False,
@@ -211,6 +232,7 @@ class LivePreparation:
                     "quote_aware_order_adapter_offline_tested": True,
                     "runtime_connected": self.runtime is not None,
                     "balance_conservation_connected": self.runtime is not None,
+                    "fresh_pre_submit_guard_connected": self._pre_submit_connected,
                     "production_submission_accepted": False,
                     "account_reconciliation_accepted": False,
                     "binance_testnet_accepted": False,
@@ -223,5 +245,6 @@ class LivePreparation:
                     "quote_asset": "USDC",
                     "target_notional_quote": "50.00",
                     "minimum_free_quote": "60.00",
+                    "max_reference_deviation_bps": "25",
                 },
             }
