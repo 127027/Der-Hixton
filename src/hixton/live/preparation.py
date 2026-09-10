@@ -13,9 +13,10 @@ from pathlib import Path
 from threading import RLock
 from uuid import uuid4
 
+from hixton.constants import SYMBOLS
 from hixton.domain.versions import StrategyDefinition
-from hixton.live.binance import BinanceCheckError, BinanceReadOnlyClient
-from hixton.live.credentials import CredentialService, LocalAccess, Vault
+from hixton.live.binance import BinanceCheckError, BinanceReadOnlyClient, assess_account
+from hixton.live.credentials import BinanceCredentials, CredentialService, LocalAccess, Vault
 from hixton.live.exchange import BinanceSpotExchange, BinanceSpotTransport
 from hixton.live.orders import ExchangeOrder, OrderJournal, TrialIntent, TrialOrderExecutor
 from hixton.live.reconciliation import AccountSnapshot, TrialReconciler, read_account_snapshot
@@ -23,6 +24,8 @@ from hixton.live.runtime import TrialRuntime
 from hixton.live.safety import TrialPreSubmitGuard
 from hixton.live.trial import SignalTrial
 
+_PRODUCTION = "https://api.binance.com"
+_TESTNET = "https://testnet.binance.vision"
 RELEASE_BLOCKERS = (
     "USDC-Migration und Echtorder-Anschluss benötigen gemeinsame Betriebsabnahme; "
     "USDT-Signale werden nicht als USDC ausgeführt.",
@@ -40,12 +43,17 @@ class LivePreparation:
         database: Path,
         vault: Vault,
         client_factory: Callable[..., BinanceReadOnlyClient] = _USDC_CLIENT,
+        *,
+        order_base_url: str = _PRODUCTION,
     ) -> None:
+        if order_base_url not in {_PRODUCTION, _TESTNET}:
+            raise ValueError("Explicit Binance production or Spot-testnet trial host required")
         self.database = database
         self.credentials = CredentialService(vault)
         self.access = LocalAccess(vault)
         self.lock = RLock()
         self.client_factory = client_factory
+        self.order_base_url = order_base_url
         self._check: dict[str, object] | None = None
         self._check_time = 0.0
         self._check_fingerprint: str | None = None
@@ -56,6 +64,10 @@ class LivePreparation:
         self.snapshot_reader: Callable[[], AccountSnapshot] | None = None
         self._pre_submit_connected = False
 
+    @property
+    def environment(self) -> str:
+        return "TESTNET" if self.order_base_url == _TESTNET else "PRODUCTION"
+
     def connect_runtime(self, strategy: StrategyDefinition) -> TrialRuntime:
         """Wire durable recovery without granting a public BUY action at startup."""
         service = self
@@ -64,7 +76,7 @@ class LivePreparation:
             credentials = service.credentials.load()
             if credentials is None:
                 raise BinanceCheckError("Binance-Schlüssel fehlt")
-            transport = BinanceSpotTransport(credentials, base_url="https://api.binance.com")
+            transport = BinanceSpotTransport(credentials, base_url=service.order_base_url)
             return BinanceSpotExchange(
                 transport, account_fingerprint=credentials.fingerprint, quote_asset="USDC"
             )
@@ -89,7 +101,12 @@ class LivePreparation:
                 allowed = False
             service.audit(
                 "TRIAL_PRE_SUBMIT_ALLOWED" if allowed else "TRIAL_PRE_SUBMIT_BLOCKED",
-                {"intent_id": intent.intent_id, "symbol": intent.symbol, "side": intent.side},
+                {
+                    "intent_id": intent.intent_id,
+                    "symbol": intent.symbol,
+                    "side": intent.side,
+                    "environment": service.environment,
+                },
             )
             return allowed
 
@@ -147,7 +164,7 @@ class LivePreparation:
     def arm_trial(self, *, notional: Decimal) -> dict[str, object]:
         """Prepare exactly one durable entitlement after a fresh read-only account check.
 
-        This method itself never submits an order. The public HTTP route intentionally
+        This method itself never submits an order. The public production HTTP route
         remains blocked until external Testnet/failure acceptance is recorded.
         """
         with self.lock:
@@ -176,12 +193,17 @@ class LivePreparation:
                 )
             except Exception:
                 self._discard_unused_baseline()
-                self.audit("TRIAL_ARM_FAILED")
+                self.audit("TRIAL_ARM_FAILED", {"environment": self.environment})
                 raise
             report = self.trial.report()
             self.audit(
                 "TRIAL_ARMED",
-                {"trial_id": report.get("trial_id"), "quote_asset": "USDC", "notional": "50"},
+                {
+                    "trial_id": report.get("trial_id"),
+                    "quote_asset": "USDC",
+                    "notional": "50",
+                    "environment": self.environment,
+                },
             )
             return report
 
@@ -235,6 +257,49 @@ class LivePreparation:
         self._check_time = 0
         self._check_fingerprint = None
 
+    @staticmethod
+    def _testnet_permissions() -> dict[str, bool]:
+        values = {
+            "enableReading": True,
+            "enableSpotAndMarginTrading": True,
+            "ipRestrict": True,
+            "enableWithdrawals": False,
+            "enableMargin": False,
+            "enableFutures": False,
+            "enableInternalTransfer": False,
+            "permitsUniversalTransfer": False,
+            "enableVanillaOptions": False,
+            "enablePortfolioMarginTrading": False,
+            "enableFixApiTrade": False,
+        }
+        return values
+
+    def _inspect_testnet(self, credentials: BinanceCredentials) -> dict[str, object]:
+        """Spot-testnet readiness without pretending production SAPI permission proof."""
+        transport = BinanceSpotTransport(credentials, base_url=_TESTNET)
+        account = transport.request("GET", "/api/v3/account", {"omitZeroBalances": "true"})
+        orders = transport.request("GET", "/api/v3/openOrders", {})
+        markets = transport.request(
+            "GET",
+            "/api/v3/exchangeInfo",
+            {"symbols": json.dumps(SYMBOLS, separators=(",", ":"))},
+        )
+        result = assess_account(
+            self._testnet_permissions(),
+            account,
+            orders,
+            markets,
+            Decimal("50"),
+            quote_asset="USDC",
+        )
+        result["environment"] = "TESTNET"
+        result["production_api_permissions_verified"] = False
+        result["note"] = (
+            "Spot-Testnet Vorprüfung; Testnet-Guthaben ist kein Echtgeld und ersetzt keine "
+            "Produktions-Key-/IP-Prüfung."
+        )
+        return result
+
     def check(self) -> dict[str, object]:
         with self.lock:
             if time.monotonic() < self._next_check:
@@ -248,13 +313,21 @@ class LivePreparation:
                 )
             self.invalidate_check()
             self._next_check = time.monotonic() + 30
-            self.audit("BINANCE_READ_ONLY_CHECK_REQUESTED")
+            self.audit("BINANCE_READ_ONLY_CHECK_REQUESTED", {"environment": self.environment})
             try:
-                result = self.client_factory(credentials).inspect(Decimal("50"))
+                if self.order_base_url == _TESTNET:
+                    result = self._inspect_testnet(credentials)
+                else:
+                    result = self.client_factory(credentials).inspect(Decimal("50"))
+                    result["environment"] = "PRODUCTION"
+                    result["production_api_permissions_verified"] = True
             except BinanceCheckError as error:
                 self._next_check = max(self._next_check, time.monotonic() + error.retry_after)
-                self.audit("BINANCE_READ_ONLY_CHECK_FAILED")
+                self.audit("BINANCE_READ_ONLY_CHECK_FAILED", {"environment": self.environment})
                 raise
+            except Exception:
+                self.audit("BINANCE_READ_ONLY_CHECK_FAILED", {"environment": self.environment})
+                raise BinanceCheckError("Binance-Testnet-Prüfung fehlgeschlagen.") from None
             self._check = {**result, "checked_at_utc": datetime.now(UTC).isoformat()}
             self._check_time = time.monotonic()
             self._check_fingerprint = credentials.fingerprint
@@ -263,6 +336,7 @@ class LivePreparation:
                 {
                     "passed": result.get("account_checks_passed") is True,
                     "fingerprint": credentials.fingerprint,
+                    "environment": self.environment,
                 },
             )
             return dict(self._check)
@@ -301,6 +375,7 @@ class LivePreparation:
                 "account_check": fresh_check if authenticated else None,
                 "trial_dispatch_available": False,
                 "trial_quote_asset": "USDC",
+                "trial_environment": self.environment,
                 "trial_readiness": {
                     "quote_aware_order_adapter_offline_tested": True,
                     "runtime_connected": self.runtime is not None,
