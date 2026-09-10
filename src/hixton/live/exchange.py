@@ -24,14 +24,19 @@ from hixton.live.credentials import BinanceCredentials
 from hixton.live.orders import ExchangeFill, ExchangeOrder, TrialIntent
 
 _BASES = {"https://api.binance.com", "https://testnet.binance.vision"}
-_ALLOWLIST = {
+_PUBLIC = {
     ("GET", "/api/v3/time"),
+    ("GET", "/api/v3/exchangeInfo"),
+    ("GET", "/api/v3/ticker/bookTicker"),
+}
+_PRIVATE = {
     ("GET", "/api/v3/order"),
     ("GET", "/api/v3/myTrades"),
     ("GET", "/api/v3/account"),
     ("GET", "/api/v3/openOrders"),
     ("POST", "/api/v3/order"),
 }
+_ALLOWLIST = _PUBLIC | _PRIVATE
 
 
 class ExchangeRequestError(RuntimeError):
@@ -85,7 +90,7 @@ class BinanceSpotTransport:
     def request(self, method: str, path: str, params: dict[str, str]) -> Any:
         if (method, path) not in _ALLOWLIST:
             raise ValueError("Order transport endpoint/method is not allowlisted")
-        public = path == "/api/v3/time"
+        public = (method, path) in _PUBLIC
         if not public and (
             self._clock_checked_at is None or not 0 <= self._clock() - self._clock_checked_at <= 30
         ):
