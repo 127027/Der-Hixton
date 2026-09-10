@@ -1,18 +1,18 @@
 {
   "mode": "BOOTSTRAP_LEARN_ONLY",
   "bootstrap_complete": false,
-  "progress_percent": 0,
-  "current_focus": "Initial repository learning has not started yet.",
-  "last_indexed_commit": null,
-  "last_learning_round": 0,
+  "progress_percent": 12,
+  "current_focus": "Verified Test Trade path first: UI -> HTTP route -> LivePreparation -> SignalTrial -> executor/release barriers. Continue with supervisor/runtime cadence, exchange/order filters, reconciliation, storage, and full repository inventory.",
+  "last_indexed_commit": "3b1acb1547bec3b6af374ace1603d8a5e1dbf6f8",
+  "last_learning_round": 1,
   "areas": {
-    "inventory": 0,
-    "architecture": 0,
-    "dataflows": 0,
-    "ui_map": 0,
-    "storage": 0,
-    "tests": 0,
-    "security": 0,
+    "inventory": 5,
+    "architecture": 10,
+    "dataflows": 25,
+    "ui_map": 15,
+    "storage": 5,
+    "tests": 15,
+    "security": 20,
     "cross_check": 0
   },
   "inventory_complete": false,
@@ -24,8 +24,15 @@
   "security_complete": false,
   "cross_check_complete": false,
   "unresolved_repository_questions": [
-    "Full repository learning pass not yet executed."
+    "Trace the exact RuntimeSupervisor -> TrialRuntime cadence and restart/error propagation.",
+    "Verify all Binance market/quantity/price filters and pre-submit rejection paths in exchange.py/orders.py.",
+    "Verify account reconciliation, foreign-order detection, residual handling, and ownership checks end-to-end.",
+    "Map all Live/Test-Trade storage tables and restart semantics.",
+    "Verify full Backtest/Paper/Live strategy-decision parity and identify divergences.",
+    "Complete tracked-file inventory and all required architecture/UI/tests/security cross-checks."
   ],
-  "external_runtime_unknowns": [],
-  "notes": "During bootstrap the agent may modify only agent_memory/. Progress values must be evidence-based, monotonic unless later evidence invalidates prior understanding, and never inflated merely to finish bootstrap."
+  "external_runtime_unknowns": [
+    "No real Binance/Testnet execution acceptance has been verified from repository evidence."
+  ],
+  "notes": "Round 1 was performed GitHub-only. Verified root cause of the currently non-executing Test Trade: /api/live/trial/start deliberately returns HTTP 409 without arming; production SignalTrial release_check is hard-wired False; TrialOrderExecutor pre-submit gate is hard-wired False. No production code was changed."
 }
